@@ -26,6 +26,4 @@ public class Member extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     private SocialProvider socialProvider;
-    
-    private String externalId;
 }
