@@ -4,6 +4,8 @@ import com.bobeat.backend.domain.common.BaseTimeEntity;
 import com.bobeat.backend.domain.store.vo.Address;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,6 +30,11 @@ public class Store extends BaseTimeEntity {
     private Address address;
 
     private String phoneNumber;
-    private String mainCategory;
+
+    @Enumerated(EnumType.STRING)
+    private StoreType storeType;
+
+    private String description;
+
     private String mainImage;
 }
