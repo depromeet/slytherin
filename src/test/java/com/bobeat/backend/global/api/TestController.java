@@ -8,22 +8,31 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/test")
 public class TestController {
 
-    @GetMapping("/success")
+    @GetMapping("/test/success")
     public ApiResponse<TestApiResponse> getSuccess() {
         TestApiResponse response = new TestApiResponse("응답 값");
         return ApiUtil.success(response);
     }
 
-    @GetMapping("/error")
+    @GetMapping("/test/error")
     public ApiResponse<String> getError() {
         throw new RuntimeException("허용되지 않은 API입니다");
     }
 
-    @GetMapping("/success-only")
+    @GetMapping("/test/success-only")
     public ApiResponse<Void> getSuccessOnly() {
         return ApiUtil.successOnly();
+    }
+
+    @GetMapping("/test/custom-error")
+    public ApiResponse<String> getCustomError() {
+        throw new TestCustomException();
+    }
+
+    @GetMapping("test/custom-error/message")
+    public ApiResponse<String> getCustomErrorWithMessage() {
+        throw new TestCustomException("허용되지 않은 API입니다");
     }
 }
