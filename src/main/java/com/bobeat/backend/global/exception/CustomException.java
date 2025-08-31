@@ -1,4 +1,4 @@
-package com.ourmenu.backend.global.exception;
+package com.bobeat.backend.global.exception;
 
 public class CustomException extends RuntimeException {
 

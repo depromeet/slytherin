@@ -1,7 +1,8 @@
-package com.ourmenu.backend.global.response.util;
+package com.bobeat.backend.global.response.util;
 
-import com.ourmenu.backend.global.exception.ErrorResponse;
-import com.ourmenu.backend.global.response.ApiResponse;
+
+import com.bobeat.backend.global.exception.ErrorResponse;
+import com.bobeat.backend.global.response.ApiResponse;
 
 public class ApiUtil {
 

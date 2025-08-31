@@ -1,8 +1,7 @@
-package com.ourmenu.backend.global.exception;
+package com.bobeat.backend.global.exception;
 
-import com.ourmenu.backend.global.response.ApiResponse;
-import com.ourmenu.backend.global.response.util.ApiUtil;
-import io.jsonwebtoken.JwtException;
+import com.bobeat.backend.global.response.ApiResponse;
+import com.bobeat.backend.global.response.util.ApiUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
