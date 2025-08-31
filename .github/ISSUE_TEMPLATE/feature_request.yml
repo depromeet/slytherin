@@ -1,0 +1,15 @@
+name: "✨ Feature Request"
+description: "새 기능 제안"
+title: "[BE][FEAT] "
+labels: ["BE", "FEAT"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: 제안 요약
+      placeholder: 어떤 기능을 추가하고 싶나요?
+  - type: textarea
+    id: details
+    attributes:
+      label: 상세 설명
+      placeholder: 왜 필요한 기능인가요? 어떻게 동작하면 좋을까요?

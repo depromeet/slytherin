@@ -1,0 +1,15 @@
+name: "♻️ Refactor"
+description: "리팩토링 제안"
+title: "[BE][REFACTOR] "
+labels: ["BE", "REFACTOR"]
+body:
+  - type: input
+    id: target
+    attributes:
+      label: 대상
+      placeholder: 어떤 모듈/코드를 리팩토링하려 하나요?
+  - type: textarea
+    id: reason
+    attributes:
+      label: 이유
+      placeholder: 왜 리팩토링이 필요한가요?

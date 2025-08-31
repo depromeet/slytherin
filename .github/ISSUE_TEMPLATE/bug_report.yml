@@ -1,0 +1,25 @@
+name: "🐛 Bug Report"
+description: "버그 발생 시 작성"
+title: "[BE][BUG] "
+labels: ["BE", "BUG"]
+body:
+  - type: input
+    id: api
+    attributes:
+      label: API / 모듈명
+      placeholder: ex) POST /api/v1/login
+  - type: textarea
+    id: what
+    attributes:
+      label: 발생 현상
+      placeholder: 어떤 문제가 발생했나요?
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 방법
+      placeholder: 어떻게 하면 문제가 재현되나요?
+  - type: textarea
+    id: logs
+    attributes:
+      label: 로그 / 스크린샷
+      placeholder: 관련 로그, 에러 메시지를 붙여주세요
