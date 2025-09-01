@@ -1,7 +1,6 @@
 package com.bobeat.backend.global.exception;
 
 import com.bobeat.backend.global.response.ApiResponse;
-import com.bobeat.backend.global.response.util.ApiUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,6 +27,6 @@ public class GlobalExceptionHandler {
 
     public ApiResponse<?> handleException(Exception e, ErrorResponse errorResponse) {
         log.error("{}: {}", errorResponse.code(), e.getMessage());
-        return ApiUtil.error(errorResponse);
+        return ApiResponse.error(errorResponse);
     }
 }

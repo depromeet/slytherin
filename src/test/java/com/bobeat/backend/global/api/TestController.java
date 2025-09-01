@@ -2,7 +2,6 @@ package com.bobeat.backend.global.api;
 
 import com.bobeat.backend.global.exception.ErrorResponse;
 import com.bobeat.backend.global.response.ApiResponse;
-import com.bobeat.backend.global.response.util.ApiUtil;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,7 +12,7 @@ public class TestController {
     @GetMapping("/test/success")
     public ApiResponse<TestApiResponse> getSuccess() {
         TestApiResponse response = new TestApiResponse("응답 값");
-        return ApiUtil.success(response);
+        return ApiResponse.success(response);
     }
 
     @GetMapping("/test/error")
@@ -23,7 +22,7 @@ public class TestController {
 
     @GetMapping("/test/success-only")
     public ApiResponse<Void> getSuccessOnly() {
-        return ApiUtil.successOnly();
+        return ApiResponse.successOnly();
     }
 
     @GetMapping("/test/custom-error")

@@ -16,4 +16,16 @@ public class ApiResponse<T> {
     private final T response;
 
     private final ErrorResponse errorResponse;
+
+    public static <T> ApiResponse<T> success(T response) {
+        return new ApiResponse<>(true, response, null);
+    }
+
+    public static ApiResponse<?> error(ErrorResponse errorResponse) {
+        return new ApiResponse<>(false, null, errorResponse);
+    }
+
+    public static ApiResponse<Void> successOnly() {
+        return new ApiResponse<>(true, null, null);
+    }
 }
