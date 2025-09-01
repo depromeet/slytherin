@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: ${POSTGRESQL_HOST}
+    password: ${POSTGRESQL_PASSWORD}
+    username: ${POSTGRESQL_USERNAME}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
