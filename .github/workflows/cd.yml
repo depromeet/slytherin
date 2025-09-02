@@ -1,0 +1,32 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - 'main'
+
+#동시성 환경을 해결한다
+concurrency:
+  group: ${{ github.ref }} # 동일한 PR에 대한 식별자
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      write-all
+    steps:
+      - name: 배포한다
+        uses: appleboy/ssh-action@master
+        id: deploy
+        with:
+          host: ${{ secrets.HOST }}
+          username: root
+          password: ${{ secrets.PASSWORD }}
+          port: 22
+          key: ${{ secrets.KEY }}
+          envs: GITHUB_SHA
+          script: |
+            cd ${{secrets.PROJECT_PATH}}
+            sudo chmod +x ./infra/script/deploy.sh
+            ./infra/script/deploy.sh

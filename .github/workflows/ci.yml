@@ -28,6 +28,7 @@ jobs:
           - 5433:5432  # 외부포트:내부포트 (원하는 포트에 맞게 조정)
         env:
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bobeat
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -50,7 +51,7 @@ jobs:
 
       - name: 빌드한다.
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/bobeat
+          SPRING_DATASOURCE_URL: jdbc:postgresql://127.0.0.1:5433/bobeat
           SPRING_DATASOURCE_USERNAME: postgres
           SPRING_DATASOURCE_PASSWORD: postgres
         run: ./gradlew build --stacktrace
@@ -66,6 +67,3 @@ jobs:
         if: failure()
         run: |
           echo failed!
-
-  
-
