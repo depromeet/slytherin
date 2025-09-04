@@ -11,21 +11,19 @@ import lombok.Getter;
 @Getter
 public class ApiResponse<T> {
 
-    private final boolean success;
-
     private final T response;
 
     private final ErrorResponse errorResponse;
 
     public static <T> ApiResponse<T> success(T response) {
-        return new ApiResponse<>(true, response, null);
+        return new ApiResponse<>(response, null);
     }
 
     public static ApiResponse<?> error(ErrorResponse errorResponse) {
-        return new ApiResponse<>(false, null, errorResponse);
+        return new ApiResponse<>(null, errorResponse);
     }
 
     public static ApiResponse<Void> successOnly() {
-        return new ApiResponse<>(true, null, null);
+        return new ApiResponse<>(null, null);
     }
 }
