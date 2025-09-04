@@ -1,5 +1,6 @@
 package com.bobeat.backend.domain.store.entity;
 
+import com.bobeat.backend.domain.common.BaseTimeEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "store_menu_category")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class StoreMenuCategory {
+public class StoreMenuCategory extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -29,7 +29,10 @@ public class SeatOption extends BaseTimeEntity {
     private SeatType seatType;
     
     private Integer maxCapacity;
+
     private String description;
+
+    private String image;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
