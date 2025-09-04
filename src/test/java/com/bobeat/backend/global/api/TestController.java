@@ -1,9 +1,7 @@
 package com.bobeat.backend.global.api;
 
-import com.bobeat.backend.global.exception.ErrorResponse;
 import com.bobeat.backend.global.response.ApiResponse;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController

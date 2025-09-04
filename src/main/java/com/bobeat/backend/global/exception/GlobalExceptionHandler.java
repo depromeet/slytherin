@@ -12,17 +12,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ApiResponse<?> handleException(RuntimeException e) {
-        return handleException(e, ErrorResponse.of(ErrorCode.INTERNAL_SERVER));
+        return handleException(e, new ErrorResponse(ErrorCode.INTERNAL_SERVER));
     }
 
     @ExceptionHandler(CustomException.class)
     public ApiResponse<?> handleCustomException(CustomException e) {
-        return handleException(e, ErrorResponse.of(e.getMessage(), e.getErrorCode()));
+        return handleException(e, new ErrorResponse(e.getErrorCode(), e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ApiResponse<?> handleValidateException(MethodArgumentNotValidException e){
-        return handleException(e, ErrorResponse.of(ErrorCode.BAD_REQUEST));
+        return handleException(e, new ErrorResponse(ErrorCode.BAD_REQUEST));
     }
 
     public ApiResponse<?> handleException(Exception e, ErrorResponse errorResponse) {
