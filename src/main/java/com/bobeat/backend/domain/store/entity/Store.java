@@ -40,5 +40,5 @@ public class Store extends BaseTimeEntity {
 
     private int storeHonbabLevel;
 
-    private String storeCategory;
+    private int turnoverMinute;
 }
