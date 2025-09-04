@@ -29,4 +29,6 @@ public class Menu extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
     private Store store;
+
+    private String image;
 }
