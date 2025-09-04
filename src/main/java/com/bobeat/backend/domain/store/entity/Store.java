@@ -36,7 +36,7 @@ public class Store extends BaseTimeEntity {
 
     private String description;
 
-    private String mainImage;
+    private String mainImageUrl;
 
     private int storeHonbabLevel;
 

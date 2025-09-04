@@ -31,7 +31,7 @@ public class Menu extends BaseTimeEntity {
     @JoinColumn(name = "store_id")
     private Store store;
 
-    private String image;
+    private String imageUrl;
 
     private boolean recommend;
 }

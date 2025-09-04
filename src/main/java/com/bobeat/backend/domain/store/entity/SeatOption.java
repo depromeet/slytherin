@@ -32,7 +32,7 @@ public class SeatOption extends BaseTimeEntity {
 
     private String description;
 
-    private String image;
+    private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
