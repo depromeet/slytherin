@@ -14,16 +14,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "store_seat_category")
+@Table(name = "seat_category")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class StoreSeatCategory extends BaseTimeEntity {
+public class SeatCategory extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private StoreSeatCategoryType storeSeatCategoryType;
+    private SeatType seatType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
