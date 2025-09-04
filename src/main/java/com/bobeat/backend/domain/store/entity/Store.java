@@ -2,6 +2,7 @@ package com.bobeat.backend.domain.store.entity;
 
 import com.bobeat.backend.domain.common.BaseTimeEntity;
 import com.bobeat.backend.domain.store.vo.Address;
+import com.bobeat.backend.domain.store.vo.Categories;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -41,4 +42,7 @@ public class Store extends BaseTimeEntity {
     private int storeHonbabLevel;
 
     private int turnoverMinute;
+
+    @Embedded
+    private Categories categories;
 }

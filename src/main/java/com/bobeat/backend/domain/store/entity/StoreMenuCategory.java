@@ -23,7 +23,7 @@ public class StoreMenuCategory extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private StoreMenuCategoryType storeMenuCategoryType;
+    private StoreType storeType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
