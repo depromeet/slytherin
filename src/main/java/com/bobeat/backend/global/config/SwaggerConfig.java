@@ -17,7 +17,7 @@ public class SwaggerConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("북스타 API 명세서")
+                        .title("밥잇 API 명세서")
                         .description("작성중입니다")
                         .version("1.0.0")
                 )
