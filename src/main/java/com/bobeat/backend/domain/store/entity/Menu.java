@@ -31,4 +31,6 @@ public class Menu extends BaseTimeEntity {
     private Store store;
 
     private String image;
+
+    private boolean recommend;
 }
