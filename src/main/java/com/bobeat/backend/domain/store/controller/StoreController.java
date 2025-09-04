@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class StoreController {
 
     @Operation(summary = "위치 기반 식당 검색", description = "현재 위치를 기반으로 식당을 검색하고 필터링합니다.")
-    @PostMapping("/api/stores")
+    @PostMapping
     public ApiResponse<CursorPageResponse<StoreSearchResponse>> searchRestaurants(
             @Valid CursorPaginationRequest pagination,
             @RequestBody @Valid StoreFilteringRequest filteringRequest,
