@@ -14,10 +14,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "member_store")
+@Table(name = "member_saved_store")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MemberStore {
+public class MemberSavedStore {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
