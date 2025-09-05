@@ -1,15 +1,7 @@
 #!/bin/bash
 
-echo "🌍 환경 변수 등록"
-set -o allexport
-source "$(dirname "$0")/.env"
-set +o allexport
-
-echo "📋 현재 환경 변수 목록 (일부)"
-env | grep -E 'POSTGRESQL_HOST|POSTGRESQL_PASSWORD|POSTGRESQL_USERNAME'
-
-APP_NAME="backend-0.0.1-SNAPSHOT.jar"
-JAR_PATH="./build/libs/backend-0.0.1-SNAPSHOT.jar"
+APP_NAME="bobeat-server.jar"
+JAR_PATH="./build/libs/bobeat-server.jar"
 LOG_PATH="./application.log"
 echo "🔍 실행 중인 애플리케이션 확인"
 PID=$(ps -ef | grep $APP_NAME | grep java | grep -v grep | awk '{print $2}')
@@ -29,9 +21,6 @@ else
     echo "✅ 정상 종료되었습니다."
   fi
 fi
-
-echo "🚀 애플리케이션 빌드"
-./gradlew clean build
 
 echo "🚀 애플리케이션 시작 중..."
 nohup java -jar $JAR_PATH > $LOG_PATH 2>&1 &
