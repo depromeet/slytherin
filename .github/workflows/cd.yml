@@ -1,0 +1,78 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - 'main'
+
+#동시성 환경을 해결한다
+concurrency:
+  group: ${{ github.ref }} # 동일한 PR에 대한 식별자
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      write-all
+    steps:
+      - uses: actions/checkout@v4
+      - name: JDK 21 를 준비한다.
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: gradlew 의 root 실행권한을 부여한다.
+        run: chmod +x gradlew
+
+      - name: Gradle 를 준비한다.
+        uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
+
+      - name: application.yml 를 구성한다
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
+          cat src/main/resources/application.yml
+
+      - name: 빌드한다(테스트는 제외한다)
+        run: ./gradlew clean build -x test
+
+      - name: JAR 파일 복사한다
+        run: cp build/libs/backend-0.0.1-SNAPSHOT.jar ./bobeat-server.jar
+
+      - name: 기존 JAR 파일을 삭제한다
+        uses: appleboy/ssh-action@master
+        id: deploy
+        with:
+          host: ${{ secrets.HOST }}
+          username: root
+          password: ${{ secrets.PASSWORD }}
+          port: 22
+          key: ${{ secrets.KEY }}
+          envs: GITHUB_SHA
+          script: |
+            cd ${{secrets.PROJECT_PATH}}
+            rm -f ./build/libs/bobeat-server.jar
+
+      - name: 새로운 JAR 파일을 전송한다.
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: root
+          password: ${{ secrets.PASSWORD }}
+          key: ${{ secrets.KEY }}
+          source: "bobeat-server.jar"
+          target: "${{secrets.PROJECT_PATH}}/build/libs"
+
+      - name: 서버를 실행한다
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: root
+          password: ${{ secrets.PASSWORD }}
+          key: ${{ secrets.KEY }}
+          script: |
+            echo "🚀 애플리케이션 실행 중..."
+            cd ${{ secrets.PROJECT_PATH }}
+            ./infra/script/deploy.sh 
