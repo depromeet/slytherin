@@ -14,24 +14,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "menu")
+@Table(name = "store_image")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Menu extends BaseTimeEntity {
+public class StoreImage extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    private String imageUrl;
 
-    private int price;
+    private boolean isMain;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
     private Store store;
-
-    private String imageUrl;
-
-    private boolean recommend;
 }

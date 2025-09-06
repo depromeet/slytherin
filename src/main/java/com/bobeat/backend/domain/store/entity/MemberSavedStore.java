@@ -1,6 +1,6 @@
 package com.bobeat.backend.domain.store.entity;
 
-import com.bobeat.backend.domain.common.BaseTimeEntity;
+import com.bobeat.backend.domain.member.entity.Member;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -14,24 +14,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "menu")
+@Table(name = "member_saved_store")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Menu extends BaseTimeEntity {
+public class MemberSavedStore {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-
-    private int price;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
     private Store store;
 
-    private String imageUrl;
-
-    private boolean recommend;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
 }
