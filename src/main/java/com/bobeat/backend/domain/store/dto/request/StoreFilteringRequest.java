@@ -1,10 +1,11 @@
 package com.bobeat.backend.domain.store.dto.request;
 
 import com.bobeat.backend.domain.store.entity.SeatType;
-import com.bobeat.backend.global.request.PagingRequest;
+import com.bobeat.backend.global.request.CursorPaginationRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+
 import java.util.List;
 
 public record StoreFilteringRequest(
@@ -22,7 +23,7 @@ public record StoreFilteringRequest(
 
         @Schema(description = "페이징 정보")
         @Valid
-        PagingRequest paging
+        CursorPaginationRequest paging
 ) {
         public record BoundingBox(
                 @Schema(description = "박스 좌상단 위도", example = "37.58")

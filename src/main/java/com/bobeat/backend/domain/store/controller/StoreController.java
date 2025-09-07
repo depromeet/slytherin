@@ -5,7 +5,7 @@ import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResponse;
 import com.bobeat.backend.global.response.ApiResponse;
-import com.bobeat.backend.global.response.PagingResponse;
+import com.bobeat.backend.global.response.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,7 +19,7 @@ public class StoreController {
 
     @Operation(summary = "위치 기반 식당 검색", description = "현재 위치를 기반으로 식당을 검색하고 필터링합니다.")
     @PostMapping
-    public ApiResponse<PagingResponse<StoreSearchResponse>> searchRestaurants(
+    public ApiResponse<CursorPageResponse<StoreSearchResponse>> searchRestaurants(
             @RequestBody @Valid StoreFilteringRequest request) {
         return ApiResponse.success(null);
     }
