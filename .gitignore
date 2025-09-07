@@ -39,3 +39,6 @@ out/
 
 .env
 .act_secrets
+
+### application ###
+application.yml
