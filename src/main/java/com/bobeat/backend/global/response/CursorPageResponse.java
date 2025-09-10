@@ -1,11 +1,12 @@
 package com.bobeat.backend.global.response;
 
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.function.ToLongFunction;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 /**
  * 커서 기반 페이지네이션 응답을 위한 범용 클래스입니다.

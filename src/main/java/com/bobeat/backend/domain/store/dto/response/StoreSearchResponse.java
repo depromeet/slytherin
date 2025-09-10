@@ -1,6 +1,7 @@
 package com.bobeat.backend.domain.store.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
 @Schema(description = "위치 기반 가게 검색 응답 DTO")
