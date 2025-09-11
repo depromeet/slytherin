@@ -36,14 +36,14 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                         // 메뉴 카테고리 조건
                         categoriesIn(request),
                         // 가격 조건
-                        recommendedMenuPriceInrange(request),
+                        recommendedMenuPriceInRange(request),
                         // 좌석 형태 조건
                         seatTypesIn(request)
                 )
                 .orderBy(store.id.desc())
                 .limit(pageSize + 1)
                 .fetch();
-        return null;
+        return CursorPageResponse.of(results, pageSize, Store::getId);
     }
 
     private BooleanExpression bboxWithin(StoreFilteringRequest request) {
@@ -58,7 +58,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
         BooleanExpression latBetween = null;
         if(nwLat != null && seLat != null) {
-            latBetween = store.address.latitude.loe(nwLat).and(store.address.latitude.loe(seLat));
+            latBetween = store.address.latitude.loe(nwLat).and(store.address.latitude.goe(seLat));
         } else if(nwLat != null) {
             latBetween = store.address.latitude.loe(nwLat);
         } else if(seLat != null) {
@@ -99,7 +99,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     }
 
     // TODO: 가격 범위 쿼리 방식 재검토(AS-IS: 서브쿼리 방식으로 추천메뉴 중 가격 조건에 맞는 메뉴가 하나라도 있는지 확인)
-    private BooleanExpression recommendedMenuPriceInrange(StoreFilteringRequest request) {
+    private BooleanExpression recommendedMenuPriceInRange(StoreFilteringRequest request) {
         if(request.filters() == null || request.filters().price() == null) {
             return null;
         }
