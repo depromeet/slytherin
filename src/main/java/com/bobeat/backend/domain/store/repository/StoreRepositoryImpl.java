@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static com.bobeat.backend.domain.store.entity.QSeatOption.seatOption;
 import static com.bobeat.backend.domain.store.entity.QStore.store;
 import static com.bobeat.backend.domain.store.entity.QMenu.menu;
 
@@ -21,8 +22,6 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
     @Override
     public CursorPageResponse<Store> search(StoreFilteringRequest request) {
-//        return null;
-//    }
         int pageSize = request.paging() != null? request.paging().limit() : 20;
 
         List<Store> results = queryFactory
@@ -37,11 +36,9 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                         // 메뉴 카테고리 조건
                         categoriesIn(request),
                         // 가격 조건
-                        recommendedMenuPriceInrange(request)
-//                        // 좌석 형태 조건
-//                        seatTypesIn(request),
-//                        // 결제 방식 조건 (paymentMethodsIn 메서드 구현 필요)
-//                        paymentMethodsIn(request)
+                        recommendedMenuPriceInrange(request),
+                        // 좌석 형태 조건
+                        seatTypesIn(request)
                 )
                 .orderBy(store.id.desc())
                 .limit(pageSize + 1)
@@ -88,21 +85,6 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         return store.honbobLevel.loe(request.filters().level());
     }
 
-//    private BooleanExpression seatTypesIn(StoreFilteringRequest request) {
-//        if (request.filters().seatTypes() == null || request.filters().seatTypes().isEmpty()) {
-//            return null;
-//        }
-//        return store.seatTypes.any().in(request.filters().seatTypes());
-//    }
-////
-//    private BooleanExpression paymentMethodsIn(StoreFilteringRequest request) {
-//        if (request.filters().paymentMethods() == null || request.filters().paymentMethods().isEmpty()) {
-//            return null;
-//        }
-//        // TODO: paymentMethods에 대한 EnumType 설정 및 store entity에 반영 필요
-//        return store.paymentMethods.any().in(request.filters().paymentMethods());
-//    }
-
     private BooleanExpression categoriesIn(StoreFilteringRequest request) {
         if (request.filters().categories() == null || request.filters().categories().isEmpty()) {
             return null;
@@ -144,6 +126,22 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                         menu.store.eq(store),
                         menu.recommend.isTrue(),
                         priceCondition
+                )
+                .exists();
+    }
+
+    private BooleanExpression seatTypesIn(StoreFilteringRequest request) {
+        if (request.filters().seatTypes() == null || request.filters().seatTypes().isEmpty()) {
+            return null;
+        }
+        var types = request.filters().seatTypes();
+
+        return JPAExpressions
+                .selectOne()
+                .from(seatOption)
+                .where(
+                        seatOption.store.eq(store),
+                        seatOption.seatType.in(types)
                 )
                 .exists();
     }
