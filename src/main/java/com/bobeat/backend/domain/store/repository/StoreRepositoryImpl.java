@@ -4,6 +4,7 @@ import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.global.response.CursorPageResponse;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 import static com.bobeat.backend.domain.store.entity.QStore.store;
+import static com.bobeat.backend.domain.store.entity.QMenu.menu;
 
 @Repository
 @RequiredArgsConstructor
@@ -34,8 +36,8 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                         levelLoe(request),
                         // 메뉴 카테고리 조건
                         categoriesIn(request),
-//                        // 가격 조건
-//                        priceBetween(request),
+                        // 가격 조건
+                        recommendedMenuPriceInrange(request)
 //                        // 좌석 형태 조건
 //                        seatTypesIn(request),
 //                        // 결제 방식 조건 (paymentMethodsIn 메서드 구현 필요)
@@ -114,23 +116,37 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         return primaryIn.or(secondaryIn);
     }
 
-//    private Predicate priceBetween(StoreFilteringRequest request) {
-//        if(request.filters() == null || request.filters().price() == null) {
-//            return null;
-//        }
-//        Integer min = request.filters().price().min();
-//        Integer max = request.filters().price().max();
-//
-//        if(min == null && max == null) {
-//            return null;
-//        } else if(min != null && max != null) {
-//            return store..averagePrice.between(min, max);
-//        } else if(min != null) {
-//            return store.averagePrice.goe(min);
-//        } else { // max != null
-//            return store.averagePrice.loe(max);
-//        }
-//    }
+    // TODO: 가격 범위 쿼리 방식 재검토(AS-IS: 서브쿼리 방식으로 추천메뉴 중 가격 조건에 맞는 메뉴가 하나라도 있는지 확인)
+    private BooleanExpression recommendedMenuPriceInrange(StoreFilteringRequest request) {
+        if(request.filters() == null || request.filters().price() == null) {
+            return null;
+        }
+        Integer min = request.filters().price().min();
+        Integer max = request.filters().price().max();
+
+        if(min == null && max == null) {
+            return null;
+        }
+        BooleanExpression priceCondition;
+
+        if(min != null && max != null) {
+            priceCondition = menu.price.between(min, max);
+        } else if(min != null) {
+            priceCondition = menu.price.goe(min);
+        } else {
+            priceCondition = menu.price.loe(max);
+        }
+
+        return JPAExpressions
+                .selectOne()
+                .from(menu)
+                .where(
+                        menu.store.eq(store),
+                        menu.recommend.isTrue(),
+                        priceCondition
+                )
+                .exists();
+    }
 
     private BooleanExpression andAll(BooleanExpression... exprs) {
         BooleanExpression acc = null;
