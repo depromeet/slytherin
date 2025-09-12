@@ -2,7 +2,6 @@ package com.bobeat.backend.domain.member.entity;
 
 import com.bobeat.backend.domain.member.dto.request.OnboardingAnswerDto;
 import com.bobeat.backend.domain.member.dto.request.OnboardingRequest;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,12 +16,10 @@ import static org.assertj.core.api.Assertions.*;
 class MemberOnboardingProfileTest {
 
     @Nested
-    @DisplayName("온보딩 프로필 생성")
-    class CreateProfileTest {
+    class 온보딩프로필생성 {
 
         @Test
-        @DisplayName("회원과 온보딩 요청으로 프로필을 생성할 수 있다")
-        void shouldCreateProfileWithMemberAndRequest() {
+        void 회원과온보딩요청으로프로필을생성할수있다() {
             // given
             Member member = createTestMember();
             OnboardingRequest request = createValidOnboardingRequest();
@@ -41,13 +38,11 @@ class MemberOnboardingProfileTest {
     }
 
     @Nested
-    @DisplayName("혼밥 레벨 계산 및 업데이트")
-    class CalculateAndUpdateLevelTest {
+    class 혼밥레벨계산및업데이트 {
 
         @ParameterizedTest
         @MethodSource("provideLevelCalculationTestCases")
-        @DisplayName("답변 조합에 따라 올바른 레벨이 계산된다")
-        void shouldCalculateCorrectLevelForAnswerCombination(
+        void 답변조합에따라올바른레벨이계산된다(
                 List<OnboardingAnswerDto> answers, 
                 Level expectedLevel, 
                 String description) {
@@ -119,8 +114,7 @@ class MemberOnboardingProfileTest {
         }
 
         @Test
-        @DisplayName("가중치가 적용된 점수 계산이 올바르게 작동한다")
-        void shouldCalculateWeightedScoreCorrectly() {
+        void 가중치가적용된점수계산이올바르게작동한다() {
             // given: Q4(2인분 도전)에 높은 점수, 나머지는 낮은 점수
             Member member = createTestMember();
             OnboardingRequest request = new OnboardingRequest(List.of(
@@ -141,8 +135,7 @@ class MemberOnboardingProfileTest {
         }
 
         @Test
-        @DisplayName("Q4(2인분 도전)의 높은 가중치가 레벨에 결정적 영향을 미친다")
-        void shouldQ4HighWeightInfluenceLevelSignificantly() {
+        void Q4이인분도전의높은가중치가레벨에결정적영향을미친다() {
             // given: Q4만 높고 나머지는 중간 정도
             Member member = createTestMember();
             OnboardingRequest request = new OnboardingRequest(List.of(

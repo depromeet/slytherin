@@ -2,7 +2,6 @@ package com.bobeat.backend.domain.member.entity;
 
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -10,12 +9,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.*;
 
-@DisplayName("OnboardingAnswer 도메인 테스트")
 class OnboardingAnswerTest {
 
     @Nested
-    @DisplayName("질문과 옵션으로 답변 찾기")
-    class FindByQuestionAndOptionTest {
+    class 질문과옵션으로답변찾기 {
 
         @ParameterizedTest
         @CsvSource({
@@ -40,8 +37,7 @@ class OnboardingAnswerTest {
                 "5, 3, Q5_VARIETY_OF_MENU",
                 "5, 4, Q5_NO_CONDITIONS_MATTER"
         })
-        @DisplayName("유효한 질문 번호와 옵션으로 올바른 답변을 찾을 수 있다")
-        void shouldFindCorrectAnswerForValidQuestionAndOption(int questionNumber, int selectedOption, String expectedAnswer) {
+        void 유효한질문번호와옵션으로올바른답변을찾을수있다(int questionNumber, int selectedOption, String expectedAnswer) {
             // when
             OnboardingAnswer result = OnboardingAnswer.findByQuestionAndOption(questionNumber, selectedOption);
 
@@ -60,8 +56,7 @@ class OnboardingAnswerTest {
                 "-1, 1",  // 음수 질문 번호
                 "1, -1"   // 음수 옵션
         })
-        @DisplayName("유효하지 않은 질문 번호나 옵션으로 예외가 발생한다")
-        void shouldThrowExceptionForInvalidQuestionOrOption(int questionNumber, int selectedOption) {
+        void 유효하지않은질문번호나옵션으로예외가발생한다(int questionNumber, int selectedOption) {
             // when & then
             assertThatThrownBy(() -> OnboardingAnswer.findByQuestionAndOption(questionNumber, selectedOption))
                     .isInstanceOf(CustomException.class)
@@ -70,12 +65,10 @@ class OnboardingAnswerTest {
     }
 
     @Nested
-    @DisplayName("가중치 적용 점수 계산")
-    class WeightedScoreTest {
+    class 가중치적용점수계산 {
 
         @Test
-        @DisplayName("Q1(메뉴) 답변은 1.2배 가중치가 적용된다")
-        void shouldApplyWeightForQ1MenuAnswers() {
+        void Q1메뉴답변은1점2배가중치가적용된다() {
             // given
             OnboardingAnswer convenientFood = OnboardingAnswer.Q1_CONVENIENT_FOOD; // score: 1, weight: 1.2
             OnboardingAnswer sharingFood = OnboardingAnswer.Q1_SHARING_FOOD;       // score: 4, weight: 1.2
@@ -86,8 +79,7 @@ class OnboardingAnswerTest {
         }
 
         @Test
-        @DisplayName("Q2(좌석) 답변은 1.2배 가중치가 적용된다")
-        void shouldApplyWeightForQ2SeatAnswers() {
+        void Q2좌석답변은1점2배가중치가적용된다() {
             // given
             OnboardingAnswer barSeatOnly = OnboardingAnswer.Q2_BAR_SEAT_ONLY;         // score: 1, weight: 1.2
             OnboardingAnswer anyComfortable = OnboardingAnswer.Q2_ANY_SEAT_COMFORTABLE; // score: 4, weight: 1.2
@@ -98,8 +90,7 @@ class OnboardingAnswerTest {
         }
 
         @Test
-        @DisplayName("Q3(시선) 답변은 1.0배 가중치가 적용된다")
-        void shouldApplyNoWeightForQ3EyeAnswers() {
+        void Q3시선답변은1점0배가중치가적용된다() {
             // given
             OnboardingAnswer veryUncomfortable = OnboardingAnswer.Q3_VERY_UNCOMFORTABLE; // score: 1, weight: 1.0
             OnboardingAnswer notConcerned = OnboardingAnswer.Q3_NOT_CONCERNED_AT_ALL;   // score: 4, weight: 1.0
@@ -110,8 +101,7 @@ class OnboardingAnswerTest {
         }
 
         @Test
-        @DisplayName("Q4(2인분 도전) 답변은 1.3배 가중치가 적용된다")
-        void shouldApplyHighestWeightForQ4TwoPersonAnswers() {
+        void Q4이인분도전답변은1점3배가중치가적용된다() {
             // given  
             OnboardingAnswer cannotAtAll = OnboardingAnswer.Q4_CANNOT_AT_ALL;     // score: 1, weight: 1.3
             OnboardingAnswer noProblem = OnboardingAnswer.Q4_NO_PROBLEM_AT_ALL;   // score: 4, weight: 1.3
@@ -122,8 +112,7 @@ class OnboardingAnswerTest {
         }
 
         @Test
-        @DisplayName("Q5(중요도) 답변은 1.0배 가중치가 적용된다")
-        void shouldApplyNoWeightForQ5ImportanceAnswers() {
+        void Q5중요도답변은1점0배가중치가적용된다() {
             // given
             OnboardingAnswer quickSimple = OnboardingAnswer.Q5_QUICK_AND_SIMPLE;      // score: 1, weight: 1.0
             OnboardingAnswer noConditions = OnboardingAnswer.Q5_NO_CONDITIONS_MATTER; // score: 4, weight: 1.0
@@ -135,8 +124,7 @@ class OnboardingAnswerTest {
     }
 
     @Nested
-    @DisplayName("레벨 계산")
-    class CalculateLevelTest {
+    class 레벨계산 {
 
         @ParameterizedTest
         @CsvSource({
@@ -153,8 +141,7 @@ class OnboardingAnswerTest {
                 "23.0, LEVEL_4",  // 고수 중간값
                 "26.0, LEVEL_4"   // 고수 최대값
         })
-        @DisplayName("점수 구간에 따라 올바른 레벨을 반환한다")
-        void shouldReturnCorrectLevelForScoreRange(double totalScore, Level expectedLevel) {
+        void 점수구간에따라올바른레벨을반환한다(double totalScore, Level expectedLevel) {
             // when
             Level result = OnboardingAnswer.calculateLevel(totalScore);
 
@@ -163,8 +150,7 @@ class OnboardingAnswerTest {
         }
 
         @Test
-        @DisplayName("점수가 5 미만이면 LEVEL_1을 반환한다")
-        void shouldReturnLevel1ForScoreBelowMinimum() {
+        void 점수가5미만이면LEVEL_1을반환한다() {
             // when
             Level result = OnboardingAnswer.calculateLevel(4.0);
 
@@ -173,8 +159,7 @@ class OnboardingAnswerTest {
         }
 
         @Test
-        @DisplayName("점수가 26 초과이면 LEVEL_4를 반환한다")
-        void shouldReturnLevel4ForScoreAboveMaximum() {
+        void 점수가26초과이면LEVEL_4를반환한다() {
             // when
             Level result = OnboardingAnswer.calculateLevel(30.0);
 
@@ -183,8 +168,7 @@ class OnboardingAnswerTest {
         }
 
         @Test
-        @DisplayName("점수 반올림이 올바르게 작동한다")
-        void shouldHandleRoundingCorrectly() {
+        void 점수반올림이올바르게작동한다() {
             // when & then
             assertThat(OnboardingAnswer.calculateLevel(9.4)).isEqualTo(Level.LEVEL_1);  // 반올림하면 9
             assertThat(OnboardingAnswer.calculateLevel(9.5)).isEqualTo(Level.LEVEL_2);  // 반올림하면 10
