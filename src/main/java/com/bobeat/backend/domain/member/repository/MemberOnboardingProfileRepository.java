@@ -1,4 +1,4 @@
-package com.bobeat.backend.domain.onboarding.repository;
+package com.bobeat.backend.domain.member.repository;
 
 import com.bobeat.backend.domain.member.entity.MemberOnboardingProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
