@@ -11,14 +11,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "store")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class Store extends BaseTimeEntity {
 
     @Id
@@ -39,7 +39,7 @@ public class Store extends BaseTimeEntity {
 
     private String mainImageUrl;
 
-    private HONBOB_LEVEL honbobLevel;
+    private Integer honbobLevel;
 
     private int turnoverMinute;
 

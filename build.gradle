@@ -35,8 +35,30 @@ dependencies {
 
     //swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+
+    //querydsl
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 }
 
+
+
+// Querydsl 설정 시작
+def generated = 'src/main/generated'
+
+tasks.withType(JavaCompile).configureEach {
+    options.generatedSourceOutputDirectory = file(generated)
+}
+
+sourceSets {
+    main.java.srcDirs += "$projectDir/$generated"
+}
+
+clean {
+    delete file('src/main/generated')
+}
 tasks.named('test') {
     useJUnitPlatform()
 }
