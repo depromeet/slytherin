@@ -5,6 +5,8 @@ import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.store.entity.Store;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -46,6 +48,7 @@ public class Review extends BaseTimeEntity {
 
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "text[]")
+    @Enumerated(EnumType.STRING)
     @Builder.Default
     private List<ReviewKeyword> keywords = new ArrayList<>();
     

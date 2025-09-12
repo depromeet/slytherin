@@ -44,8 +44,7 @@ public class CursorPageResponse<T> {
         long nextCursor = -1L;
 
         if (hasNext) {
-            T lastReponse = data.get(pageSize - 1);
-            nextCursor = idExtractor.applyAsLong(lastReponse);
+            nextCursor = idExtractor.applyAsLong(data.getLast());
 
             data = data.subList(0, pageSize);
         }

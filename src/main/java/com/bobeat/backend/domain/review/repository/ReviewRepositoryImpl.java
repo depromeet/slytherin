@@ -23,7 +23,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
 
         if (request.lastKnown() != null) {
             Long cursor = Long.parseLong(request.lastKnown());
-            builder.and(review.id.loe(cursor));
+            builder.and(review.id.lt(cursor));
         }
 
         return queryFactory
@@ -42,7 +42,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
 
         if (request.lastKnown() != null) {
             Long cursor = Long.parseLong(request.lastKnown());
-            builder.and(review.id.loe(cursor));
+            builder.and(review.id.lt(cursor));
         }
 
         return queryFactory
