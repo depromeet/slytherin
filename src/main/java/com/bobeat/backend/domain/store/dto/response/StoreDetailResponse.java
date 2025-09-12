@@ -52,6 +52,8 @@ public record StoreDetailResponse(
                 .restaurantId(store.getId())
                 .thumbnailUrls(thumbnailUrls)
                 .level(store.getHonbobLevel())
+                .name(store.getName())
+                .address(store.getAddress().getAddress())
                 .menus(menuDtos)
                 .seatInfo(seatInfoDto)
                 .seatImages(seatDtos)
