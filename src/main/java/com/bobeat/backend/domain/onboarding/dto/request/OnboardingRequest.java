@@ -1,4 +1,4 @@
-package com.bobeat.backend.domain.member.dto.request;
+package com.bobeat.backend.domain.onboarding.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
