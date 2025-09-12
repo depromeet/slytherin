@@ -11,8 +11,6 @@ public record MemberProfileResponse(
         @Schema(description = "프로필 이미지 URL")
         String profileImageUrl,
         @Schema(description = "혼밥 레벨")
-        int level,
-        @Schema(description = "저장한 가게 수")
-        int scrapCount
+        int level
 ) {
 }
