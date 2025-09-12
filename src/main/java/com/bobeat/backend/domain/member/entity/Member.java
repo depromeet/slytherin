@@ -37,4 +37,8 @@ public class Member extends BaseTimeEntity {
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
+    
+    public boolean isOwner(Long memberId) {
+        return this.id.equals(memberId);
+    }
 }

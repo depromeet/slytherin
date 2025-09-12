@@ -17,7 +17,15 @@ public enum ErrorCode {
     // 회원
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "회원을 찾을 수 없습니다."),
     INVALID_LEVEL_VALUE(HttpStatus.BAD_REQUEST, "M002", "유효하지 않은 레벨 값입니다."),
-    INVALID_ONBOARDING_QUESTION(HttpStatus.BAD_REQUEST, "M003", "유효하지 않은 온보딩 질문 또는 옵션입니다.");
+    INVALID_ONBOARDING_QUESTION(HttpStatus.BAD_REQUEST, "M003", "유효하지 않은 온보딩 질문 또는 옵션입니다."),
+    
+    // 가게
+    STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "가게를 찾을 수 없습니다."),
+    
+    // 리뷰
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리뷰를 찾을 수 없습니다."),
+    REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "R002", "이미 해당 가게에 리뷰를 작성했습니다."),
+    REVIEW_ACCESS_DENIED(HttpStatus.FORBIDDEN, "R003", "리뷰에 대한 접근 권한이 없습니다.");
 
     private final HttpStatus httpStatus;
 

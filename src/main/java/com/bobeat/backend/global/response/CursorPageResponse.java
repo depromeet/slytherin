@@ -19,6 +19,7 @@ public class CursorPageResponse<T> {
     private final List<T> data;
     private final Long nextCursor;
     private final Boolean hasNext;
+    private final Object metadata;
 
     /**
      * Repository에서 pageSize + 1만큼 조회한 데이터 리스트를 받아
@@ -31,6 +32,14 @@ public class CursorPageResponse<T> {
      * @return 계산된 페이지네이션 정보가 포함된 응답 객체
      */
     public static <T> CursorPageResponse<T> of(List<T> data, int pageSize, ToLongFunction<T> idExtractor) {
+        return of(data, pageSize, idExtractor, null);
+    }
+
+    /**
+     * +)
+     * @param metadata    추가 메타데이터 객체
+     */
+    public static <T> CursorPageResponse<T> of(List<T> data, int pageSize, ToLongFunction<T> idExtractor, Object metadata) {
         boolean hasNext = data.size() > pageSize;
         long nextCursor = -1L;
 
@@ -41,10 +50,10 @@ public class CursorPageResponse<T> {
             data = data.subList(0, pageSize);
         }
 
-        return new CursorPageResponse<>(data, nextCursor, hasNext);
+        return new CursorPageResponse<>(data, nextCursor, hasNext, metadata);
     }
 
     public static <T> CursorPageResponse<T> empty() {
-        return new CursorPageResponse<>(Collections.emptyList(), -1L, false);
+        return new CursorPageResponse<>(Collections.emptyList(), -1L, false, null);
     }
 }

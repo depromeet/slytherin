@@ -28,7 +28,8 @@ public class StoreService {
         return new CursorPageResponse<>(
                 storeSearchResponses,
                 storeCursorPageResponse.getNextCursor(),
-                storeCursorPageResponse.getHasNext()
+                storeCursorPageResponse.getHasNext(),
+                storeCursorPageResponse.getMetadata()
         );
     }
 
