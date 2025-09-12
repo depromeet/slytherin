@@ -37,7 +37,7 @@ public class StoreController {
     @Operation(summary = "식당 상세 정보 조회", description = "특정 식당의 상세 정보를 조회합니다.")
     @GetMapping("/{restaurantId}")
     public ApiResponse<StoreDetailResponse> getRestaurantDetails(
-            @Parameter(description = "식당 ID") @PathVariable Long restaurantId
+            @Parameter(description = "식당 ID") @PathVariable("restaurantId") Long restaurantId
     ) {
         StoreDetailResponse response = storeService.findById(restaurantId);
         return ApiResponse.success(response);
