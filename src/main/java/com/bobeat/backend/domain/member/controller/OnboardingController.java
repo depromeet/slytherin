@@ -1,8 +1,8 @@
-package com.bobeat.backend.domain.onboarding.controller;
+package com.bobeat.backend.domain.member.controller;
 
-import com.bobeat.backend.domain.onboarding.dto.response.OnBoardingResult;
-import com.bobeat.backend.domain.onboarding.dto.request.OnboardingRequest;
-import com.bobeat.backend.domain.onboarding.service.OnboardingService;
+import com.bobeat.backend.domain.member.dto.response.OnBoardingResult;
+import com.bobeat.backend.domain.member.dto.request.OnboardingRequest;
+import com.bobeat.backend.domain.member.service.OnboardingService;
 import com.bobeat.backend.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

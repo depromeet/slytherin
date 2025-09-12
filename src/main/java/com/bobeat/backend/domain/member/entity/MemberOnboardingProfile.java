@@ -1,16 +1,13 @@
 package com.bobeat.backend.domain.member.entity;
 
 import com.bobeat.backend.domain.common.BaseTimeEntity;
-import com.bobeat.backend.domain.onboarding.dto.request.OnboardingRequest;
+import com.bobeat.backend.domain.member.dto.request.OnboardingRequest;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Entity
 @Table(name = "member_onboarding_profile")
