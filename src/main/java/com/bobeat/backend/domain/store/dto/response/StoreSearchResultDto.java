@@ -20,11 +20,17 @@ public record StoreSearchResultDto(
         @Schema(description = "현재 위치로부터 거리(m)")
         int distance,
 
+        @Schema(description = "도보 소요 시간")
+        int walkingMinutes,
+
         @Schema(description = "좌석 형태")
         List<String> seats,
 
-        @Schema(description = "메뉴 카테고리")
-        List<String> categories,
+        @Schema(description = "태그")
+        List<String> tags,
+
+        @Schema(description = "혼밥레벨")
+        int honbobLevel,
 
         @Schema(description = "사용자가 저장한 가게 여부")
         boolean saved
