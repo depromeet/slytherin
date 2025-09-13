@@ -12,7 +12,7 @@ import lombok.Builder;
 @Builder
 public record StoreDetailResponse(
         @Schema(description = "가게 ID")
-        Long restaurantId,
+        Long storeId,
         @Schema(description = "가게 대표 이미지 URL 목록")
         List<String> thumbnailUrls,
         @Schema(description = "혼밥 레벨")
@@ -48,7 +48,7 @@ public record StoreDetailResponse(
                 .toList();
 
         return StoreDetailResponse.builder()
-                .restaurantId(store.getId())
+                .storeId(store.getId())
                 .thumbnailUrls(thumbnailUrls)
                 .level(store.getHonbobLevel())
                 .name(store.getName())

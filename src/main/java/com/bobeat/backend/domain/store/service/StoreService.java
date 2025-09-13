@@ -1,6 +1,6 @@
 package com.bobeat.backend.domain.store.service;
 
-import static com.bobeat.backend.global.exception.ErrorCode.NOT_FOUND_RESTAURANT;
+import static com.bobeat.backend.global.exception.ErrorCode.NOT_FOUND_STORE;
 
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
@@ -32,7 +32,7 @@ public class StoreService {
     @Transactional(readOnly = true)
     public CursorPageResponse<StoreSearchResultDto> search(StoreFilteringRequest request) {
         int pageSize = request.paging() != null ? request.paging().limit() : 20;
-        
+
         List<StoreSearchResultDto> dataPlusOne = storeRepository.search(request);
 
         return CursorPageResponse.of(
@@ -42,9 +42,9 @@ public class StoreService {
         );
     }
 
-    public StoreDetailResponse findById(Long restaurantId) {
-        Store store = storeRepository.findById(restaurantId)
-                .orElseThrow(() -> new CustomException(NOT_FOUND_RESTAURANT));
+    public StoreDetailResponse findById(Long storeId) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new CustomException(NOT_FOUND_STORE));
         List<StoreImage> storeImages = storeImageRepository.findByStore(store);
         List<Menu> menus = menuRepository.findByStore(store);
         List<SeatOption> seatOptions = seatOptionRepository.findByStore(store);

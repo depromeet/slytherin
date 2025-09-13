@@ -28,7 +28,7 @@ public class StoreController {
 
     @Operation(summary = "위치 기반 식당 검색", description = "현재 위치를 기반으로 식당을 검색하고 필터링합니다.")
     @PostMapping
-    public ApiResponse<CursorPageResponse<StoreSearchResultDto>> searchRestaurants(
+    public ApiResponse<CursorPageResponse<StoreSearchResultDto>> searchStores(
             @RequestBody @Valid StoreFilteringRequest request) {
         CursorPageResponse<StoreSearchResultDto> response = storeService.search(request);
         return ApiResponse.success(response);
@@ -36,10 +36,10 @@ public class StoreController {
 
     @Operation(summary = "식당 상세 정보 조회", description = "특정 식당의 상세 정보를 조회합니다.")
     @GetMapping("/{storeId}")
-    public ApiResponse<StoreDetailResponse> getRestaurantDetails(
-            @Parameter(description = "식당 ID") @PathVariable("restaurantId") Long restaurantId
+    public ApiResponse<StoreDetailResponse> getStoreDetails(
+            @Parameter(description = "식당 ID") @PathVariable("storeId") Long storeId
     ) {
-        StoreDetailResponse response = storeService.findById(restaurantId);
+        StoreDetailResponse response = storeService.findById(storeId);
         return ApiResponse.success(response);
     }
 
