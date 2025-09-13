@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Store", description = "가게(식당) 관련 API")
 @RestController
-@RequestMapping("/api/v1/store")
+@RequestMapping("/api/v1/stores")
 @RequiredArgsConstructor
 public class StoreController {
     private final StoreService storeService;
