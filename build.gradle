@@ -46,6 +46,11 @@ dependencies {
     testRuntimeOnly 'com.h2database:h2'
     testImplementation 'org.testcontainers:postgresql:1.19.0'
     testImplementation 'org.testcontainers:junit-jupiter:1.19.0'
+
+    // postGIS
+    implementation "org.hibernate.orm:hibernate-spatial"
+    implementation "org.locationtech.jts:jts-core:1.19.0"
+
 }
 
 
