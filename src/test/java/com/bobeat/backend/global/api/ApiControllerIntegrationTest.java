@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.bobeat.backend.global.db.PostgreSQLTestContainer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -12,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@PostgreSQLTestContainer
 class ApiControllerIntegrationTest {
 
     @Autowired
@@ -20,9 +22,9 @@ class ApiControllerIntegrationTest {
     @Test
     void 전역_응답_값을_사용한다() throws Exception {
         mockMvc.perform(get("/test/success"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.response.message").value("응답 값"))
-            .andExpect(jsonPath("$.error").doesNotExist());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response.message").value("응답 값"))
+                .andExpect(jsonPath("$.error").doesNotExist());
     }
 
     @Test
@@ -36,9 +38,9 @@ class ApiControllerIntegrationTest {
     @Test
     void 전역_예외만_생성_할_수_있다() throws Exception {
         mockMvc.perform(get("/test/success-only"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data").doesNotExist())
-            .andExpect(jsonPath("$.error").doesNotExist());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.error").doesNotExist());
     }
 
     @Test

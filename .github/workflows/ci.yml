@@ -20,21 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       write-all
-
-    services:
-      postgres:
-        image: postgres
-        ports:
-          - 5433:5432  # 외부포트:내부포트 (원하는 포트에 맞게 조정)
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: bobeat
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
       - name: JDK 21 를 준비한다.
@@ -50,10 +35,6 @@ jobs:
         uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
 
       - name: 빌드한다.
-        env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://127.0.0.1:5433/bobeat
-          SPRING_DATASOURCE_USERNAME: postgres
-          SPRING_DATASOURCE_PASSWORD: postgres
         run: ./gradlew build --stacktrace
 
       # Test 후 Report 생성
