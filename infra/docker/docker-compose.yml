@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  bobeat-server:
+    container_name: bobeat
+    image: ji0513ji/bobeat
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
