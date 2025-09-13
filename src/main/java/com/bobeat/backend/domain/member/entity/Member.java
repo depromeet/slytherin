@@ -38,10 +38,16 @@ public class Member extends BaseTimeEntity {
     @OneToOne(mappedBy = "member", fetch = FetchType.LAZY)
     private MemberOnboardingProfile onboardingProfile;
 
+    private MemberRole role;
+
+    private String providerId;
+
+    private String email;
+
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
-    
+
     public boolean isOwner(Long memberId) {
         return this.id.equals(memberId);
     }

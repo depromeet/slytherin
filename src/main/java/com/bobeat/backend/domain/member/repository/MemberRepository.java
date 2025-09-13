@@ -25,4 +25,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
         return findByIdWithOnboardingProfile(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
     }
+
+    Optional<Member> findByProviderId(String providerId);
 }
