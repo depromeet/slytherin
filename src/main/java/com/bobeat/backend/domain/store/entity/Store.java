@@ -41,8 +41,6 @@ public class Store extends BaseTimeEntity {
 
     private Integer honbobLevel;
 
-    private int turnoverMinute;
-
     @Embedded
     private Categories categories;
 }
