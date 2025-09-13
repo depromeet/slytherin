@@ -6,7 +6,6 @@ import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.entity.StoreImage;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Builder;
 
 @Schema(description = "가게 상세 정보 조회 응답 DTO")
@@ -36,7 +35,7 @@ public record StoreDetailResponse(
         List<String> thumbnailUrls = storeImages.stream()
                 .sorted((a, b) -> Boolean.compare(b.isMain(), a.isMain())) // true 먼저
                 .map(StoreImage::getImageUrl) // String 리스트로 변환
-                .collect(Collectors.toList());
+                .toList();
 
         List<MenuDto> menuDtos = menus.stream()
                 .map(MenuDto::from)
