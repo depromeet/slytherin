@@ -29,8 +29,8 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 .leftJoin(store.categories.primaryCategory).fetchJoin()
                 .leftJoin(store.categories.secondaryCategory).fetchJoin()
                 .where(
-                        // Bounding Box 조건
-                        bboxWithin(request),
+                        // 위치기반 필터 조건
+                        locationCondition(request),
                         // 혼밥 레벨 조건
                         levelLoe(request),
                         // 메뉴 카테고리 조건
@@ -44,6 +44,38 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 .limit(pageSize + 1)
                 .fetch();
         return CursorPageResponse.of(results, pageSize, Store::getId);
+    }
+
+    private BooleanExpression locationCondition(StoreFilteringRequest request) {
+        if (request.bbox() != null) {
+            return bboxWithin(request);
+        } else if (request.center() != null) {
+            return circleWithin(request);
+        }
+        return null;
+    }
+
+    private BooleanExpression circleWithin(StoreFilteringRequest request) {
+        if (request.center() == null) {
+            return null;
+        }
+
+        // 위도, 경도, 반경(미터)을 이용한 원형 영역 계산
+        Double centerLat = request.center().lat();
+        Double centerLon = request.center().lon();
+        Double radiusInMeters = 700.0;
+
+        // Haversine 공식을 사용한 거리 계산
+        return store.address.latitude
+                .subtract(centerLat)
+                .multiply(store.address.latitude.subtract(centerLat))
+                .add(
+                        store.address.longitude
+                                .subtract(centerLon)
+                                .multiply(store.address.longitude.subtract(centerLon))
+                )
+                .multiply(111.2 * 111.2 * 1000 * 1000) // 위도/경도를 미터 단위로 변환 (근사값)
+                .loe(radiusInMeters * radiusInMeters);
     }
 
     private BooleanExpression bboxWithin(StoreFilteringRequest request) {

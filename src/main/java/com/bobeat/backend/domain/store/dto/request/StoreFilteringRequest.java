@@ -10,7 +10,7 @@ import java.util.List;
 
 public record StoreFilteringRequest(
         @Schema(description = "위치기반 검색 bounding box")
-        @Valid @NotNull
+        @Valid
         BoundingBox bbox,
 
         @Schema(description = "박스 중심점 위경도")
