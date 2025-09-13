@@ -35,6 +35,5 @@ public class PostgreSQLContainerExtension implements BeforeAllCallback {
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        // 아무 것도 안 해도 됨 - 컨테이너는 static 블럭에서 이미 시작됨
     }
 }
