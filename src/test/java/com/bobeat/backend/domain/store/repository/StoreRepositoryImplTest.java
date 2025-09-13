@@ -1,24 +1,25 @@
 package com.bobeat.backend.domain.store.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.SeatType;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.vo.Address;
+import com.bobeat.backend.global.db.PostgreSQLTestContainer;
 import com.bobeat.backend.global.response.CursorPageResponse;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 @SpringBootTest
 @Transactional
+@PostgreSQLTestContainer
 public class StoreRepositoryImplTest {
     @Autowired
     private StoreRepository storeRepository;

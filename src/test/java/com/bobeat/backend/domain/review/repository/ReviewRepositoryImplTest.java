@@ -1,45 +1,24 @@
 package com.bobeat.backend.domain.review.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.review.entity.Review;
 import com.bobeat.backend.domain.review.entity.ReviewKeyword;
 import com.bobeat.backend.domain.store.entity.Store;
+import com.bobeat.backend.global.db.PostgreSQLTestContainer;
 import com.bobeat.backend.global.request.CursorPaginationRequest;
 import jakarta.persistence.EntityManager;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
-@Testcontainers
+@PostgreSQLTestContainer
 class ReviewRepositoryImplTest {
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test");
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-        registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.PostgreSQLDialect");
-    }
 
     @Autowired
     private EntityManager entityManager;
@@ -119,7 +98,7 @@ class ReviewRepositoryImplTest {
                 .containsExactly(member1Review2.getId(), member1Review1.getId());
     }
 
-   private Member createAndSaveMember(String nickname) {
+    private Member createAndSaveMember(String nickname) {
         Member member = Member.builder()
                 .nickname(nickname)
                 .build();
