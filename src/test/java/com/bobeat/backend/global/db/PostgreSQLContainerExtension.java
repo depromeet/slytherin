@@ -13,7 +13,7 @@ public class PostgreSQLContainerExtension implements BeforeAllCallback {
 
     static {
         POSTGRES_CONTAINER = new PostgreSQLContainer<>("postgres:15")
-                .withDatabaseName("testdb")
+                .withDatabaseName("bobeat")
                 .withUsername("test")
                 .withPassword("test");
         POSTGRES_CONTAINER.start();
