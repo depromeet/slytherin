@@ -27,10 +27,6 @@ public class SeatOption extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     private SeatType seatType;
-    
-    private Integer maxCapacity;
-
-    private String description;
 
     private String imageUrl;
 
