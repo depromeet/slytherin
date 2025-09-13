@@ -18,7 +18,7 @@ public class StoreService {
     private final StoreRepository storeRepository;
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<StoreSearchResponse> searchRestaurants(StoreFilteringRequest request) {
+    public CursorPageResponse<StoreSearchResponse> search(StoreFilteringRequest request) {
         CursorPageResponse<Store> storeCursorPageResponse = storeRepository.search(request);
 
         List<StoreSearchResponse> storeSearchResponses = storeCursorPageResponse.getData().stream()

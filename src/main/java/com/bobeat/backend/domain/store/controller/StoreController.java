@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Store", description = "가게(식당) 관련 API")
 @RestController
-@RequestMapping("/api/v1/restaurants")
+@RequestMapping("/api/v1/store")
 @RequiredArgsConstructor
 public class StoreController {
     private final StoreService storeService;
@@ -25,22 +25,22 @@ public class StoreController {
     @PostMapping
     public ApiResponse<CursorPageResponse<StoreSearchResponse>> searchRestaurants(
             @RequestBody @Valid StoreFilteringRequest request) {
-        CursorPageResponse<StoreSearchResponse> response = storeService.searchRestaurants(request);
+        CursorPageResponse<StoreSearchResponse> response = storeService.search(request);
         return ApiResponse.success(response);
     }
 
     @Operation(summary = "식당 상세 정보 조회", description = "특정 식당의 상세 정보를 조회합니다.")
-    @GetMapping("/{restaurantId}")
+    @GetMapping("/{storeId}")
     public ApiResponse<StoreDetailResponse> getRestaurantDetails(
-            @Parameter(description = "식당 ID") @PathVariable Long restaurantId
+            @Parameter(description = "식당 ID") @PathVariable Long storeId
     ) {
         return ApiResponse.success(null);
     }
 
     @Operation(summary = "정보 수정 제안", description = "식당 정보 수정을 제안합니다.")
-    @PostMapping("/{restaurantId}/proposals")
+    @PostMapping("/{storeId}/proposals")
     public ApiResponse<Void> proposeEdit(
-            @Parameter(description = "식당 ID") @PathVariable Long restaurantId,
+            @Parameter(description = "식당 ID") @PathVariable Long storeId,
             @RequestBody EditProposalRequest request
     ) {
         return ApiResponse.successOnly();
