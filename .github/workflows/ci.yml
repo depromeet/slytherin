@@ -35,10 +35,6 @@ jobs:
         uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
 
       - name: 빌드한다.
-        env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://127.0.0.1:5432/bobeat
-          SPRING_DATASOURCE_USERNAME: test
-          SPRING_DATASOURCE_PASSWORD: test
         run: ./gradlew build --stacktrace
 
       # Test 후 Report 생성
