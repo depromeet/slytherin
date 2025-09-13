@@ -11,7 +11,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "store")
@@ -40,8 +44,6 @@ public class Store extends BaseTimeEntity {
     private String mainImageUrl;
 
     private Integer honbobLevel;
-
-    private int turnoverMinute;
 
     @Embedded
     private Categories categories;

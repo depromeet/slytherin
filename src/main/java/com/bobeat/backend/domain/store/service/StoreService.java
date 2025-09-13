@@ -5,6 +5,7 @@ import static com.bobeat.backend.global.exception.ErrorCode.NOT_FOUND_RESTAURANT
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResponse;
+import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.Store;
@@ -29,17 +30,15 @@ public class StoreService {
     private final SeatOptionRepository seatOptionRepository;
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<StoreSearchResponse> searchRestaurants(StoreFilteringRequest request) {
-        CursorPageResponse<Store> storeCursorPageResponse = storeRepository.search(request);
+    public CursorPageResponse<StoreSearchResultDto> search(StoreFilteringRequest request) {
+        int pageSize = request.paging() != null ? request.paging().limit() : 20;
+        
+        List<StoreSearchResultDto> dataPlusOne = storeRepository.search(request);
 
-        List<StoreSearchResponse> storeSearchResponses = storeCursorPageResponse.getData().stream()
-                .map(this::convertToDto)
-                .toList();
-
-        return new CursorPageResponse<>(
-                storeSearchResponses,
-                storeCursorPageResponse.getNextCursor(),
-                storeCursorPageResponse.getHasNext()
+        return CursorPageResponse.of(
+                dataPlusOne,
+                pageSize,
+                StoreSearchResultDto::id
         );
     }
 

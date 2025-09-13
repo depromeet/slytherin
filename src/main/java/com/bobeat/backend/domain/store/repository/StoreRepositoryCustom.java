@@ -1,9 +1,10 @@
 package com.bobeat.backend.domain.store.repository;
 
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
-import com.bobeat.backend.domain.store.entity.Store;
-import com.bobeat.backend.global.response.CursorPageResponse;
+import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
+
+import java.util.List;
 
 public interface StoreRepositoryCustom {
-    CursorPageResponse<Store> search(StoreFilteringRequest request);
+    List<StoreSearchResultDto> search(StoreFilteringRequest request);
 }
