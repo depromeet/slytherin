@@ -1,6 +1,7 @@
 package com.bobeat.backend.domain.store.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
 @Schema(description = "위치 기반 가게 검색 response")
@@ -30,10 +31,7 @@ public record StoreSearchResultDto(
         List<String> tags,
 
         @Schema(description = "혼밥레벨")
-        int honbobLevel,
-
-        @Schema(description = "사용자가 저장한 가게 여부")
-        boolean saved
+        int honbobLevel
 ) {
         @Schema(description = "대표 메뉴정보")
         public record SignatureMenu(
