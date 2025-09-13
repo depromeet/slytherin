@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Review", description = "리뷰 관련 API")
@@ -23,9 +25,10 @@ public class ReviewController {
     private final ReviewService reviewService;
     
     @Operation(summary = "리뷰 작성", description = "특정 가게에 리뷰를 작성합니다.")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ApiResponse<ReviewResponse> createReview(
-            @Parameter(description = "회원 ID", example = "1") @RequestHeader("Member-Id") Long memberId,
+            @AuthenticationPrincipal Long memberId,
             @RequestBody @Valid CreateReviewRequest request
     ) {
         ReviewResponse response = reviewService.createReview(memberId, request);
@@ -43,9 +46,10 @@ public class ReviewController {
     }
     
     @Operation(summary = "내 리뷰 목록 조회", description = "로그인한 사용자의 리뷰 목록을 커서 기반으로 조회합니다.")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/my")
     public ApiResponse<CursorPageResponse<ReviewResponse>> getMyReviews(
-            @Parameter(description = "회원 ID", example = "1") @RequestHeader("Member-Id") Long memberId,
+            @AuthenticationPrincipal Long memberId,
             @ModelAttribute @Valid CursorPaginationRequest request
     ) {
         CursorPageResponse<ReviewResponse> response = reviewService.getMyReviews(memberId, request);
@@ -62,9 +66,10 @@ public class ReviewController {
     }
     
     @Operation(summary = "리뷰 수정", description = "작성한 리뷰를 수정합니다.")
+    @PreAuthorize("isAuthenticated()")
     @PutMapping("/{reviewId}")
     public ApiResponse<ReviewResponse> updateReview(
-            @Parameter(description = "회원 ID", example = "1") @RequestHeader("Member-Id") Long memberId,
+            @AuthenticationPrincipal Long memberId,
             @Parameter(description = "리뷰 ID", example = "1") @PathVariable Long reviewId,
             @RequestBody @Valid UpdateReviewRequest request
     ) {
@@ -73,9 +78,10 @@ public class ReviewController {
     }
     
     @Operation(summary = "리뷰 삭제", description = "작성한 리뷰를 삭제합니다.")
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{reviewId}")
     public ApiResponse<Void> deleteReview(
-            @Parameter(description = "회원 ID", example = "1") @RequestHeader("Member-Id") Long memberId,
+            @AuthenticationPrincipal Long memberId,
             @Parameter(description = "리뷰 ID", example = "1") @PathVariable Long reviewId
     ) {
         reviewService.deleteReview(memberId, reviewId);
