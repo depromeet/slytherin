@@ -1,39 +1,19 @@
 package com.bobeat.backend.global.db;
 
-import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.springframework.boot.test.util.TestPropertyValues;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Bean;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
-public class PostgreSQLContainerExtension implements BeforeAllCallback {
+@TestConfiguration(proxyBeanMethods = false)
+public class PostgreSQLContainerExtension {
 
-    private static final PostgreSQLContainer<?> POSTGRES_CONTAINER;
-
-    static {
-        POSTGRES_CONTAINER = new PostgreSQLContainer<>("postgres:15")
-                .withDatabaseName("bobeat")
-                .withUsername("test")
-                .withPassword("test");
-        POSTGRES_CONTAINER.start();
-    }
-
-    public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-        @Override
-        public void initialize(ConfigurableApplicationContext context) {
-            TestPropertyValues.of(
-                    "spring.datasource.url=" + POSTGRES_CONTAINER.getJdbcUrl(),
-                    "spring.datasource.username=" + POSTGRES_CONTAINER.getUsername(),
-                    "spring.datasource.password=" + POSTGRES_CONTAINER.getPassword(),
-                    "spring.datasource.driver-class-name=org.postgresql.Driver",
-                    "spring.jpa.hibernate.ddl-auto=create-drop",
-                    "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect"
-            ).applyTo(context.getEnvironment());
-        }
-    }
-
-    @Override
-    public void beforeAll(ExtensionContext context) {
+    @Bean
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgreSQLContainer() {
+        DockerImageName postgisImage = DockerImageName.parse("postgis/postgis:15-3.3")
+                .asCompatibleSubstituteFor("postgres");
+        return new PostgreSQLContainer<>(postgisImage);
     }
 }
