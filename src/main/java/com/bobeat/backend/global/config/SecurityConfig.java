@@ -2,7 +2,9 @@ package com.bobeat.backend.global.config;
 
 import com.bobeat.backend.domain.security.auth.jwt.JwtAuthenticationFilter;
 import com.bobeat.backend.domain.security.auth.service.JwtService;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -15,9 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
-import java.util.List;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Configuration
 @EnableWebSecurity
@@ -26,6 +26,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtService jwtService;
+
+    @Qualifier("handlerExceptionResolver")
+    private final HandlerExceptionResolver handlerExceptionResolver;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -37,7 +40,7 @@ public class SecurityConfig {
                         .anyRequest().permitAll()  // 기본적으로 모든 요청 허용 (메소드 레벨에서 보안 관리)
                 )
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtService),
+                        new JwtAuthenticationFilter(jwtService, handlerExceptionResolver),
                         UsernamePasswordAuthenticationFilter.class
                 );
 

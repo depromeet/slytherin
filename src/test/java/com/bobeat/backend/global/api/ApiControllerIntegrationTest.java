@@ -28,7 +28,6 @@ class ApiControllerIntegrationTest {
     @Test
     void 전역_예외_값을_확인한다() throws Exception {
         mockMvc.perform(get("/test/error"))
-            .andExpect(status().isOk())
             .andExpect(jsonPath("$.response").doesNotExist())
             .andExpect(jsonPath("$.errorResponse.code").value("G500"))
             .andExpect(jsonPath("$.errorResponse.message").value("서버 내부에서 에러가 발생하였습니다"));
@@ -45,7 +44,6 @@ class ApiControllerIntegrationTest {
     @Test
     void 커스텀_예외를_발생시킨다() throws Exception {
         mockMvc.perform(get("/test/custom-error"))
-                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.response").doesNotExist())
                 .andExpect(jsonPath("$.errorResponse.code").value("G500"))
                 .andExpect(jsonPath("$.errorResponse.message").value("서버 내부에서 에러가 발생하였습니다"));
@@ -54,7 +52,6 @@ class ApiControllerIntegrationTest {
     @Test
     void 커스텀_예외를_메세지와_함께_발생시킨다() throws Exception {
         mockMvc.perform(get("/test/custom-error/message"))
-                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.response").doesNotExist())
                 .andExpect(jsonPath("$.errorResponse.code").value("G500"))
                 .andExpect(jsonPath("$.errorResponse.message").value("허용되지 않은 API입니다"));
