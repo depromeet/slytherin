@@ -16,6 +16,9 @@ public enum ErrorCode {
     FORBIDDEN_RESOURCE(HttpStatus.FORBIDDEN, "G403", "접근할 수 없는 리소스입니다"),
     NOT_FOUND_RESOURCE(HttpStatus.NOT_FOUND, "G404", "찾을 수 없는 리소스입니다"),
 
+    //식당
+    NOT_FOUND_RESTAURANT(HttpStatus.NOT_FOUND, "R404", "찾을 수 없는 식당입니다"),
+
     // 회원
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "회원을 찾을 수 없습니다."),
     INVALID_LEVEL_VALUE(HttpStatus.BAD_REQUEST, "M002", "유효하지 않은 레벨 값입니다."),
@@ -41,6 +44,7 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "J006", "리프레시 토큰을 찾을 수 없습니다."),
     REFRESH_TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "J007", "리프레시 토큰이 일치하지 않습니다."),
     CONCURRENCY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G501", "동시성 처리 중 오류가 발생했습니다.");
+
 
     private final HttpStatus httpStatus;
 
