@@ -1,11 +1,30 @@
-version: '3'
-
 services:
+  postgresql:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: bobeat
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: q1w2e3r4@
+    ports:
+      - "5432:5432"
+    networks:
+      - bobeat-network
+    volumes:
+      - postgis-data:/var/lib/postgresql/data
   bobeat-server:
     container_name: bobeat
     image: ji0513ji/bobeat
     restart: on-failure
     ports:
       - "8080:8080"
+    networks:
+      - bobeat-network
     volumes:
       - /etc/localtime:/etc/localtime:ro
+networks:
+  bobeat-network:
+    driver: bridge
+
+volumes:
+  postgis-data:
+    driver: local

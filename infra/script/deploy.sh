@@ -3,9 +3,12 @@
 # 안전하게 스크립트 실행 중 에러 발생 시 종료
 set -e
 
+
 IMAGE_NAME="ji0513ji/bobeat:latest"
 CONTAINER_NAME="bobeat"
 DOCKERFILE_PATH="infra/docker/Dockerfile"
+
+docker pull $IMAGE_NAME
 
 echo "📦 Step 1: 기존 컨테이너 중지 및 삭제"
 
