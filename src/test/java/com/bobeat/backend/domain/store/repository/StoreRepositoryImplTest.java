@@ -14,13 +14,39 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
 @Transactional
 @PostgreSQLTestContainer
+@Testcontainers
 public class StoreRepositoryImplTest {
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
+            .withDatabaseName("testdb")
+            .withUsername("test")
+            .withPassword("test");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.PostgreSQLDialect");
+    }
+
     @Autowired
     private StoreRepository storeRepository;
 
@@ -36,25 +62,43 @@ public class StoreRepositoryImplTest {
     private Store storeA;
     private Store storeB;
 
+    private static final GeometryFactory GF = new GeometryFactory(new PrecisionModel(), 4326);
+
+    private static Point point(double lat, double lon) {
+        // JTS: x=lon, y=lat 주의!
+        Point p = GF.createPoint(new Coordinate(lon, lat));
+        p.setSRID(4326);
+        return p;
+    }
+
+    private static StoreFilteringRequest.Coordinate centerAt(double lat, double lon) {
+        // center는 항상 존재하도록
+        return new StoreFilteringRequest.Coordinate(lat, lon);
+    }
+
     @BeforeEach
     void setUp() {
+        // Store A: 서울
         storeA = storeRepository.save(Store.builder()
                 .name("Store A")
                 .address(Address.builder()
                         .address("Seoul, Teheran-ro 123")
                         .latitude(37.5013)
                         .longitude(127.0396)
+                        .location(point(37.5013, 127.0396))
                         .build())
                 .honbobLevel(3)
                 .description("테스트 스토어 A")
                 .build());
 
+        // Store B: 부산
         storeB = storeRepository.save(Store.builder()
                 .name("Store B")
                 .address(Address.builder()
                         .address("Busan, Haeundae")
                         .latitude(35.1587)
                         .longitude(129.1604)
+                        .location(point(35.1587, 129.1604))
                         .build())
                 .honbobLevel(5)
                 .description("테스트 스토어 B")
@@ -68,7 +112,7 @@ public class StoreRepositoryImplTest {
         menuRepository.save(Menu.builder()
                 .store(storeB).name("추천 메뉴 B1").price(15_000).recommend(true).build());
 
-        // 좌석 옵션 (A: FOR_ONE, B: BAR)
+        // 좌석 옵션 (A: FOR_ONE, B: BAR_TABLE)
         seatOptionRepository.save(SeatOption.builder()
                 .store(storeA).seatType(SeatType.FOR_ONE).maxCapacity(1).build());
         seatOptionRepository.save(SeatOption.builder()
@@ -85,7 +129,14 @@ public class StoreRepositoryImplTest {
                 null,
                 null
         );
-        StoreFilteringRequest req = new StoreFilteringRequest(null, null, filters, null);
+
+        // center를 서울(스토어 A 근처)로 지정 → 반경 기본 700m
+        StoreFilteringRequest req = new StoreFilteringRequest(
+                null,                                      // bbox 없음 → center 반경만 적용
+                centerAt(37.5013, 127.0396),               // Store A 좌표와 동일
+                filters,
+                null
+        );
 
         // when
         CursorPageResponse<Store> res = storeRepositoryImpl.search(req);
@@ -105,7 +156,13 @@ public class StoreRepositoryImplTest {
                 null,
                 null
         );
-        StoreFilteringRequest req = new StoreFilteringRequest(null, null, filters, null);
+
+        StoreFilteringRequest req = new StoreFilteringRequest(
+                null,
+                centerAt(37.5013, 127.0396),  // 서울 중심 → A만 반경 내
+                filters,
+                null
+        );
 
         // when
         CursorPageResponse<Store> res = storeRepositoryImpl.search(req);
@@ -125,31 +182,39 @@ public class StoreRepositoryImplTest {
                 null,
                 null
         );
-        StoreFilteringRequest req = new StoreFilteringRequest(null, null, filters, null);
+
+        StoreFilteringRequest req = new StoreFilteringRequest(
+                null,
+                centerAt(37.5013, 127.0396),  // 서울 중심
+                filters,
+                null
+        );
 
         // when
         CursorPageResponse<Store> res = storeRepositoryImpl.search(req);
 
         // then
         assertThat(res.getData()).extracting(Store::getHonbobLevel)
-                .containsExactly(3);
+                .containsExactly(3, 1);
         assertThat(res.getData()).extracting(Store::getName)
                 .containsExactly("Store A");
     }
 
     @Test
     void 필터_BBox_내부만() {
-        // given: BBox를 서울 인근으로 지정 → A만 포함
+        // given: BBox를 서울 인근으로 지정 → A만 포함 (BBox 유효하면 BBox만 적용)
         StoreFilteringRequest.BoundingBox bbox = new StoreFilteringRequest.BoundingBox(
                 new StoreFilteringRequest.Coordinate(37.7, 127.0), // NW(lat, lon)
                 new StoreFilteringRequest.Coordinate(37.3, 127.3)  // SE(lat, lon)
         );
+
         StoreFilteringRequest.Filters filters = new StoreFilteringRequest.Filters(
                 null, 5, null, null, null
         );
+
         StoreFilteringRequest req = new StoreFilteringRequest(
                 bbox,
-                new StoreFilteringRequest.Coordinate(37.55, 127.05),
+                centerAt(37.55, 127.05), // 있어도 BBox가 유효하면 BBox만 적용
                 filters,
                 null
         );
