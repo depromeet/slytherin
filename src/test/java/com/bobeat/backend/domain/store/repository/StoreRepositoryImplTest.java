@@ -1,12 +1,12 @@
 package com.bobeat.backend.domain.store.repository;
 
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
+import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.SeatType;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.vo.Address;
-import com.bobeat.backend.global.db.PostgreSQLTestContainer;
 import com.bobeat.backend.global.response.CursorPageResponse;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,9 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
-@PostgreSQLTestContainer
+//@PostgreSQLTestContainer
 public class StoreRepositoryImplTest {
-
     @Autowired
     private StoreRepository storeRepository;
 
@@ -119,10 +118,10 @@ public class StoreRepositoryImplTest {
         );
 
         // when
-        CursorPageResponse<Store> res = storeRepositoryImpl.search(req);
+        List<StoreSearchResultDto> res = storeRepositoryImpl.search(req);
 
         // then
-        assertThat(res.getData()).extracting(Store::getName)
+        assertThat(res).extracting(StoreSearchResultDto::name)
                 .containsExactly("Store A");
     }
 
@@ -145,10 +144,10 @@ public class StoreRepositoryImplTest {
         );
 
         // when
-        CursorPageResponse<Store> res = storeRepositoryImpl.search(req);
+        List<StoreSearchResultDto> res = storeRepositoryImpl.search(req);
 
         // then
-        assertThat(res.getData()).extracting(Store::getName)
+        assertThat(res).extracting(StoreSearchResultDto::name)
                 .containsExactly("Store A");
     }
 
@@ -171,12 +170,12 @@ public class StoreRepositoryImplTest {
         );
 
         // when
-        CursorPageResponse<Store> res = storeRepositoryImpl.search(req);
+        List<StoreSearchResultDto> res = storeRepositoryImpl.search(req);
 
         // then
-        assertThat(res.getData()).extracting(Store::getHonbobLevel)
+        assertThat(res).extracting(StoreSearchResultDto::honbobLevel)
                 .containsExactly(3, 1);
-        assertThat(res.getData()).extracting(Store::getName)
+        assertThat(res).extracting(StoreSearchResultDto::name)
                 .containsExactly("Store A");
     }
 
@@ -200,10 +199,10 @@ public class StoreRepositoryImplTest {
         );
 
         // when
-        CursorPageResponse<Store> res = storeRepositoryImpl.search(req);
+        List<StoreSearchResultDto> res = storeRepositoryImpl.search(req);
 
         // then
-        assertThat(res.getData()).extracting(Store::getName)
+        assertThat(res).extracting(StoreSearchResultDto::name)
                 .containsExactly("Store A");
     }
 }

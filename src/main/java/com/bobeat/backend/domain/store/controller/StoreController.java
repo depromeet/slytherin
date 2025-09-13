@@ -3,7 +3,7 @@ package com.bobeat.backend.domain.store.controller;
 import com.bobeat.backend.domain.store.dto.request.EditProposalRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
-import com.bobeat.backend.domain.store.dto.response.StoreSearchResponse;
+import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.service.StoreService;
 import com.bobeat.backend.global.response.ApiResponse;
 import com.bobeat.backend.global.response.CursorPageResponse;
@@ -23,9 +23,9 @@ public class StoreController {
 
     @Operation(summary = "위치 기반 식당 검색", description = "현재 위치를 기반으로 식당을 검색하고 필터링합니다.")
     @PostMapping
-    public ApiResponse<CursorPageResponse<StoreSearchResponse>> searchRestaurants(
+    public ApiResponse<CursorPageResponse<StoreSearchResultDto>> searchRestaurants(
             @RequestBody @Valid StoreFilteringRequest request) {
-        CursorPageResponse<StoreSearchResponse> response = storeService.search(request);
+        CursorPageResponse<StoreSearchResultDto> response = storeService.search(request);
         return ApiResponse.success(response);
     }
 
