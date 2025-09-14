@@ -50,7 +50,7 @@ public record StoreDetailResponse(
         return StoreDetailResponse.builder()
                 .storeId(store.getId())
                 .thumbnailUrls(thumbnailUrls)
-                .level(store.getHonbobLevel())
+                .level(store.getHonbobLevel().getValue())
                 .name(store.getName())
                 .address(store.getAddress().getAddress())
                 .menus(menuDtos)

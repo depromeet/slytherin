@@ -1,6 +1,7 @@
 package com.bobeat.backend.domain.store.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
@@ -17,6 +18,9 @@ public record StoreSearchResultDto(
 
         @Schema(description = "대표 메뉴")
         SignatureMenu signatureMenu,
+
+        @Schema(description = "위/경도 정보")
+        Coordinate coordinate,
 
         @Schema(description = "현재 위치로부터 거리(m)")
         int distance,
@@ -40,5 +44,16 @@ public record StoreSearchResultDto(
 
                 @Schema(description = "대표 메뉴 가격(원)")
                 int price
+        ) {}
+
+        @Schema(description = "위경도 정보")
+        public record Coordinate(
+                @Schema(description = "위도", example = "37.58")
+                @NotNull
+                Double lat,
+
+                @Schema(description = "경도", example = "127.0")
+                @NotNull
+                Double lon
         ) {}
 }
