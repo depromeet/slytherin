@@ -34,8 +34,8 @@ public record StoreCreateRequest(
         @Positive(message = "혼밥 레벨은 1 이상이어야 합니다")
         Integer honbobLevel,
 
-        @Schema(description = "카테고리 정보")
-        @NotNull(message = "카테고리 정보는 필수입니다")
+        @Schema(description = "메뉴 카테고리 정류 ex) 한식, 일식, 중식")
+        @NotNull(message = "메뉴 카테고리는 필수입니다")
         @Valid
         CategoryRequest categories,
 
@@ -69,8 +69,8 @@ public record StoreCreateRequest(
 
     @Schema(description = "카테고리 요청 DTO")
     public record CategoryRequest(
-            @Schema(description = "1차 카테고리 ID")
-            @NotNull(message = "1차 카테고리는 필수입니다")
+            @Schema(description = "메뉴 카테고리 ID")
+            @NotNull(message = "메뉴 카테고리는 필수입니다")
             String primaryCategory
     ) {}
 
