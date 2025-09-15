@@ -21,4 +21,9 @@ public class Categories {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "secondary_category_id")
     private SecondaryCategory secondaryCategory;
+
+    public Categories(PrimaryCategory primaryCategory, SecondaryCategory secondaryCategory) {
+        this.primaryCategory = primaryCategory;
+        this.secondaryCategory = secondaryCategory;
+    }
 }
