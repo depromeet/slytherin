@@ -26,9 +26,6 @@ public class Store extends BaseTimeEntity {
 
     private String phoneNumber;
 
-    @Enumerated(EnumType.STRING)
-    private StoreType storeType;
-
     private String description;
 
     private String mainImageUrl;
