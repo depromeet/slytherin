@@ -11,6 +11,7 @@ import com.bobeat.backend.domain.store.repository.*;
 import com.bobeat.backend.domain.store.vo.Categories;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.response.CursorPageResponse;
+import com.bobeat.backend.global.util.KeysetCursor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,7 +70,11 @@ public class StoreService {
                 })
                 .collect(Collectors.toList());
 
-        Long nextCursor = hasNext && !data.isEmpty() ? data.getLast().id() : null;
+        String nextCursor = null;
+        if (hasNext && !rows.isEmpty()) {
+            var last = rows.getLast();
+            nextCursor = KeysetCursor.encode(last.distance(), last.store().getId());
+        }
 
         return new CursorPageResponse<>(data, nextCursor, hasNext, null);
     }

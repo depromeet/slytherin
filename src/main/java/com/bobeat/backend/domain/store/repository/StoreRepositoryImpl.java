@@ -7,6 +7,7 @@ import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.QMenu;
 import com.bobeat.backend.domain.store.entity.QSeatOption;
 import com.bobeat.backend.domain.store.entity.Store;
+import com.bobeat.backend.global.util.KeysetCursor;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -44,7 +45,12 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 seatTypesIn(request)
         );
 
-        OrderSpecifier<?>[] orders = buildOrder(distanceExpr);
+        filters = andAll(filters, applyKeyset(request, distanceExpr));
+
+        OrderSpecifier<?>[] orders = new OrderSpecifier<?>[]{
+                distanceExpr.asc(),
+                store.id.asc()
+        };
 
         List<Tuple> rows = queryFactory
                 .select(store, distanceExpr)
@@ -61,6 +67,19 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
             result.add(new StoreRow(s, d != null ? d : 0));
         }
         return result;
+    }
+
+    private BooleanExpression applyKeyset(StoreFilteringRequest req, NumberExpression<Integer> distanceExpr) {
+        if (req.paging() == null) return null;
+
+        var cursor = KeysetCursor.decodeOrNull(req.paging().lastKnown());
+        if (cursor == null) return null;
+
+        int  lastDist = cursor.distance();
+        long lastId   = cursor.id();
+
+        return distanceExpr.gt(lastDist)
+                .or(distanceExpr.eq(lastDist).and(store.id.gt(lastId)));
     }
 
     @Override
