@@ -38,6 +38,7 @@ public class Member extends BaseTimeEntity {
     @OneToOne(mappedBy = "member", fetch = FetchType.LAZY)
     private MemberOnboardingProfile onboardingProfile;
 
+    @Enumerated(EnumType.STRING)
     private MemberRole role;
 
     private String providerId;
