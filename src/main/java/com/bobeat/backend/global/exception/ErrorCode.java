@@ -17,9 +17,8 @@ public enum ErrorCode {
     NOT_FOUND_RESOURCE(HttpStatus.NOT_FOUND, "G404", "찾을 수 없는 리소스입니다"),
 
     //식당
-    NOT_FOUND_RESTAURANT(HttpStatus.NOT_FOUND, "R404", "찾을 수 없는 식당입니다"),
-    NOT_FOUND_STORE_CATEGORY(HttpStatus.NOT_FOUND, "R405", "찾을 수 없는 식당 카테고리입니다"),
     NOT_FOUND_STORE(HttpStatus.NOT_FOUND, "R404", "찾을 수 없는 식당입니다"),
+    NOT_FOUND_STORE_CATEGORY(HttpStatus.NOT_FOUND, "R405", "찾을 수 없는 식당 카테고리입니다"),
 
     // 회원
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "회원을 찾을 수 없습니다."),

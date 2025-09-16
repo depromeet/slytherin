@@ -1,5 +1,6 @@
 package com.bobeat.backend.domain.store.dto.request;
 
+import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.entity.SeatType;
 import com.bobeat.backend.global.request.CursorPaginationRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,21 +27,21 @@ public record StoreFilteringRequest(
         CursorPaginationRequest paging
 ) {
         public record BoundingBox(
-                @Schema(description = "박스 좌상단 위도", example = "37.58")
+                @Schema(description = "박스 좌상단 위도", example = "37.5665")
                 @NotNull
                 Coordinate nw,
 
-                @Schema(description = "박스 좌상단 경도", example = "127.0")
+                @Schema(description = "박스 좌상단 경도", example = "126.9780")
                 @NotNull
                 Coordinate se
         ) {}
 
         public record Coordinate(
-                @Schema(description = "위도", example = "37.58")
+                @Schema(description = "위도", example = "37.5665")
                 @NotNull
                 Double lat,
 
-                @Schema(description = "경도", example = "127.0")
+                @Schema(description = "경도", example = "126.9780")
                 @NotNull
                 Double lon
         ) {}
@@ -50,19 +51,15 @@ public record StoreFilteringRequest(
                 @Valid
                 PriceRange price,
 
-                @Schema(description = "혼밥 레벨 (1~5)", example = "3")
+                @Schema(description = "혼밥 레벨 (1~4)", example = "3")
                 @NotNull
                 Integer level,
 
-                @Schema(description = "좌석 형태", example = "[\"FOR_ONE\", \"BAR\"]")
+                @Schema(description = "좌석 형태", example = "[\"FOR_ONE\", \", \"FOR_TWO\"\", \"FOR_FOUR\", \", \"CUBICLE\"\", \"BAR_TABLE\"]")
                 List<SeatType> seatTypes,
 
                 // TODO: ENUM 생성시 변경
-                @Schema(description = "결제 방식", example = "[\"CARD\", \"ZERO_PAY\"]")
-                List<String> paymentMethods,
-
-                // TODO: ENUM 생성시 변경
-                @Schema(description = "메뉴 카테고리", example = "[\"korean\", \"japanese\"]")
+                @Schema(description = "메뉴 카테고리", example = "[\"한식\", \"일식\", \"중식\", \"양식\", \"패스트푸드\", \"분식\", \"아시아음식\", \"카페\", \"기타\"]")
                 List<String> categories
         ) {}
 

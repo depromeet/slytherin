@@ -1,34 +1,30 @@
 package com.bobeat.backend.domain.store.service;
 
-import static com.bobeat.backend.global.exception.ErrorCode.NOT_FOUND_STORE;
-
+import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.dto.request.StoreCreateRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
-import com.bobeat.backend.domain.store.entity.Menu;
-import com.bobeat.backend.domain.store.entity.PrimaryCategory;
-import com.bobeat.backend.domain.store.entity.SeatOption;
-import com.bobeat.backend.domain.store.entity.Store;
-import com.bobeat.backend.domain.store.entity.StoreImage;
-import com.bobeat.backend.domain.store.repository.MenuRepository;
-import com.bobeat.backend.domain.store.repository.PrimaryCategoryRepository;
-import com.bobeat.backend.domain.store.repository.SeatOptionRepository;
-import com.bobeat.backend.domain.store.repository.SecondaryCategoryRepository;
-import com.bobeat.backend.domain.store.repository.StoreImageRepository;
-import com.bobeat.backend.domain.store.repository.StoreRepository;
+import com.bobeat.backend.domain.store.entity.*;
+import com.bobeat.backend.domain.store.repository.*;
 import com.bobeat.backend.domain.store.vo.Address;
 import com.bobeat.backend.domain.store.vo.Categories;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
 import com.bobeat.backend.global.response.CursorPageResponse;
-import java.util.List;
+import com.bobeat.backend.global.util.KeysetCursor;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.bobeat.backend.global.exception.ErrorCode.NOT_FOUND_STORE;
 
 @Service
 @RequiredArgsConstructor
@@ -38,20 +34,55 @@ public class StoreService {
     private final MenuRepository menuRepository;
     private final SeatOptionRepository seatOptionRepository;
     private final PrimaryCategoryRepository primaryCategoryRepository;
-    private final SecondaryCategoryRepository secondaryCategoryRepository;
     private final GeometryFactory geometryFactory;
 
     @Transactional(readOnly = true)
     public CursorPageResponse<StoreSearchResultDto> search(StoreFilteringRequest request) {
-        int pageSize = request.paging() != null ? request.paging().limit() : 20;
+        final int pageSize = request.paging() != null ? request.paging().limit() : 20;
 
-        List<StoreSearchResultDto> dataPlusOne = storeRepository.search(request);
+        List<StoreRepositoryCustom.StoreRow> rows = storeRepository.findStoresSlice(request, pageSize + 1);
 
-        return CursorPageResponse.of(
-                dataPlusOne,
-                pageSize,
-                StoreSearchResultDto::id
-        );
+        boolean hasNext = rows.size() > pageSize;
+        if (hasNext) {
+            rows = rows.subList(0, pageSize);
+        }
+
+        List<Long> storeIds = rows.stream()
+                .map(r -> r.store().getId())
+                .toList();
+
+        var repMenuMap = storeRepository.findRepresentativeMenus(storeIds);
+        var seatTypesMap = storeRepository.findSeatTypes(storeIds);
+
+        List<StoreSearchResultDto> data = rows.stream()
+                .map(r -> {
+                    var s = r.store();
+                    long id = s.getId();
+                    int distance = r.distance();
+                    int walkingMinutes = (int) Math.ceil(distance / 80.0);
+
+                    return new StoreSearchResultDto(
+                            s.getId(),
+                            s.getName(),
+                            s.getMainImageUrl(),
+                            repMenuMap.getOrDefault(id, new StoreSearchResultDto.SignatureMenu(null, 0)),
+                            new StoreSearchResultDto.Coordinate(s.getAddress().getLatitude(), s.getAddress().getLongitude()),
+                            distance,
+                            walkingMinutes,
+                            seatTypesMap.getOrDefault(id, List.of()),
+                            buildTagsFromCategories(s.getCategories()),
+                            s.getHonbobLevel() != null ? s.getHonbobLevel().getValue() : 0
+                    );
+                })
+                .collect(Collectors.toList());
+
+        String nextCursor = null;
+        if (hasNext && !rows.isEmpty()) {
+            var last = rows.getLast();
+            nextCursor = KeysetCursor.encode(last.distance(), last.store().getId());
+        }
+
+        return new CursorPageResponse<>(data, nextCursor, hasNext, null);
     }
 
     public StoreDetailResponse findById(Long storeId) {
@@ -63,6 +94,13 @@ public class StoreService {
         return StoreDetailResponse.of(store, storeImages, menus, seatOptions);
     }
 
+    private List<String> buildTagsFromCategories(Categories c) {
+        if (c == null) return List.of();
+        List<String> tags = new ArrayList<>(5);
+        if (c.getPrimaryCategory() != null) tags.add(c.getPrimaryCategory().getPrimaryType());
+        if (c.getSecondaryCategory() != null) tags.add(c.getSecondaryCategory().getSecondaryType());
+        return tags;
+    }
 
     @Transactional
     public List<Long> createStores(List<StoreCreateRequest> requests) {
@@ -86,7 +124,7 @@ public class StoreService {
                 .phoneNumber(request.phoneNumber())
                 .description(request.description())
                 .mainImageUrl(request.mainImageUrl())
-                .honbobLevel(request.honbobLevel())
+                .honbobLevel(Level.fromValue(request.honbobLevel()))
                 .categories(categories)
                 .build();
 

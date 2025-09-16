@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.ToLongFunction;
+import java.util.function.Function;
 
 /**
  * 커서 기반 페이지네이션 응답을 위한 범용 클래스입니다.
@@ -17,7 +17,7 @@ import java.util.function.ToLongFunction;
 public class CursorPageResponse<T> {
 
     private final List<T> data;
-    private final Long nextCursor;
+    private final String nextCursor;
     private final Boolean hasNext;
     private final Object metadata;
 
@@ -27,25 +27,20 @@ public class CursorPageResponse<T> {
      *
      * @param data        Repository에서 조회된 데이터 리스트 (pageSize + 1 크기)
      * @param pageSize    클라이언트에게 반환할 실제 페이지 크기
-     * @param idExtractor 데이터 요소에서 Long 타입의 ID(커서)를 추출하는 함수
+     * @param cursorExtractor 데이터 요소에서 String 타입의 ID(커서)를 추출하는 함수
      * @param <T>         데이터 요소의 타입
      * @return 계산된 페이지네이션 정보가 포함된 응답 객체
      */
-    public static <T> CursorPageResponse<T> of(List<T> data, int pageSize, ToLongFunction<T> idExtractor) {
-        return of(data, pageSize, idExtractor, null);
+    public static <T> CursorPageResponse<T> of(List<T> data, int pageSize, Function<T, String> cursorExtractor) {
+        return of(data, pageSize, cursorExtractor, null);
     }
 
-    /**
-     * +)
-     * @param metadata    추가 메타데이터 객체
-     */
-    public static <T> CursorPageResponse<T> of(List<T> data, int pageSize, ToLongFunction<T> idExtractor, Object metadata) {
+    public static <T> CursorPageResponse<T> of(List<T> data, int pageSize, Function<T, String> cursorExtractor, Object metadata) {
         boolean hasNext = data.size() > pageSize;
-        long nextCursor = -1L;
+        String nextCursor = null;
 
         if (hasNext) {
-            nextCursor = idExtractor.applyAsLong(data.getLast());
-
+            nextCursor = cursorExtractor.apply(data.getLast());
             data = data.subList(0, pageSize);
         }
 
@@ -53,6 +48,6 @@ public class CursorPageResponse<T> {
     }
 
     public static <T> CursorPageResponse<T> empty() {
-        return new CursorPageResponse<>(Collections.emptyList(), -1L, false, null);
+        return new CursorPageResponse<>(Collections.emptyList(), null, false, null);
     }
 }
