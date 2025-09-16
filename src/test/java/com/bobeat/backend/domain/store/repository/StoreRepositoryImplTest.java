@@ -1,13 +1,12 @@
 package com.bobeat.backend.domain.store.repository;
 
+import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
-import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.SeatType;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.vo.Address;
-import com.bobeat.backend.global.response.CursorPageResponse;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
+import static com.bobeat.backend.domain.member.entity.Level.LEVEL_3;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -66,7 +66,7 @@ public class StoreRepositoryImplTest {
                         .longitude(127.0396)
                         .location(point(37.5013, 127.0396))
                         .build())
-                .honbobLevel(3)
+                .honbobLevel(Level.fromValue(3))
                 .description("테스트 스토어 A")
                 .build());
 
@@ -79,7 +79,7 @@ public class StoreRepositoryImplTest {
                         .longitude(129.1604)
                         .location(point(35.1587, 129.1604))
                         .build())
-                .honbobLevel(5)
+                .honbobLevel(Level.fromValue(2))
                 .description("테스트 스토어 B")
                 .build());
 
@@ -103,8 +103,7 @@ public class StoreRepositoryImplTest {
         // given: 추천 7,000~10,000 → A(8,000)만
         StoreFilteringRequest.Filters filters = new StoreFilteringRequest.Filters(
                 new StoreFilteringRequest.PriceRange(7_000, 10_000),
-                5,
-                null,
+                3,
                 null,
                 null
         );
@@ -118,10 +117,11 @@ public class StoreRepositoryImplTest {
         );
 
         // when
-        List<StoreSearchResultDto> res = storeRepositoryImpl.search(req);
+        List<StoreRepositoryCustom.StoreRow> res = storeRepositoryImpl.findStoresSlice(req, 20);
 
         // then
-        assertThat(res).extracting(StoreSearchResultDto::name)
+        assertThat(res)
+                .extracting("store.name", String.class)
                 .containsExactly("Store A");
     }
 
@@ -130,9 +130,8 @@ public class StoreRepositoryImplTest {
         // given: FOR_ONE 좌석 매장만
         StoreFilteringRequest.Filters filters = new StoreFilteringRequest.Filters(
                 null,
-                5,
+                3,
                 List.of(SeatType.FOR_ONE),
-                null,
                 null
         );
 
@@ -144,10 +143,11 @@ public class StoreRepositoryImplTest {
         );
 
         // when
-        List<StoreSearchResultDto> res = storeRepositoryImpl.search(req);
+        List<StoreRepositoryCustom.StoreRow> res = storeRepositoryImpl.findStoresSlice(req, 20);
 
         // then
-        assertThat(res).extracting(StoreSearchResultDto::name)
+        assertThat(res)
+                .extracting("store.name", String.class)
                 .containsExactly("Store A");
     }
 
@@ -157,7 +157,6 @@ public class StoreRepositoryImplTest {
         StoreFilteringRequest.Filters filters = new StoreFilteringRequest.Filters(
                 null,
                 3,
-                null,
                 null,
                 null
         );
@@ -170,12 +169,14 @@ public class StoreRepositoryImplTest {
         );
 
         // when
-        List<StoreSearchResultDto> res = storeRepositoryImpl.search(req);
+        List<StoreRepositoryCustom.StoreRow> res = storeRepositoryImpl.findStoresSlice(req, 20);
 
         // then
-        assertThat(res).extracting(StoreSearchResultDto::honbobLevel)
-                .containsExactly(3, 1);
-        assertThat(res).extracting(StoreSearchResultDto::name)
+        assertThat(res)
+                .extracting("store.honbobLevel", Level.class)
+                .containsExactly(LEVEL_3);
+        assertThat(res)
+                .extracting("store.name", String.class)
                 .containsExactly("Store A");
     }
 
@@ -188,7 +189,7 @@ public class StoreRepositoryImplTest {
         );
 
         StoreFilteringRequest.Filters filters = new StoreFilteringRequest.Filters(
-                null, 5, null, null, null
+                null, 3, null, null
         );
 
         StoreFilteringRequest req = new StoreFilteringRequest(
@@ -199,10 +200,11 @@ public class StoreRepositoryImplTest {
         );
 
         // when
-        List<StoreSearchResultDto> res = storeRepositoryImpl.search(req);
+        List<StoreRepositoryCustom.StoreRow> res = storeRepositoryImpl.findStoresSlice(req, 20);
 
         // then
-        assertThat(res).extracting(StoreSearchResultDto::name)
+        assertThat(res)
+                .extracting("store.name", String.class)
                 .containsExactly("Store A");
     }
 }
