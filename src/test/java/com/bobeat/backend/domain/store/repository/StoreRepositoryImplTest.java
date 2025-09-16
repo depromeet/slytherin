@@ -93,9 +93,9 @@ public class StoreRepositoryImplTest {
 
         // 좌석 옵션 (A: FOR_ONE, B: BAR_TABLE)
         seatOptionRepository.save(SeatOption.builder()
-                .store(storeA).seatType(SeatType.FOR_ONE).maxCapacity(1).build());
+                .store(storeA).seatType(SeatType.FOR_ONE).build());
         seatOptionRepository.save(SeatOption.builder()
-                .store(storeB).seatType(SeatType.BAR_TABLE).maxCapacity(4).build());
+                .store(storeB).seatType(SeatType.BAR_TABLE).build());
     }
 
     @Test

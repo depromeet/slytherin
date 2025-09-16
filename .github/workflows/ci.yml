@@ -34,6 +34,11 @@ jobs:
       - name: Gradle 를 준비한다.
         uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
 
+      - name: 테스트 애플리케이션yml을 생성한다
+        run: |
+          mkdir -p src/test/resources
+          echo "${{ secrets.APPLICATION_TEST_YML }}" | base64 -d > src/test/resources/application.yml
+
       - name: 빌드한다.
         run: ./gradlew build --stacktrace
 
