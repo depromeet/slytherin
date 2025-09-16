@@ -3,6 +3,7 @@ package com.bobeat.backend.domain.store.service;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
+import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.SeatOption;
@@ -55,7 +56,7 @@ public class StoreServiceTest {
                         .longitude(Double.valueOf(12.2))
                         .build())
                 .phoneNumber("010-1234-5678")
-                .honbobLevel(3)
+                .honbobLevel(Level.fromValue(3))
                 .build();
 
         List<StoreImage> storeImages = List.of(
