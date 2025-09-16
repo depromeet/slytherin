@@ -28,6 +28,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse renewAccessToken(String refreshTokenWithBearer) {
+        log.info("토큰 갱신 요청 받음 - Bearer 토큰: {}", refreshTokenWithBearer);
         String refreshToken = jwtService.resolveAndValidateToken(refreshTokenWithBearer);
 
         // 토큰 검증 후 Claims 한번만 추출

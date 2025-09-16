@@ -93,6 +93,9 @@ public class JwtService {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expireTime);
 
+        log.info("토큰 생성 - 현재시간: {}, 만료시간: {}, 유효기간: {}ms",
+                now, expiryDate, expireTime);
+
         Claims claims = Jwts.claims();
         claims.put("id", tokenClaims.getId());
         claims.put("role", tokenClaims.getRole().name());
@@ -137,14 +140,23 @@ public class JwtService {
 
     public void validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes())).build().parseClaimsJws(token);
+            Claims claims = Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes())).build().parseClaimsJws(token).getBody();
+            Date now = new Date();
+            Date expiration = claims.getExpiration();
+            long remainingTime = expiration.getTime() - now.getTime();
+
+            log.info("토큰 검증 - 현재시간: {}, 만료시간: {}, 남은시간: {}ms", now, expiration, remainingTime);
         } catch (SecurityException | MalformedJwtException e) {
+            log.error("토큰 검증 실패 - 잘못된 토큰: {}", e.getMessage());
             throw new CustomException(ErrorCode.JWT_INVALID_TOKEN);
         } catch (ExpiredJwtException e) {
+            log.error("토큰 검증 실패 - 만료된 토큰: {}", e.getMessage());
             throw new CustomException(ErrorCode.JWT_EXPIRED);
         } catch (UnsupportedJwtException e) {
+            log.error("토큰 검증 실패 - 지원되지 않는 토큰: {}", e.getMessage());
             throw new CustomException(ErrorCode.JWT_UNSUPPORTED);
         } catch (IllegalArgumentException e) {
+            log.error("토큰 검증 실패 - 빈 클레임: {}", e.getMessage());
             throw new CustomException(ErrorCode.JWT_CLAIMS_EMPTY);
         }
     }
