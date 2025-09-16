@@ -31,16 +31,17 @@ public class CursorPageResponse<T> {
      * @param <T>         데이터 요소의 타입
      * @return 계산된 페이지네이션 정보가 포함된 응답 객체
      */
-    public static <T> CursorPageResponse<T> of(List<T> data, int pageSize, Function<T, String> cursorExtractor) {
+    public static <T> CursorPageResponse<T> of(List<T> data, int pageSize, Function<T, ?> cursorExtractor) {
         return of(data, pageSize, cursorExtractor, null);
     }
 
-    public static <T> CursorPageResponse<T> of(List<T> data, int pageSize, Function<T, String> cursorExtractor, Object metadata) {
+    public static <T> CursorPageResponse<T> of(List<T> data, int pageSize, Function<T, ?> cursorExtractor, Object metadata) {
         boolean hasNext = data.size() > pageSize;
         String nextCursor = null;
 
         if (hasNext) {
-            nextCursor = cursorExtractor.apply(data.getLast());
+            T last = data.getLast();
+            nextCursor = String.valueOf(cursorExtractor.apply(last));
             data = data.subList(0, pageSize);
         }
 
