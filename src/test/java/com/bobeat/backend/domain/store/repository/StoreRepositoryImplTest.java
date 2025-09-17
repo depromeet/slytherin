@@ -13,7 +13,6 @@ import com.bobeat.backend.domain.store.vo.Address;
 import com.bobeat.backend.global.db.PostgreSQLTestContainer;
 import jakarta.transaction.Transactional;
 import java.util.List;
-import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -38,9 +37,6 @@ public class StoreRepositoryImplTest {
 
     @Autowired
     private SeatOptionRepository seatOptionRepository;
-
-    @Autowired
-    DataSource dataSource;
 
     private Store storeA;
     private Store storeB;
