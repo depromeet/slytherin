@@ -20,11 +20,16 @@ public class MemberService {
     public MemberProfileResponse getMyProfile(Long memberId) {
         Member member = memberRepository.findByIdWithOnboardingProfileOrElseThrow(memberId);
 
+        int honbapLevelValue = -1;
+        if (member.getOnboardingProfile() != null) {
+            honbapLevelValue = member.getOnboardingProfile().getHonbapLevel().getValue();
+        }
+
         return new MemberProfileResponse(
                 member.getId().toString(),
                 member.getNickname(),
                 member.getProfileImageUrl(),
-                member.getOnboardingProfile().getHonbapLevel().getValue()
+                honbapLevelValue
         );
     }
 
