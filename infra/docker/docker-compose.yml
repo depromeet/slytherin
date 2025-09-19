@@ -21,7 +21,7 @@ services:
       - bobeat-network
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /var/log/bobeat:/app/logs
+      - /root/logs:/app/logs
 networks:
   bobeat-network:
     driver: bridge
