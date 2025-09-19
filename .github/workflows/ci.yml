@@ -37,7 +37,7 @@ jobs:
       - name: 테스트 애플리케이션yml을 생성한다
         run: |
           mkdir -p src/test/resources
-          echo "${{ secrets.APPLICATION_TEST_YML }}" | base64 -d > src/test/resources/application.yml
+          echo "${{ secrets.APPLICATION_TEST_YML }}" | base64 -d > src/main/resources/application.yml
 
       - name: 빌드한다.
         run: ./gradlew build --stacktrace
