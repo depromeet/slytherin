@@ -81,6 +81,7 @@ public class StoreServiceTest {
                         .price(9000)
                         .recommend(true)
                         .store(store)
+                        .imageUrl("김치찌개.jpg")
                         .build(),
                 Menu.builder()
                         .id(2L)
@@ -88,6 +89,7 @@ public class StoreServiceTest {
                         .price(9000)
                         .recommend(false)
                         .store(store)
+                        .imageUrl("된장찌개.jpg")
                         .build()
         );
 
@@ -110,5 +112,8 @@ public class StoreServiceTest {
         Assertions.assertThat(response.thumbnailUrls().size()).isEqualTo(2);
         Assertions.assertThat(response.menus().size()).isEqualTo(2);
         Assertions.assertThat(response.seatImages().size()).isEqualTo(2);
+        Assertions.assertThat(response.menus())
+                .extracting("imageUrl")
+                .containsExactlyInAnyOrder("김치찌개.jpg", "된장찌개.jpg");
     }
 }

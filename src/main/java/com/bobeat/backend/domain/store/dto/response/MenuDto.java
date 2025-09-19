@@ -12,13 +12,17 @@ public record MenuDto(
         @Schema(description = "메뉴 가격")
         int price,
         @Schema(description = "대표 메뉴 여부")
-        boolean isRepresentative
+        boolean isRepresentative,
+        @Schema(description = "메뉴 이미지 URL")
+        String imageUrl
+
 ) {
     public static MenuDto from(Menu menu) {
         return MenuDto.builder()
                 .name(menu.getName())
                 .price(menu.getPrice())
                 .isRepresentative(menu.isRecommend())
+                .imageUrl(menu.getImageUrl())
                 .build();
     }
 }
