@@ -62,7 +62,7 @@ public class ReviewService {
         return CursorPageResponse.of(
                 reviews.stream().map(ReviewResponse::from).toList(),
                 request.limit(),
-                ReviewResponse::getId,
+                review -> review.getId().toString(),
                 metadata
         );
     }
@@ -76,7 +76,7 @@ public class ReviewService {
         return CursorPageResponse.of(
                 reviews.stream().map(ReviewResponse::from).toList(),
                 request.limit(),
-                ReviewResponse::getId);
+                review -> review.getId().toString());
     }
 
     @Transactional(readOnly = true)

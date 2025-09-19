@@ -2,6 +2,7 @@ package com.bobeat.backend.global.config;
 
 import com.bobeat.backend.domain.security.auth.jwt.JwtAuthenticationFilter;
 import com.bobeat.backend.domain.security.auth.service.JwtService;
+import com.bobeat.backend.global.filter.RequestLoggingFilter;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,6 +15,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.HeaderWriterFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -38,6 +40,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()  // 기본적으로 모든 요청 허용 (메소드 레벨에서 보안 관리)
+                )
+                .addFilterBefore(
+                        new RequestLoggingFilter(),
+                        HeaderWriterFilter.class
                 )
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtService, handlerExceptionResolver),
