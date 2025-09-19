@@ -9,27 +9,35 @@
 
     <!-- 일별 파일 출력 -->
     <appender name="DAILY_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>/app/logs/bobeat-${BY_DATE}.log</file>
+        <file>logs/bobeat.log</file>
         <encoder>
             <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %5level %logger{36} - %msg%n</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>/app/logs/%d{yyyy-MM}/bobeat-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>logs/%d{yyyy-MM}/bobeat-%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>90</maxHistory>
             <totalSizeCap>10GB</totalSizeCap>
         </rollingPolicy>
     </appender>
 
-    <!-- 루트 로거 설정 -->
-    <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="DAILY_FILE"/>
-    </root>
+    <!-- 테스트 환경: 콘솔만 사용 -->
+    <springProfile name="test">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.bobeat.backend" level="INFO"/>
+        <logger name="org.hibernate.SQL" level="DEBUG"/>
+        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
+    </springProfile>
 
-    <!-- 애플리케이션 로그 레벨 설정 -->
-    <logger name="com.bobeat.backend" level="INFO"/>
-
-    <!-- 하이버네이트 SQL 로그 (필요시) -->
-    <logger name="org.hibernate.SQL" level="DEBUG"/>
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
+    <!-- 개발/운영 환경: 콘솔 + 파일 -->
+    <springProfile name="!test">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="DAILY_FILE"/>
+        </root>
+        <logger name="com.bobeat.backend" level="INFO"/>
+        <logger name="org.hibernate.SQL" level="DEBUG"/>
+        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
+    </springProfile>
 </configuration>

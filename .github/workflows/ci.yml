@@ -41,6 +41,8 @@ jobs:
 
       - name: 빌드한다.
         run: ./gradlew build --stacktrace
+        env:
+          SPRING_PROFILES_ACTIVE: test
 
       # Test 후 Report 생성
       - name: 테스트 결과를 게시한다.
