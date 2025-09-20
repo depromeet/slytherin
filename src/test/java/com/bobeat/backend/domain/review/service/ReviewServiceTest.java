@@ -1,6 +1,9 @@
 package com.bobeat.backend.domain.review.service;
 
+import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.member.entity.Member;
+import com.bobeat.backend.domain.member.entity.MemberOnboardingProfile;
+import com.bobeat.backend.domain.member.repository.MemberOnboardingProfileRepository;
 import com.bobeat.backend.domain.member.repository.MemberRepository;
 import com.bobeat.backend.domain.review.dto.request.CreateReviewRequest;
 import com.bobeat.backend.domain.review.dto.request.UpdateReviewRequest;
@@ -22,7 +25,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -37,6 +39,9 @@ class ReviewServiceTest {
     
     @Mock
     private StoreRepository storeRepository;
+
+    @Mock
+    private MemberOnboardingProfileRepository onboardingProfileRepository;
     
     @InjectMocks
     private ReviewService reviewService;
@@ -150,9 +155,23 @@ class ReviewServiceTest {
     }
 
     private Member createMember(Long memberId) {
-        return Member.builder()
+
+        Member member =  Member.builder()
                 .id(memberId)
                 .nickname("테스트유저")
+                .build();
+
+        MemberOnboardingProfile onboardingProfile = createOnboardingProfile(member);
+        member.setOnboardingProfile(onboardingProfile);
+
+        return member;
+    }
+
+    private MemberOnboardingProfile createOnboardingProfile(Member member) {
+        return MemberOnboardingProfile.builder()
+                .id(1L)
+                .member(member)
+                .honbobLevel(Level.LEVEL_3)
                 .build();
     }
 

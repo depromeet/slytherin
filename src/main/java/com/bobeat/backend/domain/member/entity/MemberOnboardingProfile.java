@@ -5,14 +5,14 @@ import com.bobeat.backend.domain.member.dto.request.OnboardingRequest;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "member_onboarding_profile")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 public class MemberOnboardingProfile extends BaseTimeEntity {
 
     @Id
@@ -35,7 +35,7 @@ public class MemberOnboardingProfile extends BaseTimeEntity {
     private OnboardingAnswer question5;
 
     @Enumerated(EnumType.STRING)
-    private Level honbapLevel = Level.LEVEL_1;
+    private Level honbobLevel = Level.LEVEL_1;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
@@ -67,10 +67,10 @@ public class MemberOnboardingProfile extends BaseTimeEntity {
         }
     }
 
-    public Level calculateAndUpdateHonbapLevel() {
+    public Level calculateAndUpdateHonbobLevel() {
         double totalWeightedScore = calculateTotalWeightedScore();
         Level level = OnboardingAnswer.calculateLevel(totalWeightedScore);
-        this.honbapLevel = level;
+        this.honbobLevel = level;
         return level;
     }
 

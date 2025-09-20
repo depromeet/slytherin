@@ -43,11 +43,11 @@ class MemberOnboardingProfileTest {
         MemberOnboardingProfile profile = MemberOnboardingProfile.create(member, request);
 
         // when
-        Level calculatedLevel = profile.calculateAndUpdateHonbapLevel();
+        Level calculatedLevel = profile.calculateAndUpdateHonbobLevel();
 
         // then
         assertThat(calculatedLevel).isEqualTo(expectedLevel);
-        assertThat(profile.getHonbapLevel()).isEqualTo(expectedLevel);
+        assertThat(profile.getHonbobLevel()).isEqualTo(expectedLevel);
     }
 
     static Stream<Arguments> provideLevelCalculationTestCases() {
@@ -119,7 +119,7 @@ class MemberOnboardingProfileTest {
         MemberOnboardingProfile profile = MemberOnboardingProfile.create(member, request);
 
         // when
-        Level calculatedLevel = profile.calculateAndUpdateHonbapLevel();
+        Level calculatedLevel = profile.calculateAndUpdateHonbobLevel();
 
         // then
         assertThat(calculatedLevel).isEqualTo(Level.LEVEL_2);
