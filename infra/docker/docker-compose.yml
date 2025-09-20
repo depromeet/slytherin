@@ -15,13 +15,15 @@ services:
     container_name: bobeat
     image: ji0513ji/bobeat
     restart: on-failure
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
     ports:
       - "8080:8080"
     networks:
       - bobeat-network
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /var/log/bobeat:/app/logs
+      - /root/logs:/app/logs
 networks:
   bobeat-network:
     driver: bridge
