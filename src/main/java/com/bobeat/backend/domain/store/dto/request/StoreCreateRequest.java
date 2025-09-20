@@ -103,7 +103,7 @@ public record StoreCreateRequest(
     @Schema(description = "좌석 옵션 요청 DTO")
     public record SeatOptionRequest(
             @Schema(description = "좌석 카테고리")
-            @NotBlank(message = "좌석 카테고리는 필수입니다")
+            @NotNull(message = "좌석 옵션은 필수입니다")
             SeatType seatType,
 
             @Schema(description = "좌석 이미지 URL")
