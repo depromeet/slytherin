@@ -30,7 +30,7 @@ public class OnboardingService {
 
         MemberOnboardingProfile profile = createOrUpdateOnboardingProfile(member, request);
 
-        Level level = profile.calculateAndUpdateHonbapLevel();
+        Level level = profile.calculateAndUpdateHonbobLevel();
 
         onboardingProfileRepository.save(profile);
 

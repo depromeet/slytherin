@@ -43,6 +43,9 @@ public class ReviewResponse {
         
         @Schema(description = "프로필 이미지 URL")
         private String profileImageUrl;
+
+        @Schema(description = "사용자의 혼밥레벨", example = "3")
+        private int honbobLevel;
     }
     
     public static ReviewResponse from(com.bobeat.backend.domain.review.entity.Review review) {
@@ -52,7 +55,8 @@ public class ReviewResponse {
                 new ReviewerInfo(
                         review.getMember().getId(),
                         review.getMember().getNickname(),
-                        review.getMember().getProfileImageUrl()
+                        review.getMember().getProfileImageUrl(),
+                        review.getMember().getOnboardingProfile().getHonbobLevel().getValue()
                 ),
                 review.getKeywords(),
                 review.getCreatedAt(),
