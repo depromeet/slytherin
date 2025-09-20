@@ -5,6 +5,8 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import java.util.Collections;
 import org.springdoc.core.properties.SwaggerUiConfigParameters;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
 import org.springframework.context.annotation.Bean;
@@ -13,9 +15,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SwaggerConfig {
 
+    private String serverUrl = "https://bobeat.store";
+
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
+                .servers(Collections
+                        .singletonList(new Server().url(serverUrl).description("API Server")))
                 .info(new Info()
                         .title("밥잇 API 명세서")
                         .description("작성중입니다")
