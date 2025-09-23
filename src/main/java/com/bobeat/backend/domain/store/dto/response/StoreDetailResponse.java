@@ -53,6 +53,7 @@ public record StoreDetailResponse(
                 .level(store.getHonbobLevel().getValue())
                 .name(store.getName())
                 .address(store.getAddress().getAddress())
+                .phone(store.getPhoneNumber())
                 .menus(menuDtos)
                 .seatInfo(seatInfoDto)
                 .seatImages(seatDtos)
