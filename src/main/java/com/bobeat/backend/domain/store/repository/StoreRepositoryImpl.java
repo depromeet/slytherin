@@ -174,10 +174,10 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     }
 
     private BooleanExpression levelLoe(StoreFilteringRequest request) {
-        if(request.filters() == null || request.filters().level() == null) {
+        if(request.filters() == null || request.filters().honbobLevel() == null) {
             return null;
         }
-        Level target = Level.fromValue(request.filters().level());
+        Level target = Level.fromValue(request.filters().honbobLevel());
         return store.honbobLevel.loe(target);
     }
 
