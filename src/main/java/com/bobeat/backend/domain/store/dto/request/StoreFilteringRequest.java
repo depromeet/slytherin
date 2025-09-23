@@ -53,7 +53,7 @@ public record StoreFilteringRequest(
 
                 @Schema(description = "혼밥 레벨 (1~4)", example = "3")
                 @NotNull
-                Integer level,
+                Integer honbobLevel,
 
                 @Schema(description = "좌석 형태", example = "[\"FOR_ONE\", \", \"FOR_TWO\"\", \"FOR_FOUR\", \", \"CUBICLE\"\", \"BAR_TABLE\"]")
                 List<SeatType> seatTypes,

@@ -29,7 +29,7 @@ public record StoreSearchResultDto(
         int walkingMinutes,
 
         @Schema(description = "좌석 형태")
-        List<String> seats,
+        List<String> seatTypes,
 
         @Schema(description = "태그")
         List<String> tags,
