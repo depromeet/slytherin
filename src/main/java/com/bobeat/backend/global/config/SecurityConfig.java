@@ -61,7 +61,10 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*",
                 "http://127.0.0.1:*",
-                "https://localhost:*"
+                "https://localhost:*",
+                "https://gryffindor.vercel.app",
+                "https://bobeat.store",
+                "https://bobeat.store:*"
         ));
 
         // 허용할 HTTP 메소드
