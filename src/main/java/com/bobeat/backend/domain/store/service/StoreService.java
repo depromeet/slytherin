@@ -2,6 +2,7 @@ package com.bobeat.backend.domain.store.service;
 
 import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.dto.request.StoreCreateRequest;
+import com.bobeat.backend.domain.store.dto.request.StoreUpdateRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
@@ -183,6 +184,92 @@ public class StoreService {
     }
 
     private void createSeatOptions(List<StoreCreateRequest.SeatOptionRequest> seatOptionRequests, Store store) {
+        List<SeatOption> seatOptions = seatOptionRequests.stream()
+                .map(seatOptionRequest -> SeatOption.builder()
+                        .store(store)
+                        .seatType(seatOptionRequest.seatType())
+                        .imageUrl(seatOptionRequest.imageUrl())
+                        .build())
+                .toList();
+
+        seatOptionRepository.saveAll(seatOptions);
+    }
+
+    @Transactional
+    public Long updateStore(Long storeId, StoreUpdateRequest request) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new CustomException(NOT_FOUND_STORE));
+
+        PrimaryCategory primaryCategory = primaryCategoryRepository.findByPrimaryType(
+                        request.categories().primaryCategory())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_STORE_CATEGORY));
+
+        Address address = updateAddress(request.address());
+        Categories categories = createCategories(primaryCategory);
+
+        store.updateName(request.name());
+        store.updateAddress(address);
+        store.updatePhoneNumber(request.phoneNumber());
+        store.updateDescription(request.description());
+        store.updateMainImageUrl(request.mainImageUrl());
+        store.updateHonbobLevel(Level.fromValue(request.honbobLevel()));
+        store.updateCategories(categories);
+
+        updateStoreImages(store, request.storeImages());
+        updateMenus(store, request.menus());
+        updateSeatOptions(store, request.seatOptions());
+
+        return store.getId();
+    }
+
+    private Address updateAddress(StoreUpdateRequest.AddressUpdateRequest addressRequest) {
+        Point location = geometryFactory.createPoint(
+                new Coordinate(addressRequest.longitude(), addressRequest.latitude())
+        );
+        location.setSRID(4326);
+
+        Address address = Address.builder()
+                .address(addressRequest.address())
+                .latitude(addressRequest.latitude())
+                .longitude(addressRequest.longitude())
+                .build();
+
+        address.setLocation(location);
+        return address;
+    }
+
+    private void updateStoreImages(Store store, List<StoreUpdateRequest.StoreImageUpdateRequest> imageRequests) {
+        storeImageRepository.deleteByStore(store);
+
+        List<StoreImage> storeImages = imageRequests.stream()
+                .map(imageRequest -> StoreImage.builder()
+                        .store(store)
+                        .imageUrl(imageRequest.imageUrl())
+                        .isMain(imageRequest.isMain())
+                        .build())
+                .toList();
+
+        storeImageRepository.saveAll(storeImages);
+    }
+
+    private void updateMenus(Store store, List<StoreUpdateRequest.MenuUpdateRequest> menuRequests) {
+        menuRepository.deleteByStore(store);
+
+        List<Menu> menus = menuRequests.stream()
+                .map(menuRequest -> Menu.builder()
+                        .store(store)
+                        .name(menuRequest.name())
+                        .price(menuRequest.price())
+                        .imageUrl(menuRequest.imageUrl())
+                        .build())
+                .toList();
+
+        menuRepository.saveAll(menus);
+    }
+
+    private void updateSeatOptions(Store store, List<StoreUpdateRequest.SeatOptionUpdateRequest> seatOptionRequests) {
+        seatOptionRepository.deleteByStore(store);
+
         List<SeatOption> seatOptions = seatOptionRequests.stream()
                 .map(seatOptionRequest -> SeatOption.builder()
                         .store(store)

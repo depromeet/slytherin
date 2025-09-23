@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface SeatOptionRepository extends JpaRepository<SeatOption, Long> {
 
     List<SeatOption> findByStore(Store store);
+
+    void deleteByStore(Store store);
 }

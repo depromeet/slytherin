@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface StoreImageRepository extends JpaRepository<StoreImage, Long> {
 
     List<StoreImage> findByStore(Store store);
+
+    void deleteByStore(Store store);
 }
