@@ -21,6 +21,10 @@ public record StoreDetailResponse(
         String name,
         @Schema(description = "주소")
         String address,
+        @Schema(description = "위도")
+        Double lat,
+        @Schema(description = "경도")
+        Double lon,
         @Schema(description = "전화번호")
         String phone,
         @Schema(description = "메뉴 목록")
@@ -52,7 +56,10 @@ public record StoreDetailResponse(
                 .thumbnailUrls(thumbnailUrls)
                 .level(store.getHonbobLevel().getValue())
                 .name(store.getName())
+                .lat(store.getAddress().getLatitude())
+                .lon(store.getAddress().getLongitude())
                 .address(store.getAddress().getAddress())
+                .phone(store.getPhoneNumber())
                 .menus(menuDtos)
                 .seatInfo(seatInfoDto)
                 .seatImages(seatDtos)
