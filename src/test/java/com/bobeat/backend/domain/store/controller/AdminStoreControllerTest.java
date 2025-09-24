@@ -17,6 +17,8 @@ import com.bobeat.backend.domain.store.repository.SeatOptionRepository;
 import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
 import com.bobeat.backend.domain.store.service.StoreService;
+import com.bobeat.backend.domain.store.vo.Address;
+import com.bobeat.backend.domain.store.vo.Categories;
 import com.bobeat.backend.global.db.PostgreSQLTestContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -190,7 +192,7 @@ class AdminStoreControllerTest {
         return storeRepository.save(store);
     }
 
-    private com.bobeat.backend.domain.store.vo.Address createTestAddress(String address) {
+    private Address createTestAddress(String address) {
         Point location = point(37.5665, 126.9784);
         com.bobeat.backend.domain.store.vo.Address addr = com.bobeat.backend.domain.store.vo.Address.builder()
                 .address(address)
@@ -201,8 +203,8 @@ class AdminStoreControllerTest {
         return addr;
     }
 
-    private com.bobeat.backend.domain.store.vo.Categories createTestCategories() {
-        return new com.bobeat.backend.domain.store.vo.Categories(primaryCategory, null);
+    private Categories createTestCategories() {
+        return new Categories(primaryCategory, null);
     }
 
 
