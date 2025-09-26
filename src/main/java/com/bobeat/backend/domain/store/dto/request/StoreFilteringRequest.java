@@ -65,11 +65,9 @@ public record StoreFilteringRequest(
 
         public record PriceRange(
                 @Schema(description = "최소 가격(원)", example = "8000")
-                @NotNull
                 Integer min,
 
                 @Schema(description = "최대 가격(원)", example = "15000")
-                @NotNull
                 Integer max
         ) {}
 }

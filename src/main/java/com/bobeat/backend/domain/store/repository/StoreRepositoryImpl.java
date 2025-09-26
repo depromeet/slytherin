@@ -185,13 +185,8 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         if (request.filters().categories() == null || request.filters().categories().isEmpty()) {
             return null;
         }
-
         List<String> categories = request.filters().categories();
-
-        BooleanExpression primaryIn = store.categories.primaryCategory.primaryType.in(categories);
-        BooleanExpression secondaryIn = store.categories.secondaryCategory.secondaryType.in(categories);
-
-        return primaryIn.or(secondaryIn);
+        return store.categories.primaryCategory.primaryType.in(categories);
     }
 
     // TODO: 가격 범위 쿼리 방식 재검토(AS-IS: 서브쿼리 방식으로 추천메뉴 중 가격 조건에 맞는 메뉴가 하나라도 있는지 확인)
