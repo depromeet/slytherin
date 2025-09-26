@@ -34,4 +34,32 @@ public class Store extends BaseTimeEntity {
 
     @Embedded
     private Categories categories;
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updatePhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public void updateDescription(String description) {
+        this.description = description;
+    }
+
+    public void updateMainImageUrl(String mainImageUrl) {
+        this.mainImageUrl = mainImageUrl;
+    }
+
+    public void updateHonbobLevel(Level honbobLevel) {
+        this.honbobLevel = honbobLevel;
+    }
+
+    public void updateAddress(Address address) {
+        this.address = address;
+    }
+
+    public void updateCategories(Categories categories) {
+        this.categories = categories;
+    }
 }

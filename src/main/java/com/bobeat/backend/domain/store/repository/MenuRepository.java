@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface MenuRepository extends JpaRepository<Menu, Long> {
 
     List<Menu> findByStore(Store store);
+
+    void deleteByStore(Store store);
 }
