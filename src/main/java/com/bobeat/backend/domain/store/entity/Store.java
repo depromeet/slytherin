@@ -30,6 +30,7 @@ public class Store extends BaseTimeEntity {
 
     private String mainImageUrl;
 
+    @Enumerated(EnumType.ORDINAL)
     private Level honbobLevel;
 
     @Embedded
