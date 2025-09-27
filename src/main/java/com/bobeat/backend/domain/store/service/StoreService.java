@@ -1,30 +1,39 @@
 package com.bobeat.backend.domain.store.service;
 
+import static com.bobeat.backend.global.exception.ErrorCode.NOT_FOUND_STORE;
+
 import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.dto.request.StoreCreateRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
-import com.bobeat.backend.domain.store.entity.*;
-import com.bobeat.backend.domain.store.repository.*;
+import com.bobeat.backend.domain.store.entity.Menu;
+import com.bobeat.backend.domain.store.entity.PrimaryCategory;
+import com.bobeat.backend.domain.store.entity.SeatOption;
+import com.bobeat.backend.domain.store.entity.Store;
+import com.bobeat.backend.domain.store.entity.StoreImage;
+import com.bobeat.backend.domain.store.repository.MenuRepository;
+import com.bobeat.backend.domain.store.repository.PrimaryCategoryRepository;
+import com.bobeat.backend.domain.store.repository.SeatOptionRepository;
+import com.bobeat.backend.domain.store.repository.StoreImageRepository;
+import com.bobeat.backend.domain.store.repository.StoreRepository;
+import com.bobeat.backend.domain.store.repository.StoreRepositoryCustom;
 import com.bobeat.backend.domain.store.vo.Address;
 import com.bobeat.backend.domain.store.vo.Categories;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
 import com.bobeat.backend.global.response.CursorPageResponse;
 import com.bobeat.backend.global.util.KeysetCursor;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.bobeat.backend.global.exception.ErrorCode.NOT_FOUND_STORE;
 
 @Service
 @RequiredArgsConstructor
@@ -66,7 +75,8 @@ public class StoreService {
                             s.getName(),
                             s.getMainImageUrl(),
                             repMenuMap.getOrDefault(id, new StoreSearchResultDto.SignatureMenu(null, 0)),
-                            new StoreSearchResultDto.Coordinate(s.getAddress().getLatitude(), s.getAddress().getLongitude()),
+                            new StoreSearchResultDto.Coordinate(s.getAddress().getLatitude(),
+                                    s.getAddress().getLongitude()),
                             distance,
                             walkingMinutes,
                             seatTypesMap.getOrDefault(id, List.of()),
@@ -89,16 +99,26 @@ public class StoreService {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new CustomException(NOT_FOUND_STORE));
         List<StoreImage> storeImages = storeImageRepository.findByStore(store);
-        List<Menu> menus = menuRepository.findByStore(store);
+        //List<Menu> menus = menuRepository.findByStore(store);
+
+        List<Menu> menus1 = menuRepository.findTop3ByStoreAndRecommendFalseOrderByIdAsc(store);
+        List<Menu> menus2 = menuRepository.findTop3ByStoreAndRecommendTrueOrderByIdAsc(store);
+        List<Menu> sortMenus = sortMenuByRecommend(menus1, menus2);
         List<SeatOption> seatOptions = seatOptionRepository.findByStore(store);
-        return StoreDetailResponse.of(store, storeImages, menus, seatOptions);
+        return StoreDetailResponse.of(store, storeImages, sortMenus, seatOptions);
     }
 
     private List<String> buildTagsFromCategories(Categories c) {
-        if (c == null) return List.of();
+        if (c == null) {
+            return List.of();
+        }
         List<String> tags = new ArrayList<>(5);
-        if (c.getPrimaryCategory() != null) tags.add(c.getPrimaryCategory().getPrimaryType());
-        if (c.getSecondaryCategory() != null) tags.add(c.getSecondaryCategory().getSecondaryType());
+        if (c.getPrimaryCategory() != null) {
+            tags.add(c.getPrimaryCategory().getPrimaryType());
+        }
+        if (c.getSecondaryCategory() != null) {
+            tags.add(c.getSecondaryCategory().getSecondaryType());
+        }
         return tags;
     }
 
@@ -192,5 +212,11 @@ public class StoreService {
                 .toList();
 
         seatOptionRepository.saveAll(seatOptions);
+    }
+
+    private List<Menu> sortMenuByRecommend(List<Menu> menus1, List<Menu> menus2) {
+        menus1.addAll(menus2);
+        return menus1.stream()
+                .sorted(Comparator.comparing(Menu::isRecommend)).toList().reversed();
     }
 }
