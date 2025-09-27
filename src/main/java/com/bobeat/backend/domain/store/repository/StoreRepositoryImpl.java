@@ -28,7 +28,7 @@ import static com.bobeat.backend.domain.store.entity.QStore.store;
 @RequiredArgsConstructor
 public class StoreRepositoryImpl implements StoreRepositoryCustom {
     private final JPAQueryFactory queryFactory;
-    private static final int DEFAULT_RADIUS_METERS = 700;
+    private static final int DEFAULT_RADIUS_METERS = 5000;
 
     @Override
     public List<StoreRow> findStoresSlice(StoreFilteringRequest request, int limitPlusOne) {
