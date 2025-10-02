@@ -6,12 +6,12 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum ReviewKeyword {
-    
-    BEST_TASTE("맛은 최고"),
-    GOOD_FOR_SOLO("혼밥 대박"),
+
+    FAST_TURNOVER("빠른 회전율"),
+    SPACIOUS_STORE("넓은 매장"),
     KIND_SERVICE("친절한 응대"),
-    NICE_STAFF("재밌던 직원"),
-    OPEN_ATMOSPHERE("보통의 맛");
-    
+    AFFORDABLE_MEAL("저렴한 한끼"),
+    GUARANTEED_TASTE("보증된 맛");
+
     private final String displayName;
 }
