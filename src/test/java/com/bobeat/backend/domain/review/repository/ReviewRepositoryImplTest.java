@@ -117,7 +117,7 @@ class ReviewRepositoryImplTest {
     private Review createAndSaveReview(String content, Member member, Store store) {
         Review review = Review.builder()
                 .content(content)
-                .keywords(List.of(ReviewKeyword.BEST_TASTE))
+                .keywords(List.of(ReviewKeyword.GUARANTEED_TASTE))
                 .member(member)
                 .store(store)
                 .build();

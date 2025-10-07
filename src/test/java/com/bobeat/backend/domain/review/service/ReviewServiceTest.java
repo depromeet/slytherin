@@ -1,5 +1,10 @@
 package com.bobeat.backend.domain.review.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+
 import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.member.entity.MemberOnboardingProfile;
@@ -14,6 +19,7 @@ import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,28 +27,21 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
 
     @Mock
     private ReviewRepository reviewRepository;
-    
+
     @Mock
     private MemberRepository memberRepository;
-    
+
     @Mock
     private StoreRepository storeRepository;
 
     @Mock
     private MemberOnboardingProfileRepository onboardingProfileRepository;
-    
+
     @InjectMocks
     private ReviewService reviewService;
 
@@ -52,10 +51,10 @@ class ReviewServiceTest {
         Long memberId = 1L;
         Long storeId = 1L;
         CreateReviewRequest request = createReviewRequest(storeId);
-        
+
         Member member = createMember(memberId);
         Store store = createStore(storeId);
-        
+
         given(memberRepository.findByIdOrElseThrow(memberId)).willReturn(member);
         given(storeRepository.findByIdOrThrow(storeId)).willReturn(store);
         given(reviewRepository.existsByMemberIdAndStoreId(memberId, storeId)).willReturn(true);
@@ -72,10 +71,10 @@ class ReviewServiceTest {
         Long reviewOwnerId = 1L;
         Long otherMemberId = 2L;
         Long reviewId = 1L;
-        
+
         UpdateReviewRequest request = createUpdateReviewRequest();
         Review review = createReviewWithMember(reviewId, reviewOwnerId);
-        
+
         given(reviewRepository.findByIdOrThrow(reviewId)).willReturn(review);
 
         // when & then
@@ -90,9 +89,9 @@ class ReviewServiceTest {
         Long reviewOwnerId = 1L;
         Long otherMemberId = 2L;
         Long reviewId = 1L;
-        
+
         Review review = createReviewWithMember(reviewId, reviewOwnerId);
-        
+
         given(reviewRepository.findByIdOrThrow(reviewId)).willReturn(review);
 
         // when & then
@@ -106,10 +105,10 @@ class ReviewServiceTest {
         // given
         Long memberId = 1L;
         Long reviewId = 1L;
-        
+
         UpdateReviewRequest request = createUpdateReviewRequest();
         Review review = createReviewWithMember(reviewId, memberId);
-        
+
         given(reviewRepository.findByIdOrThrow(reviewId)).willReturn(review);
 
         // when
@@ -127,9 +126,9 @@ class ReviewServiceTest {
         // given
         Long memberId = 1L;
         Long reviewId = 1L;
-        
+
         Review review = createReviewWithMember(reviewId, memberId);
-        
+
         given(reviewRepository.findByIdOrThrow(reviewId)).willReturn(review);
 
         // when
@@ -143,7 +142,7 @@ class ReviewServiceTest {
         CreateReviewRequest request = new CreateReviewRequest();
         request.setStoreId(storeId);
         request.setContent("맛있어요!");
-        request.setKeywords(List.of(ReviewKeyword.BEST_TASTE, ReviewKeyword.GOOD_FOR_SOLO));
+        request.setKeywords(List.of(ReviewKeyword.KIND_SERVICE, ReviewKeyword.GUARANTEED_TASTE));
         return request;
     }
 
@@ -156,7 +155,7 @@ class ReviewServiceTest {
 
     private Member createMember(Long memberId) {
 
-        Member member =  Member.builder()
+        Member member = Member.builder()
                 .id(memberId)
                 .nickname("테스트유저")
                 .build();
@@ -185,11 +184,11 @@ class ReviewServiceTest {
     private Review createReviewWithMember(Long reviewId, Long memberId) {
         Member member = createMember(memberId);
         Store store = createStore(1L);
-        
+
         return Review.builder()
                 .id(reviewId)
                 .content("기존 리뷰 내용")
-                .keywords(List.of(ReviewKeyword.BEST_TASTE))
+                .keywords(List.of(ReviewKeyword.KIND_SERVICE))
                 .member(member)
                 .store(store)
                 .build();
