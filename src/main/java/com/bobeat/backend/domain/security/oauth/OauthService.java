@@ -52,6 +52,7 @@ public class OauthService {
     private Member toEntity(OAuth2UserInfo userInfo) {
         return Member.builder()
                 .socialProvider(userInfo.getProviderType())
+                .nickname(NicknameGenerator.getRandomNickname())
                 .providerId(userInfo.getProviderId())
                 .email(userInfo.getEmail())
                 .role(MemberRole.USER)
