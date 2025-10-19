@@ -24,6 +24,19 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /root/logs:/app/logs
+  nginx:
+    image: nginx:latest
+    container_name: bobeat-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - bobeat-network
+    volumes:
+      - /etc/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /root/logs:/var/log/nginx
 networks:
   bobeat-network:
     driver: bridge
