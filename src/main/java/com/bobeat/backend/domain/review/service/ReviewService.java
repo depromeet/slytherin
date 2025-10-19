@@ -9,6 +9,8 @@ import com.bobeat.backend.domain.review.dto.response.StoreInfo;
 import com.bobeat.backend.domain.review.entity.Review;
 import com.bobeat.backend.domain.review.repository.ReviewRepository;
 import com.bobeat.backend.domain.store.entity.Store;
+import com.bobeat.backend.domain.store.entity.StoreImage;
+import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
@@ -26,6 +28,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final MemberRepository memberRepository;
     private final StoreRepository storeRepository;
+    private final StoreImageRepository storeImageRepository;
 
     @Transactional
     public ReviewResponse createReview(Long memberId, CreateReviewRequest request) {
@@ -50,13 +53,14 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public CursorPageResponse<ReviewResponse> getReviewsByStore(Long storeId, CursorPaginationRequest request) {
         Store store = storeRepository.findByIdOrThrow(storeId);
+        StoreImage mainImage = storeImageRepository.findByStoreAndIsMainTrue(store);
 
         List<Review> reviews = reviewRepository.findByStoreIdWithCursor(storeId, request);
 
         StoreInfo metadata = new StoreInfo(
                 store.getId(),
                 store.getName(),
-                store.getMainImageUrl()
+                mainImage.getImageUrl()
         );
 
         return CursorPageResponse.of(

@@ -65,23 +65,25 @@ public class StoreService {
 
         List<StoreSearchResultDto> data = rows.stream()
                 .map(r -> {
-                    var s = r.store();
-                    long id = s.getId();
+                    var store = r.store();
+                    var mainImage = storeImageRepository.findByStoreAndIsMainTrue(store);
+
+                    long id = store.getId();
                     int distance = r.distance();
                     int walkingMinutes = (int) Math.ceil(distance / 80.0);
 
                     return new StoreSearchResultDto(
-                            s.getId(),
-                            s.getName(),
-                            s.getMainImageUrl(),
+                            store.getId(),
+                            store.getName(),
+                            mainImage.getImageUrl(),
                             repMenuMap.getOrDefault(id, new StoreSearchResultDto.SignatureMenu(null, 0)),
-                            new StoreSearchResultDto.Coordinate(s.getAddress().getLatitude(),
-                                    s.getAddress().getLongitude()),
+                            new StoreSearchResultDto.Coordinate(store.getAddress().getLatitude(),
+                                    store.getAddress().getLongitude()),
                             distance,
                             walkingMinutes,
                             seatTypesMap.getOrDefault(id, List.of()),
-                            buildTagsFromCategories(s.getCategories()),
-                            s.getHonbobLevel() != null ? s.getHonbobLevel().getValue() : 0
+                            buildTagsFromCategories(store.getCategories()),
+                            store.getHonbobLevel() != null ? store.getHonbobLevel().getValue() : 0
                     );
                 })
                 .collect(Collectors.toList());
@@ -143,7 +145,6 @@ public class StoreService {
                 .address(address)
                 .phoneNumber(request.phoneNumber())
                 .description(request.description())
-                .mainImageUrl(request.mainImageUrl())
                 .honbobLevel(Level.fromValue(request.honbobLevel()))
                 .categories(categories)
                 .build();
