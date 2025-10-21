@@ -64,7 +64,9 @@ public class SecurityConfig {
                 "https://localhost:*",
                 "https://gryffindor.vercel.app",
                 "https://bobeat.store",
-                "https://bobeat.store:*"
+                "https://bobeat.store:*",
+                "https://bobtory.com",
+                "https://bobtory.com:*"
         ));
 
         // 허용할 HTTP 메소드
