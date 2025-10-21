@@ -11,11 +11,9 @@ services:
       - bobeat-network
     volumes:
       - postgis-data:/var/lib/postgresql/data
-    deploy:
-      resources:
-        limits:
-          cpus: "1"
-          memory: 2g
+    mem_limit: 2g
+    cpus: 1.0
+
   bobeat-server:
     container_name: bobeat
     image: ji0513ji/bobeat
@@ -29,11 +27,9 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /root/logs:/app/logs
-    deploy:
-      resources:
-        limits:
-          cpus: "0.8"
-          memory: 1500M
+    mem_limit: 1500m
+    cpus: 0.8
+
   nginx:
     image: nginx:1.24.0
     container_name: bobeat-nginx
@@ -47,11 +43,9 @@ services:
       - /etc/nginx/conf.d:/etc/nginx/conf.d:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /root/logs:/var/log/nginx
-    deploy:
-      resources:
-        limits:
-          cpus: "0.2"
-          memory: 256M
+    mem_limit: 256m
+    cpus: 0.2
+
 networks:
   bobeat-network:
     driver: bridge
