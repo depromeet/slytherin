@@ -46,3 +46,5 @@ application.yml
 ### QueryDSL ###
 **/generated/
 
+/logs
+/infra/script/import_db.sh
