@@ -11,8 +11,8 @@ services:
       - bobeat-network
     volumes:
       - postgis-data:/var/lib/postgresql/data
-    mem_limit: 2g
-    cpus: 1.0
+    mem_limit: 1228m
+    cpus: 0.8
 
   bobeat-server:
     container_name: bobeat
@@ -27,8 +27,8 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /root/logs/springboot:/app/logs
-    mem_limit: 1500m
-    cpus: 0.8
+    mem_limit: 1g
+    cpus: 0.7
 
   nginx:
     image: nginx:1.24.0
@@ -55,6 +55,9 @@ services:
       - grafana-data:/var/lib/grafana
     networks:
       - bobeat-network
+    mem_limit: 256m
+    cpus: 0.1
+
   prometheus:
     container_name: prometheus
     image: prom/prometheus:v3.7.1
@@ -66,6 +69,8 @@ services:
     restart: unless-stopped
     networks:
       - bobeat-network
+    mem_limit: 256m
+    cpus: 0.1
 
   nginx-exporter:
     image: nginx/nginx-prometheus-exporter:1.3.0
@@ -78,6 +83,8 @@ services:
       - nginx
     networks:
       - bobeat-network
+    mem_limit: 128m
+    cpus: 0.05
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter
@@ -87,6 +94,8 @@ services:
       - "9187:9187"
     networks:
       - bobeat-network
+    mem_limit: 128m
+    cpus: 0.05
 
   loki:
     image: grafana/loki:2.9.0
@@ -98,6 +107,8 @@ services:
       - loki-data:/loki
     networks:
       - bobeat-network
+    mem_limit: 256m
+    cpus: 0.1
 
   promtail:
     image: grafana/promtail:2.9.0
@@ -111,6 +122,8 @@ services:
       - bobeat-network
     depends_on:
       - loki
+    mem_limit: 128m
+    cpus: 0.05
 
 networks:
   bobeat-network:
