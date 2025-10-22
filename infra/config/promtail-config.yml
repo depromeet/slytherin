@@ -1,7 +1,3 @@
-server:
-  http_listen_port: 9080
-  grpc_listen_port: 0
-
 positions:
   filename: /tmp/positions.yaml
 
@@ -16,11 +12,16 @@ scrape_configs:
           job: bobeat
           __path__: /app/logs/bobeat.log
 
-  - job_name: nginx
+  - job_name: nginx_access
     static_configs:
       - targets: [ localhost ]
         labels:
           job: nginx
-          __path__:
-            - /app/logs/access.log
-            - /app/logs/error.log
+          __path__: /var/log/nginx/access.log
+
+  - job_name: nginx_error
+    static_configs:
+      - targets: [ localhost ]
+        labels:
+          job: nginx
+          __path__: /var/log/nginx/error.log

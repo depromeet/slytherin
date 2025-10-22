@@ -105,7 +105,7 @@ services:
     volumes:
       - /root/logs/springboot:/app/logs
       - /root/logs/nginx:/var/log/nginx
-      - ./config/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - ../config/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
     command: -config.file=/etc/promtail/promtail-config.yml
     networks:
       - bobeat-network
