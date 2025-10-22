@@ -26,7 +26,7 @@ services:
       - bobeat-network
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /root/logs:/app/logs
+      - /root/logs/springboot:/app/logs
     mem_limit: 1500m
     cpus: 0.8
 
@@ -42,7 +42,7 @@ services:
     volumes:
       - /etc/nginx/conf.d:/etc/nginx/conf.d:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /root/logs:/var/log/nginx
+      - /root/logs/nginx:/var/log/nginx
     mem_limit: 256m
     cpus: 0.2
 
