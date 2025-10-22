@@ -11,6 +11,9 @@ services:
       - bobeat-network
     volumes:
       - postgis-data:/var/lib/postgresql/data
+    mem_limit: 2g
+    cpus: 1.0
+
   bobeat-server:
     container_name: bobeat
     image: ji0513ji/bobeat
@@ -23,7 +26,25 @@ services:
       - bobeat-network
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /root/logs:/app/logs
+      - /root/logs/springboot:/app/logs
+    mem_limit: 1500m
+    cpus: 0.8
+
+  nginx:
+    image: nginx:1.24.0
+    container_name: bobeat-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - bobeat-network
+    volumes:
+      - /etc/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /root/logs/nginx:/var/log/nginx
+    mem_limit: 256m
+    cpus: 0.2
 
   grafana:
     container_name: grafana
@@ -45,6 +66,7 @@ services:
     restart: unless-stopped
     networks:
       - bobeat-network
+
 networks:
   bobeat-network:
     driver: bridge
