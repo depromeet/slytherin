@@ -24,10 +24,35 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /root/logs:/app/logs
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-enterprise
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - bobeat-network
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v3.7.1
+    volumes:
+      - ../config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    networks:
+      - bobeat-network
 networks:
   bobeat-network:
     driver: bridge
 
 volumes:
   postgis-data:
+    driver: local
+  grafana-data:
+    driver: local
+  prometheus-data:
     driver: local
