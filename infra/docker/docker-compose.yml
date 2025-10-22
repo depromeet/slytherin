@@ -75,7 +75,7 @@ services:
     ports:
       - "9113:9113"
     depends_on:
-      - bobeat-nginx
+      - nginx
     networks:
       - bobeat-network
 
