@@ -6,3 +6,7 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: [ 'bobeat-server:8080' ]
+
+  - job_name: 'nginx'
+    static_configs:
+      - targets: [ 'nginx-exporter:9113' ]
