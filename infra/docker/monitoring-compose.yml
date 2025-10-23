@@ -32,8 +32,6 @@ services:
       - "-nginx.scrape-uri=http://bobeat-nginx:8081/stub_status"
     ports:
       - "9113:9113"
-    depends_on:
-      - nginx
     networks:
       - bobeat-network
     mem_limit: 128m
