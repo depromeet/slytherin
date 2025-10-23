@@ -59,8 +59,11 @@ dependencies {
     // postGIS
     implementation "org.hibernate.orm:hibernate-spatial"
     implementation "org.locationtech.jts:jts-core:1.19.0"
-}
 
+    // Monitoring
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+}
 
 
 // Querydsl 설정 시작

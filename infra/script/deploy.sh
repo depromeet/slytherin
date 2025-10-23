@@ -24,6 +24,6 @@ fi
 
 
 echo "🚀 Step 3: 새 컨테이너 실행"
-docker compose -f infra/docker/docker-compose.yml up -d
+docker compose -f infra/docker/app-compose.yml up -d
 
 echo "✅ 배포 완료: 컨테이너 '$CONTAINER_NAME' 실행 중"

@@ -1,0 +1,27 @@
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: bobeat
+    static_configs:
+      - targets: [ localhost ]
+        labels:
+          job: bobeat
+          __path__: /app/logs/bobeat.log
+
+  - job_name: nginx_access
+    static_configs:
+      - targets: [ localhost ]
+        labels:
+          job: nginx
+          __path__: /var/log/nginx/access.log
+
+  - job_name: nginx_error
+    static_configs:
+      - targets: [ localhost ]
+        labels:
+          job: nginx
+          __path__: /var/log/nginx/error.log

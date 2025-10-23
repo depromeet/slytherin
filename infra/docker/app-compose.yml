@@ -11,8 +11,8 @@ services:
       - bobeat-network
     volumes:
       - postgis-data:/var/lib/postgresql/data
-    mem_limit: 2g
-    cpus: 1.0
+    mem_limit: 1228m
+    cpus: 0.8
 
   bobeat-server:
     container_name: bobeat
@@ -27,8 +27,8 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /root/logs/springboot:/app/logs
-    mem_limit: 1500m
-    cpus: 0.8
+    mem_limit: 1g
+    cpus: 0.7
 
   nginx:
     image: nginx:1.24.0
@@ -45,7 +45,6 @@ services:
       - /root/logs/nginx:/var/log/nginx
     mem_limit: 256m
     cpus: 0.2
-
 networks:
   bobeat-network:
     driver: bridge
