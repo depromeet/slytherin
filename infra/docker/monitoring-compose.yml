@@ -1,51 +1,4 @@
 services:
-  postgresql:
-    image: postgis/postgis:16-3.4
-    environment:
-      POSTGRES_DB: bobeat
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: q1w2e3r4@
-    ports:
-      - "5432:5432"
-    networks:
-      - bobeat-network
-    volumes:
-      - postgis-data:/var/lib/postgresql/data
-    mem_limit: 1228m
-    cpus: 0.8
-
-  bobeat-server:
-    container_name: bobeat
-    image: ji0513ji/bobeat
-    restart: on-failure
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-    ports:
-      - "8080:8080"
-    networks:
-      - bobeat-network
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /root/logs/springboot:/app/logs
-    mem_limit: 1g
-    cpus: 0.7
-
-  nginx:
-    image: nginx:1.24.0
-    container_name: bobeat-nginx
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - bobeat-network
-    volumes:
-      - /etc/nginx/conf.d:/etc/nginx/conf.d:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /root/logs/nginx:/var/log/nginx
-    mem_limit: 256m
-    cpus: 0.2
-
   grafana:
     container_name: grafana
     image: grafana/grafana-enterprise
@@ -130,8 +83,6 @@ networks:
     driver: bridge
 
 volumes:
-  postgis-data:
-    driver: local
   grafana-data:
     driver: local
   prometheus-data:
