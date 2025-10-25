@@ -3,8 +3,8 @@ services:
     image: postgis/postgis:16-3.4
     environment:
       POSTGRES_DB: bobeat
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: q1w2e3r4@
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     networks:
