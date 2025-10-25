@@ -1,8 +1,9 @@
 package com.bobeat.backend.domain.store.dto.response;
 
+import com.bobeat.backend.domain.store.entity.Store;
+import com.bobeat.backend.domain.store.entity.StoreImage;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-
 import java.util.List;
 
 @Schema(description = "위치 기반 가게 검색 response")
@@ -37,23 +38,39 @@ public record StoreSearchResultDto(
         @Schema(description = "혼밥레벨")
         int honbobLevel
 ) {
-        @Schema(description = "대표 메뉴정보")
-        public record SignatureMenu(
-                @Schema(description = "대표 메뉴 이름")
-                String name,
+    @Schema(description = "대표 메뉴정보")
+    public record SignatureMenu(
+            @Schema(description = "대표 메뉴 이름")
+            String name,
 
-                @Schema(description = "대표 메뉴 가격(원)")
-                int price
-        ) {}
+            @Schema(description = "대표 메뉴 가격(원)")
+            int price
+    ) {
+    }
 
-        @Schema(description = "위경도 정보")
-        public record Coordinate(
-                @Schema(description = "위도", example = "37.58")
-                @NotNull
-                Double lat,
+    @Schema(description = "위경도 정보")
+    public record Coordinate(
+            @Schema(description = "위도", example = "37.58")
+            @NotNull
+            Double lat,
 
-                @Schema(description = "경도", example = "127.0")
-                @NotNull
-                Double lon
-        ) {}
+            @Schema(description = "경도", example = "127.0")
+            @NotNull
+            Double lon
+    ) {
+    }
+
+    public static StoreSearchResultDto of(Store store, StoreImage storeImage, List<String> seatTypeNames,
+                                          List<String> tagNames) {
+        return new StoreSearchResultDto(store.getId(),
+                store.getName(),
+                storeImage.getImageUrl(),
+                new StoreSearchResultDto.SignatureMenu(null, 0),
+                new Coordinate(store.getAddress().getLatitude(), store.getAddress().getLongitude()),
+                10,
+                10,
+                seatTypeNames,
+                tagNames,
+                store.getHonbobLevel().getValue());
+    }
 }

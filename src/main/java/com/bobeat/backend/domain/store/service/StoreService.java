@@ -27,6 +27,7 @@ import com.bobeat.backend.global.util.KeysetCursor;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
@@ -156,6 +157,25 @@ public class StoreService {
         createSeatOptions(request.seatOptions(), savedStore);
 
         return savedStore.getId();
+    }
+
+    public List<StoreSearchResultDto> searchStore(String query) {
+        List<Store> stores = storeRepository.findAll().stream()
+                .limit(5)
+                .toList();
+        List<Long> storeIds = stores.stream()
+                .map(Store::getId)
+                .toList();
+        Map<Long, List<String>> seatTypes = storeRepository.findSeatTypes(storeIds);
+
+        return stores.stream()
+                .map(store -> {
+                    StoreImage storeimage = storeImageRepository.findByStoreAndIsMainTrue(store);
+                    List<String> seatTypeNames = seatTypes.getOrDefault(store.getId(), List.of());
+                    List<String> tagNames = buildTagsFromCategories(store.getCategories());
+                    return StoreSearchResultDto.of(store, storeimage, seatTypeNames, tagNames);
+                })
+                .toList();
     }
 
     private Address createAddress(StoreCreateRequest.AddressRequest addressRequest) {
