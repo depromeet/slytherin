@@ -5,6 +5,7 @@ import static com.bobeat.backend.global.exception.ErrorCode.NOT_FOUND_STORE;
 import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.dto.request.StoreCreateRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
+import com.bobeat.backend.domain.store.dto.response.SearchHistoryDto;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.entity.Menu;
@@ -176,6 +177,10 @@ public class StoreService {
                     return StoreSearchResultDto.of(store, storeimage, seatTypeNames, tagNames);
                 })
                 .toList();
+    }
+
+    public List<SearchHistoryDto> findSearchHistory() {
+        return null;
     }
 
     private Address createAddress(StoreCreateRequest.AddressRequest addressRequest) {
