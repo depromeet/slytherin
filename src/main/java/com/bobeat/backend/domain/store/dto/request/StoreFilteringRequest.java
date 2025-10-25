@@ -24,8 +24,16 @@ public record StoreFilteringRequest(
 
         @Schema(description = "페이징 정보")
         @Valid
-        CursorPaginationRequest paging
+        CursorPaginationRequest paging,
+
+        @Schema(description = "정렬 기준 (DISTANCE: 거리순, RECOMMENDED: 추천순)", example = "DISTANCE")
+        SortBy sortBy
 ) {
+        public enum SortBy {
+                DISTANCE,      // 거리순 (거리 100%)
+                RECOMMENDED    // 추천순 (거리 70% + 내부점수 30%)
+        }
+
         public record BoundingBox(
                 @Schema(description = "박스 좌상단 위도", example = "37.5665")
                 @NotNull

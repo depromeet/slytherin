@@ -47,20 +47,8 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
         filters = andAll(filters, applyKeyset(request, distanceExpr));
 
-        // 복합 점수 계산 (30% 내부점수 + 70% 거리점수)
-        // distanceScore = 100 * (1 - (distance - minDistance) / (maxDistance - minDistance))
-        // 단순화를 위해 거리가 가까울수록 높은 점수를 주는 방식으로 계산
-        // compositeScore = COALESCE(internalScore, 50) * 0.3 - distance * 0.0007
-        // (거리 계수 0.0007은 1000m당 약 0.7점 감소를 의미)
-        NumberExpression<Double> compositeScore = store.internalScore
-                .coalesce(50.0)  // null이면 50점 기본값
-                .multiply(0.3)
-                .subtract(distanceExpr.multiply(0.0007));
-
-        OrderSpecifier<?>[] orders = new OrderSpecifier<?>[]{
-                compositeScore.desc(),  // 복합 점수 높은 순
-                store.id.asc()          // 동점일 때 ID 오름차순
-        };
+        // sortBy에 따른 정렬 기준 결정
+        OrderSpecifier<?>[] orders = buildOrderSpecifiers(request, distanceExpr);
 
         List<Tuple> rows = queryFactory
                 .select(store, distanceExpr)
@@ -158,10 +146,31 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         return map;
     }
 
-    private OrderSpecifier<?>[] buildOrder(NumberExpression<Integer> distanceExpr) {
+    /**
+     * sortBy 파라미터에 따른 정렬 기준 생성
+     * - DISTANCE (null 포함): 거리순 100%
+     * - RECOMMENDED: 복합 점수 (내부점수 30% + 거리 70%)
+     */
+    private OrderSpecifier<?>[] buildOrderSpecifiers(StoreFilteringRequest request, NumberExpression<Integer> distanceExpr) {
+        // sortBy가 null이거나 DISTANCE면 거리순 정렬
+        if (request.sortBy() == null || request.sortBy() == StoreFilteringRequest.SortBy.DISTANCE) {
+            return new OrderSpecifier<?>[]{
+                    distanceExpr.asc(),    // 거리 가까운 순
+                    store.id.asc()         // 동점일 때 ID 오름차순
+            };
+        }
+
+        // RECOMMENDED: 복합 점수 기반 정렬
+        // compositeScore = COALESCE(internalScore, 50) * 0.3 - distance * 0.0007
+        // (거리 계수 0.0007은 1000m당 약 0.7점 감소를 의미)
+        NumberExpression<Double> compositeScore = store.internalScore
+                .coalesce(50.0)  // null이면 50점 기본값
+                .multiply(0.3)
+                .subtract(distanceExpr.multiply(0.0007));
+
         return new OrderSpecifier<?>[]{
-                distanceExpr.asc(),
-                store.id.desc()
+                compositeScore.desc(),  // 복합 점수 높은 순
+                store.id.asc()          // 동점일 때 ID 오름차순
         };
     }
 
