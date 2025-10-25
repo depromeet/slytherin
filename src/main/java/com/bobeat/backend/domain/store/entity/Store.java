@@ -28,7 +28,7 @@ public class Store extends BaseTimeEntity {
 
     private String description;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     private Level honbobLevel;
 
     @Embedded
