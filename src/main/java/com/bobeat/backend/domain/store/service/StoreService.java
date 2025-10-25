@@ -7,6 +7,7 @@ import com.bobeat.backend.domain.store.dto.request.StoreCreateRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
+import com.bobeat.backend.domain.store.entity.EmbeddingStatus;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.PrimaryCategory;
 import com.bobeat.backend.domain.store.entity.SeatOption;
@@ -32,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +46,7 @@ public class StoreService {
     private final SeatOptionRepository seatOptionRepository;
     private final PrimaryCategoryRepository primaryCategoryRepository;
     private final GeometryFactory geometryFactory;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public CursorPageResponse<StoreSearchResultDto> search(StoreFilteringRequest request) {
@@ -147,6 +150,7 @@ public class StoreService {
                 .description(request.description())
                 .honbobLevel(Level.fromValue(request.honbobLevel()))
                 .categories(categories)
+                .embeddingStatus(EmbeddingStatus.PENDING)
                 .build();
 
         Store savedStore = storeRepository.save(store);
