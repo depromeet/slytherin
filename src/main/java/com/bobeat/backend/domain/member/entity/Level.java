@@ -8,6 +8,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum Level {
+    LEVEL_0(0, "미정"),
     LEVEL_1(1, "혼밥 입문자"),  // ordinal=1, DB value=1
     LEVEL_2(2, "혼밥 탐험가"),  // ordinal=2, DB value=2
     LEVEL_3(3, "혼밥 숙련자"),  // ordinal=3, DB value=3
