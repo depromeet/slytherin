@@ -1,6 +1,7 @@
 package com.bobeat.backend.domain.store.entity;
 
 import com.bobeat.backend.domain.common.BaseTimeEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -31,6 +32,7 @@ public class Menu extends BaseTimeEntity {
     @JoinColumn(name = "store_id")
     private Store store;
 
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
     private boolean recommend;

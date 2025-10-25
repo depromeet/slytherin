@@ -1,6 +1,7 @@
 package com.bobeat.backend.domain.store.entity;
 
 import com.bobeat.backend.domain.common.BaseTimeEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -28,6 +29,7 @@ public class SeatOption extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private SeatType seatType;
 
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
