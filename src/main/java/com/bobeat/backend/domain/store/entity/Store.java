@@ -33,4 +33,20 @@ public class Store extends BaseTimeEntity {
 
     @Embedded
     private Categories categories;
+
+    @Column(name = "internal_score")
+    private Double internalScore;
+
+    @Column(name = "score_update_flag")
+    @Builder.Default
+    private Boolean scoreUpdateFlag = false;
+
+    public void updateInternalScore(Double score) {
+        this.internalScore = score;
+        this.scoreUpdateFlag = false;
+    }
+
+    public void markScoreForUpdate() {
+        this.scoreUpdateFlag = true;
+    }
 }
