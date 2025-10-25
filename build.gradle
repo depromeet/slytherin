@@ -60,6 +60,9 @@ dependencies {
     implementation "org.hibernate.orm:hibernate-spatial"
     implementation "org.locationtech.jts:jts-core:1.19.0"
 
+    // pgvector
+    implementation 'com.pgvector:pgvector:0.1.4'
+
     // Monitoring
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
