@@ -1,6 +1,7 @@
 package com.bobeat.backend.domain.store.service;
 
 import com.bobeat.backend.domain.member.entity.Level;
+import com.bobeat.backend.domain.store.config.StoreScoringConfig;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.SeatType;
@@ -22,8 +23,7 @@ import java.util.List;
  * - 혼밥레벨이 낮을수록 가산점 (혼밥하기 좋음)
  * - 메인 메뉴 가격이 낮을수록 가산점
  * - 1인석/바좌석이 많을수록 가산점
- * - 카테고리가 패스트푸드/샐러드/카페일수록 가산점
- * - 카테고리가 중식/멕시칸/양식일수록 감점
+ * - 카테고리별 가중치는 YAML 설정에서 관리
  */
 @Service
 @RequiredArgsConstructor
@@ -33,23 +33,9 @@ public class StoreScoreCalculator {
     private final StoreRepository storeRepository;
     private final MenuRepository menuRepository;
     private final SeatOptionRepository seatOptionRepository;
+    private final StoreScoringConfig scoringConfig;
 
-    // 가중치 상수
     private static final double MAX_SCORE = 100.0;
-
-    // 혼밥레벨 가중치 (최대 30점)
-    private static final double HONBOB_LEVEL_WEIGHT = 30.0;
-
-    // 가격 가중치 (최대 25점)
-    private static final double PRICE_WEIGHT = 25.0;
-    private static final int PRICE_THRESHOLD_LOW = 8000;  // 8천원 이하면 만점
-    private static final int PRICE_THRESHOLD_HIGH = 20000; // 2만원 이상이면 0점
-
-    // 좌석 가중치 (최대 25점)
-    private static final double SEAT_WEIGHT = 25.0;
-
-    // 카테고리 가중치 (최대 20점)
-    private static final double CATEGORY_WEIGHT = 20.0;
 
     /**
      * 업데이트가 필요한 식당들의 내부 점수만 계산하고 업데이트 (증분 업데이트)
@@ -129,39 +115,43 @@ public class StoreScoreCalculator {
 
     /**
      * 혼밥레벨 기반 점수 계산
-     * Level 1 (하) -> 30점
-     * Level 2 (중) -> 20점
-     * Level 3 (중상) -> 10점
+     * Level 1 (하) -> 만점
+     * Level 2 (중) -> 67%
+     * Level 3 (중상) -> 33%
      * Level 4 (상) -> 0점
      */
     private double calculateHonbobLevelScore(Store store) {
+        double weight = scoringConfig.getHonbobLevelWeight();
+
         if (store.getHonbobLevel() == null) {
-            return HONBOB_LEVEL_WEIGHT / 2; // 기본값
+            return weight / 2; // 기본값
         }
 
         int levelValue = store.getHonbobLevel().getValue();
 
         return switch (levelValue) {
-            case 1 -> HONBOB_LEVEL_WEIGHT;           // 하: 30점
-            case 2 -> HONBOB_LEVEL_WEIGHT * 0.67;    // 중: 20점
-            case 3 -> HONBOB_LEVEL_WEIGHT * 0.33;    // 중상: 10점
-            case 4 -> 0.0;                           // 상: 0점
-            default -> HONBOB_LEVEL_WEIGHT / 2;      // 기본값: 15점
+            case 1 -> weight;           // 하: 만점
+            case 2 -> weight * 0.67;    // 중: 67%
+            case 3 -> weight * 0.33;    // 중상: 33%
+            case 4 -> 0.0;              // 상: 0점
+            default -> weight / 2;      // 기본값
         };
     }
 
     /**
      * 메뉴 가격 기반 점수 계산
      * 대표 메뉴의 최저가를 기준으로 계산
-     * 8,000원 이하: 25점
-     * 8,000~20,000원: 선형 감소
-     * 20,000원 이상: 0점
+     * YAML 설정의 임계값 사용
      */
     private double calculatePriceScore(Store store) {
+        double weight = scoringConfig.getPriceWeight();
+        int lowThreshold = scoringConfig.getPriceThreshold().getLow();
+        int highThreshold = scoringConfig.getPriceThreshold().getHigh();
+
         List<Menu> menus = menuRepository.findByStore(store);
 
         if (menus.isEmpty()) {
-            return PRICE_WEIGHT / 2; // 메뉴 정보 없으면 중간 점수
+            return weight / 2; // 메뉴 정보 없으면 중간 점수
         }
 
         // 대표 메뉴 중 최저가 찾기
@@ -174,24 +164,24 @@ public class StoreScoreCalculator {
                         .min()
                         .orElse(15000)); // 기본값 15,000원
 
-        if (minPrice <= PRICE_THRESHOLD_LOW) {
-            return PRICE_WEIGHT;
-        } else if (minPrice >= PRICE_THRESHOLD_HIGH) {
+        if (minPrice <= lowThreshold) {
+            return weight;
+        } else if (minPrice >= highThreshold) {
             return 0.0;
         } else {
             // 선형 감소
-            double ratio = (double) (PRICE_THRESHOLD_HIGH - minPrice) /
-                          (PRICE_THRESHOLD_HIGH - PRICE_THRESHOLD_LOW);
-            return PRICE_WEIGHT * ratio;
+            double ratio = (double) (highThreshold - minPrice) / (highThreshold - lowThreshold);
+            return weight * ratio;
         }
     }
 
     /**
      * 좌석 옵션 기반 점수 계산
      * 1인석/바좌석이 있으면 각각 가산점
-     * 둘 다 있으면 만점
      */
     private double calculateSeatScore(Store store) {
+        double weight = scoringConfig.getSeatTypeWeight();
+
         List<SeatOption> seatOptions = seatOptionRepository.findByStore(store);
 
         if (seatOptions.isEmpty()) {
@@ -204,32 +194,29 @@ public class StoreScoreCalculator {
                 .anyMatch(seat -> seat.getSeatType() == SeatType.BAR_TABLE);
 
         if (hasForOne && hasBarTable) {
-            return SEAT_WEIGHT; // 둘 다 있으면 만점
+            return weight; // 둘 다 있으면 만점
         } else if (hasForOne || hasBarTable) {
-            return SEAT_WEIGHT * 0.6; // 하나만 있으면 60%
+            return weight * 0.6; // 하나만 있으면 60%
         } else {
-            return SEAT_WEIGHT * 0.2; // 다른 좌석만 있으면 20%
+            return weight * 0.2; // 다른 좌석만 있으면 20%
         }
     }
 
     /**
      * 카테고리 기반 점수 계산
-     * 혼밥하기 좋은 카테고리: 패스트푸드, 샐러드, 카페 -> 높은 점수
-     * 혼밥하기 어려운 카테고리: 중식, 멕시칸, 양식 -> 낮은 점수
+     * YAML 설정의 카테고리별 가중치 비율 사용
      */
     private double calculateCategoryScore(Store store) {
+        double weight = scoringConfig.getCategoryWeight();
+
         if (store.getCategories() == null ||
             store.getCategories().getPrimaryCategory() == null) {
-            return CATEGORY_WEIGHT / 2;
+            return weight / 2;
         }
 
         String category = store.getCategories().getPrimaryCategory().getPrimaryType();
+        double ratio = scoringConfig.getCategoryWeightRatio(category);
 
-        return switch (category) {
-            case "패스트푸드", "샐러드", "카페" -> CATEGORY_WEIGHT;        // 20점
-            case "한식", "일식", "분식", "아시안", "기타" -> CATEGORY_WEIGHT * 0.6;  // 12점
-            case "중식", "멕시칸", "양식" -> CATEGORY_WEIGHT * 0.2;         // 4점
-            default -> CATEGORY_WEIGHT / 2;                                // 10점
-        };
+        return weight * ratio;
     }
 }
