@@ -47,9 +47,19 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
         filters = andAll(filters, applyKeyset(request, distanceExpr));
 
+        // 복합 점수 계산 (30% 내부점수 + 70% 거리점수)
+        // distanceScore = 100 * (1 - (distance - minDistance) / (maxDistance - minDistance))
+        // 단순화를 위해 거리가 가까울수록 높은 점수를 주는 방식으로 계산
+        // compositeScore = COALESCE(internalScore, 50) * 0.3 - distance * 0.0007
+        // (거리 계수 0.0007은 1000m당 약 0.7점 감소를 의미)
+        NumberExpression<Double> compositeScore = store.internalScore
+                .coalesce(50.0)  // null이면 50점 기본값
+                .multiply(0.3)
+                .subtract(distanceExpr.multiply(0.0007));
+
         OrderSpecifier<?>[] orders = new OrderSpecifier<?>[]{
-                distanceExpr.asc(),
-                store.id.asc()
+                compositeScore.desc(),  // 복합 점수 높은 순
+                store.id.asc()          // 동점일 때 ID 오름차순
         };
 
         List<Tuple> rows = queryFactory

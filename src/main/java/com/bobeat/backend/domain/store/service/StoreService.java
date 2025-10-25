@@ -56,10 +56,8 @@ public class StoreService {
     public CursorPageResponse<StoreSearchResultDto> search(StoreFilteringRequest request) {
         final int pageSize = request.paging() != null ? request.paging().limit() : 20;
 
+        // DB 쿼리 레벨에서 복합 점수 기반으로 정렬됨 (30% 내부점수 + 70% 거리)
         List<StoreRepositoryCustom.StoreRow> rows = storeRepository.findStoresSlice(request, pageSize + 1);
-
-        // 내부 점수와 거리를 조합한 정렬 (30% 내부 점수 + 70% 거리)
-        rows = sortByCompositeScore(rows);
 
         boolean hasNext = rows.size() > pageSize;
         if (hasNext) {
@@ -261,64 +259,6 @@ public class StoreService {
                 .sorted(Comparator.comparing(Menu::isRecommend)).toList().reversed();
     }
 
-    private void saveSearchHistory(Long userId, String name) {}
-
-    /**
-     * 내부 점수와 거리를 조합하여 정렬
-     *
-     * 최종 점수 = (정규화된 내부점수 * 0.3) + (정규화된 거리점수 * 0.7)
-     * - 내부점수: 0~100점 -> 높을수록 좋음
-     * - 거리점수: 거리가 가까울수록 높은 점수
-     *
-     * @param rows 정렬할 Store 리스트
-     * @return 정렬된 Store 리스트
-     */
-    private List<StoreRepositoryCustom.StoreRow> sortByCompositeScore(
-            List<StoreRepositoryCustom.StoreRow> rows) {
-
-        if (rows.isEmpty()) {
-            return rows;
-        }
-
-        // 거리의 최대/최소값 찾기 (정규화를 위해)
-        int minDistance = rows.stream()
-                .mapToInt(StoreRepositoryCustom.StoreRow::distance)
-                .min()
-                .orElse(0);
-        int maxDistance = rows.stream()
-                .mapToInt(StoreRepositoryCustom.StoreRow::distance)
-                .max()
-                .orElse(1000);
-
-        // 거리 범위가 0이면 모두 같은 거리이므로 내부 점수만으로 정렬
-        final int distanceRange = maxDistance - minDistance;
-        final int finalMinDistance = minDistance;
-
-        return rows.stream()
-                .sorted((r1, r2) -> {
-                    // 내부 점수 (0~100, 높을수록 좋음)
-                    double score1 = r1.store().getInternalScore() != null
-                            ? r1.store().getInternalScore()
-                            : 50.0; // 기본값
-                    double score2 = r2.store().getInternalScore() != null
-                            ? r2.store().getInternalScore()
-                            : 50.0; // 기본값
-
-                    // 거리 점수 계산 (가까울수록 높은 점수, 0~100)
-                    double distanceScore1 = distanceRange > 0
-                            ? 100.0 * (1.0 - (double)(r1.distance() - finalMinDistance) / distanceRange)
-                            : 100.0;
-                    double distanceScore2 = distanceRange > 0
-                            ? 100.0 * (1.0 - (double)(r2.distance() - finalMinDistance) / distanceRange)
-                            : 100.0;
-
-                    // 최종 복합 점수 (30% 내부점수 + 70% 거리점수)
-                    double compositeScore1 = (score1 * 0.3) + (distanceScore1 * 0.7);
-                    double compositeScore2 = (score2 * 0.3) + (distanceScore2 * 0.7);
-
-                    // 높은 점수가 앞으로 (내림차순)
-                    return Double.compare(compositeScore2, compositeScore1);
-                })
-                .collect(Collectors.toList());
+    private void saveSearchHistory(Long userId, String name) {
     }
 }
