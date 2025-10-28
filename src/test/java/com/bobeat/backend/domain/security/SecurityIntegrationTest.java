@@ -12,6 +12,7 @@ import com.bobeat.backend.domain.member.entity.SocialProvider;
 import com.bobeat.backend.domain.member.repository.MemberRepository;
 import com.bobeat.backend.domain.security.auth.dto.TokenClaims;
 import com.bobeat.backend.domain.security.auth.service.JwtService;
+import com.bobeat.backend.global.db.PostgreSQLTestContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ import org.springframework.web.context.WebApplicationContext;
 @SpringBootTest
 @AutoConfigureWebMvc
 @Transactional
+@PostgreSQLTestContainer
 public class SecurityIntegrationTest {
 
     @Autowired
