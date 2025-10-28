@@ -138,7 +138,7 @@ public class StoreService {
                 .map(this::createStore)
                 .toList();
 
-        storeIds.forEach(storeid -> storeEmbeddingService.createEmbeddingByStore(storeid));
+        storeIds.forEach(storeid -> storeEmbeddingService.saveEmbeddingByStore(storeid));
         return storeIds;
     }
 

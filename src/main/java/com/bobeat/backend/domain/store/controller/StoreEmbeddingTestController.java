@@ -23,10 +23,10 @@ public class StoreEmbeddingTestController {
 
 
     @GetMapping("/store/{storeId}")
-    @Operation(summary = "Store 임베딩 생성 (동기)", description = "특정 Store의 임베딩 벡터를 생성하고 결과를 반환합니다.")
+    @Operation(summary = "Store 임베딩 생성 (동기)", description = "특정 Store의 임베딩 벡터를 생성 및 저장하고 결과를 반환합니다.")
     public ApiResponse<EmbeddingTestResponse> testStoreEmbedding(@PathVariable Long storeId) {
 
-        EmbeddingTestResponse response = storeEmbeddingService.createEmbeddingByStore(storeId);
+        EmbeddingTestResponse response = storeEmbeddingService.saveEmbeddingByStore(storeId);
         return ApiResponse.success(response);
     }
 
