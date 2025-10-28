@@ -4,8 +4,21 @@ import com.bobeat.backend.domain.common.BaseTimeEntity;
 import com.bobeat.backend.domain.member.dto.request.OnboardingRequest;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "member_onboarding_profile")
@@ -34,7 +47,7 @@ public class MemberOnboardingProfile extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private OnboardingAnswer question5;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     private Level honbobLevel = Level.LEVEL_1;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -77,11 +90,21 @@ public class MemberOnboardingProfile extends BaseTimeEntity {
     private double calculateTotalWeightedScore() {
         double score = 0.0;
 
-        if (question1 != null) score += question1.getWeightedScore();
-        if (question2 != null) score += question2.getWeightedScore();
-        if (question3 != null) score += question3.getWeightedScore();
-        if (question4 != null) score += question4.getWeightedScore();
-        if (question5 != null) score += question5.getWeightedScore();
+        if (question1 != null) {
+            score += question1.getWeightedScore();
+        }
+        if (question2 != null) {
+            score += question2.getWeightedScore();
+        }
+        if (question3 != null) {
+            score += question3.getWeightedScore();
+        }
+        if (question4 != null) {
+            score += question4.getWeightedScore();
+        }
+        if (question5 != null) {
+            score += question5.getWeightedScore();
+        }
 
         return score;
     }
