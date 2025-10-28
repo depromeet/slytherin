@@ -192,7 +192,7 @@ public class StoreService {
     }
 
     public List<SearchHistoryDto> findSearchHistory() {
-        return null;
+        return List.of();
     }
 
     private Address createAddress(StoreCreateRequest.AddressRequest addressRequest) {

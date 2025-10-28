@@ -168,11 +168,15 @@ public class StoreEmbeddingService {
 
     private void saveOrUpdateStoreEmbedding(StoreEmbedding storeEmbedding, Store store) {
         storeEmbeddingRepository.findByStore(store)
-                .map(existing -> {
-                    return storeEmbeddingRepository.save(existing);
-                })
-                .orElseGet(() -> {
-                    return storeEmbeddingRepository.save(storeEmbedding);
-                });
+                .ifPresentOrElse(existing -> {
+                            StoreEmbedding updated = StoreEmbedding.builder()
+                                    .id(existing.getId())
+                                    .store(existing.getStore())
+                                    .embedding(storeEmbedding.getEmbedding())
+                                    .embeddingStatus(storeEmbedding.getEmbeddingStatus())
+                                    .build();
+                            storeEmbeddingRepository.save(updated);
+                        }, () -> storeEmbeddingRepository.save(storeEmbedding)
+                );
     }
 }

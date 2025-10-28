@@ -9,5 +9,5 @@ public record SearchHistoryDto(
         @Schema(description = "좌석 이미지")
         String name,
         @Schema(description = "좌석 타입")
-        String String) {
+        String seatType) {
 }
