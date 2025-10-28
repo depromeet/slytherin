@@ -50,6 +50,7 @@ public class StoreService {
     private final GeometryFactory geometryFactory;
     private final ApplicationEventPublisher eventPublisher;
     private final MemberService memberService;
+    private final StoreEmbeddingService storeEmbeddingService;
 
     @Transactional(readOnly = true)
     public CursorPageResponse<StoreSearchResultDto> search(StoreFilteringRequest request) {
@@ -132,9 +133,13 @@ public class StoreService {
 
     @Transactional
     public List<Long> createStores(List<StoreCreateRequest> requests) {
-        return requests.stream()
+
+        List<Long> storeIds = requests.stream()
                 .map(this::createStore)
                 .toList();
+
+        storeIds.forEach(storeid -> storeEmbeddingService.createEmbeddingByStore(storeid));
+        return storeIds;
     }
 
     @Transactional
@@ -254,10 +259,5 @@ public class StoreService {
     }
 
     private void saveSearchHistory(Long userId, String name) {
-
-//        SearchHistory searchHistory =SearchHistory.builder()
-//                .name(name)
-//                .member()
-
     }
 }
