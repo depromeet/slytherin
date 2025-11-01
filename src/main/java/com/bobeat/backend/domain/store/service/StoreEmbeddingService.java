@@ -1,17 +1,24 @@
 package com.bobeat.backend.domain.store.service;
 
+import com.bobeat.backend.domain.store.controller.StoreEmbeddingTestController.EmbeddingTestResponse;
+import com.bobeat.backend.domain.store.controller.StoreEmbeddingTestController.StoreTextResponse;
+import com.bobeat.backend.domain.store.entity.EmbeddingStatus;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.Store;
+import com.bobeat.backend.domain.store.entity.StoreEmbedding;
+import com.bobeat.backend.domain.store.external.clova.service.ClovaEmbeddingClient;
 import com.bobeat.backend.domain.store.repository.MenuRepository;
 import com.bobeat.backend.domain.store.repository.SeatOptionRepository;
-import com.bobeat.backend.domain.store.external.clova.service.ClovaEmbeddingClient;
+import com.bobeat.backend.domain.store.repository.StoreEmbeddingRepository;
+import com.bobeat.backend.domain.store.repository.StoreRepository;
+import com.bobeat.backend.global.exception.CustomException;
+import com.bobeat.backend.global.exception.ErrorCode;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,18 +27,13 @@ public class StoreEmbeddingService {
     private final ClovaEmbeddingClient clovaEmbeddingClient;
     private final MenuRepository menuRepository;
     private final SeatOptionRepository seatOptionRepository;
+    private final StoreRepository storeRepository;
+    private final StoreEmbeddingRepository storeEmbeddingRepository;
 
     /**
      * Store 엔티티의 모든 정보를 결합하여 임베딩 벡터를 생성합니다.
-     *
-     * 포함 정보:
-     * - 가게 이름
-     * - 설명
-     * - 혼밥 난이도
-     * - 카테고리 (Primary, Secondary)
-     * - 위치 (주소)
-     * - 메뉴 (이름, 가격)
-     * - 좌석 유형
+     * <p>
+     * 포함 정보: - 가게 이름 - 설명 - 혼밥 난이도 - 카테고리 (Primary, Secondary) - 위치 (주소) - 메뉴 (이름, 가격) - 좌석 유형
      *
      * @param store Store 엔티티
      * @return 1024차원의 임베딩 벡터
@@ -52,13 +54,50 @@ public class StoreEmbeddingService {
         return clovaEmbeddingClient.getEmbeddingSync(combinedText);
     }
 
+    public EmbeddingTestResponse saveEmbeddingByStore(Long storeId) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_STORE));
+        String combinedText = buildStoreText(store);
+        List<Double> embedding = generateStoreEmbeddingSync(store);
+
+        StoreEmbedding storeEmbedding = StoreEmbedding.builder()
+                .embedding(embedding)
+                .embeddingStatus(EmbeddingStatus.COMPLETED)
+                .store(store)
+                .build();
+
+        saveOrUpdateStoreEmbedding(storeEmbedding, store);
+        return new EmbeddingTestResponse(
+                storeId,
+                store.getName(),
+                combinedText,
+                embedding,
+                embedding.size()
+        );
+    }
+
+    public StoreTextResponse createEmbeddingTextByStore(Long storeId) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_STORE));
+
+        String combinedText = buildStoreText(store);
+
+        return new StoreTextResponse(
+                storeId,
+                store.getName(),
+                combinedText,
+                combinedText.length()
+        );
+    }
+
     /**
      * Store 엔티티의 모든 정보를 하나의 텍스트로 결합합니다.
      *
      * @param store Store 엔티티
      * @return 결합된 텍스트
      */
-    public String buildStoreText(Store store) {
+    private String buildStoreText(Store store) {
+
         StringBuilder sb = new StringBuilder();
 
         // 1. 가게 이름
@@ -83,7 +122,8 @@ public class StoreEmbeddingService {
                 sb.append("주요 카테고리: ").append(store.getCategories().getPrimaryCategory().getPrimaryType()).append("\n");
             }
             if (store.getCategories().getSecondaryCategory() != null) {
-                sb.append("부 카테고리: ").append(store.getCategories().getSecondaryCategory().getSecondaryType()).append("\n");
+                sb.append("부 카테고리: ").append(store.getCategories().getSecondaryCategory().getSecondaryType())
+                        .append("\n");
             }
         }
 
@@ -124,5 +164,19 @@ public class StoreEmbeddingService {
      */
     private String formatPrice(int price) {
         return String.format("%,d", price);
+    }
+
+    private void saveOrUpdateStoreEmbedding(StoreEmbedding storeEmbedding, Store store) {
+        storeEmbeddingRepository.findByStore(store)
+                .ifPresentOrElse(existing -> {
+                            StoreEmbedding updated = StoreEmbedding.builder()
+                                    .id(existing.getId())
+                                    .store(existing.getStore())
+                                    .embedding(storeEmbedding.getEmbedding())
+                                    .embeddingStatus(storeEmbedding.getEmbeddingStatus())
+                                    .build();
+                            storeEmbeddingRepository.save(updated);
+                        }, () -> storeEmbeddingRepository.save(storeEmbedding)
+                );
     }
 }

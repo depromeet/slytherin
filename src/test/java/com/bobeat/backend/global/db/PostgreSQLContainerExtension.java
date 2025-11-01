@@ -12,7 +12,7 @@ public class PostgreSQLContainerExtension {
     @Bean
     @ServiceConnection
     static PostgreSQLContainer<?> postgreSQLContainer() {
-        DockerImageName postgisImage = DockerImageName.parse("postgis/postgis:15-3.3")
+        DockerImageName postgisImage = DockerImageName.parse("ji0513ji/bobeat_test_container:v1.0.0")
                 .asCompatibleSubstituteFor("postgres");
         return new PostgreSQLContainer<>(postgisImage);
     }

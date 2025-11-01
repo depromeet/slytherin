@@ -61,7 +61,7 @@ dependencies {
     implementation "org.locationtech.jts:jts-core:1.19.0"
 
     // pgvector
-    implementation 'com.pgvector:pgvector:0.1.4'
+    implementation 'org.hibernate.orm:hibernate-vector:6.4.0.Final'
 
     // Monitoring
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

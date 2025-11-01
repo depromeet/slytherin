@@ -3,11 +3,12 @@ package com.bobeat.backend.domain.store.service;
 import static com.bobeat.backend.global.exception.ErrorCode.NOT_FOUND_STORE;
 
 import com.bobeat.backend.domain.member.entity.Level;
+import com.bobeat.backend.domain.member.service.MemberService;
 import com.bobeat.backend.domain.store.dto.request.StoreCreateRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
+import com.bobeat.backend.domain.store.dto.response.SearchHistoryDto;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
-import com.bobeat.backend.domain.store.entity.EmbeddingStatus;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.PrimaryCategory;
 import com.bobeat.backend.domain.store.entity.SeatOption;
@@ -28,6 +29,7 @@ import com.bobeat.backend.global.util.KeysetCursor;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
@@ -47,6 +49,8 @@ public class StoreService {
     private final PrimaryCategoryRepository primaryCategoryRepository;
     private final GeometryFactory geometryFactory;
     private final ApplicationEventPublisher eventPublisher;
+    private final MemberService memberService;
+    private final StoreEmbeddingService storeEmbeddingService;
 
     @Transactional(readOnly = true)
     public CursorPageResponse<StoreSearchResultDto> search(StoreFilteringRequest request) {
@@ -129,9 +133,13 @@ public class StoreService {
 
     @Transactional
     public List<Long> createStores(List<StoreCreateRequest> requests) {
-        return requests.stream()
+
+        List<Long> storeIds = requests.stream()
                 .map(this::createStore)
                 .toList();
+
+        storeIds.forEach(storeid -> storeEmbeddingService.saveEmbeddingByStore(storeid));
+        return storeIds;
     }
 
     @Transactional
@@ -150,7 +158,6 @@ public class StoreService {
                 .description(request.description())
                 .honbobLevel(Level.fromValue(request.honbobLevel()))
                 .categories(categories)
-                .embeddingStatus(EmbeddingStatus.PENDING)
                 .build();
 
         Store savedStore = storeRepository.save(store);
@@ -160,6 +167,32 @@ public class StoreService {
         createSeatOptions(request.seatOptions(), savedStore);
 
         return savedStore.getId();
+    }
+
+    public List<StoreSearchResultDto> searchStore(Long userId, String query) {
+        List<Store> stores = storeRepository.findAll().stream()
+                .limit(5)
+                .toList();
+        List<Long> storeIds = stores.stream()
+                .map(Store::getId)
+                .toList();
+        Map<Long, List<String>> seatTypes = storeRepository.findSeatTypes(storeIds);
+
+        List<StoreSearchResultDto> storeSearchResultDtos = stores.stream()
+                .map(store -> {
+                    StoreImage storeimage = storeImageRepository.findByStoreAndIsMainTrue(store);
+                    List<String> seatTypeNames = seatTypes.getOrDefault(store.getId(), List.of());
+                    List<String> tagNames = buildTagsFromCategories(store.getCategories());
+                    return StoreSearchResultDto.of(store, storeimage, seatTypeNames, tagNames);
+                })
+                .toList();
+        saveSearchHistory(userId, query);
+
+        return storeSearchResultDtos;
+    }
+
+    public List<SearchHistoryDto> findSearchHistory() {
+        return List.of();
     }
 
     private Address createAddress(StoreCreateRequest.AddressRequest addressRequest) {
@@ -223,5 +256,8 @@ public class StoreService {
         menus1.addAll(menus2);
         return menus1.stream()
                 .sorted(Comparator.comparing(Menu::isRecommend)).toList().reversed();
+    }
+
+    private void saveSearchHistory(Long userId, String name) {
     }
 }
