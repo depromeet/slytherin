@@ -2,6 +2,8 @@ package com.bobeat.backend.domain.store.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -33,8 +35,13 @@ public class StoreEmbedding {
     @Array(length = 1024)
     private List<Double> embedding;
 
+    @Enumerated(EnumType.STRING)
     private EmbeddingStatus embeddingStatus;
 
     @OneToOne
     private Store store;
+
+    public void update(StoreEmbedding updated) {
+        this.embedding = embedding;
+    }
 }

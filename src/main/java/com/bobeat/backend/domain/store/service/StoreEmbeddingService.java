@@ -2,7 +2,6 @@ package com.bobeat.backend.domain.store.service;
 
 import com.bobeat.backend.domain.store.controller.StoreEmbeddingTestController.EmbeddingTestResponse;
 import com.bobeat.backend.domain.store.controller.StoreEmbeddingTestController.StoreTextResponse;
-import com.bobeat.backend.domain.store.entity.EmbeddingStatus;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.Store;
@@ -15,9 +14,11 @@ import com.bobeat.backend.domain.store.repository.StoreRepository;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -54,6 +55,7 @@ public class StoreEmbeddingService {
         return clovaEmbeddingClient.getEmbeddingSync(combinedText);
     }
 
+    @Transactional
     public EmbeddingTestResponse saveEmbeddingByStore(Long storeId) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_STORE));
@@ -62,7 +64,6 @@ public class StoreEmbeddingService {
 
         StoreEmbedding storeEmbedding = StoreEmbedding.builder()
                 .embedding(embedding)
-                .embeddingStatus(EmbeddingStatus.COMPLETED)
                 .store(store)
                 .build();
 
@@ -167,16 +168,19 @@ public class StoreEmbeddingService {
     }
 
     private void saveOrUpdateStoreEmbedding(StoreEmbedding storeEmbedding, Store store) {
-        storeEmbeddingRepository.findByStore(store)
-                .ifPresentOrElse(existing -> {
-                            StoreEmbedding updated = StoreEmbedding.builder()
-                                    .id(existing.getId())
-                                    .store(existing.getStore())
-                                    .embedding(storeEmbedding.getEmbedding())
-                                    .embeddingStatus(storeEmbedding.getEmbeddingStatus())
-                                    .build();
-                            storeEmbeddingRepository.save(updated);
-                        }, () -> storeEmbeddingRepository.save(storeEmbedding)
-                );
+        Optional<StoreEmbedding> storeEmbeddingOptional = storeEmbeddingRepository.findByStore(store);
+        if (storeEmbeddingOptional.isEmpty()) {
+            storeEmbeddingRepository.save(storeEmbedding);
+            return;
+        }
+
+        StoreEmbedding existing = storeEmbeddingOptional.get();
+        StoreEmbedding updated = StoreEmbedding.builder()
+                .store(existing.getStore())
+                .embedding(storeEmbedding.getEmbedding())
+                .embeddingStatus(storeEmbedding.getEmbeddingStatus())
+                .build();
+
+        existing.update(updated);
     }
 }
