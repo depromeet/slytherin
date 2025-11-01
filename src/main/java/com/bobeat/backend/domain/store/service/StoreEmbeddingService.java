@@ -14,7 +14,6 @@ import com.bobeat.backend.domain.store.repository.StoreRepository;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -168,19 +167,10 @@ public class StoreEmbeddingService {
     }
 
     private void saveOrUpdateStoreEmbedding(StoreEmbedding storeEmbedding, Store store) {
-        Optional<StoreEmbedding> storeEmbeddingOptional = storeEmbeddingRepository.findByStore(store);
-        if (storeEmbeddingOptional.isEmpty()) {
-            storeEmbeddingRepository.save(storeEmbedding);
-            return;
-        }
-
-        StoreEmbedding existing = storeEmbeddingOptional.get();
-        StoreEmbedding updated = StoreEmbedding.builder()
-                .store(existing.getStore())
-                .embedding(storeEmbedding.getEmbedding())
-                .embeddingStatus(storeEmbedding.getEmbeddingStatus())
-                .build();
-
-        existing.update(updated);
+        storeEmbeddingRepository.findByStore(store)
+                .ifPresentOrElse(
+                        existing -> existing.update(storeEmbedding),
+                        () -> storeEmbeddingRepository.save(storeEmbedding)
+                );
     }
 }

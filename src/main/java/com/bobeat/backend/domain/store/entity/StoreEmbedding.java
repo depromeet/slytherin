@@ -42,6 +42,6 @@ public class StoreEmbedding {
     private Store store;
 
     public void update(StoreEmbedding updated) {
-        this.embedding = embedding;
+        this.embedding = updated.getEmbedding();
     }
 }
