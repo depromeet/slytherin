@@ -41,7 +41,7 @@ public class SimilarStoreService {
      */
     @Transactional(readOnly = true)
     public List<SimilarStoreResponse> findSimilarStores(Long storeId) {
-        Store targetStore = storeRepository.findByIdOrThrow(storeId);
+        storeRepository.findByIdOrThrow(storeId);
 
         // 1단계: PostGIS로 3km 이내 가게 ID 추출
         List<Long> nearbyStoreIds = similarStoreRepository.findNearbyStoreIds(storeId, MAX_DISTANCE_METERS);
