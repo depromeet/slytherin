@@ -1,7 +1,9 @@
 package com.bobeat.backend.domain.store.dto.response;
 
+import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.entity.StoreImage;
+import com.bobeat.backend.domain.store.vo.Address;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -34,14 +36,17 @@ public record SimilarStoreResponse(
      * Store 엔티티와 StoreImage로부터 SimilarStoreResponse 생성
      */
     public static SimilarStoreResponse of(Store store, StoreImage storeImage) {
+        Address address = store.getAddress();
+        Level honbobLevel = store.getHonbobLevel();
+
         return new SimilarStoreResponse(
                 store.getId(),
                 store.getName(),
                 storeImage != null ? storeImage.getImageUrl() : null,
-                store.getAddress() != null ? store.getAddress().getAddress() : null,
-                store.getAddress() != null ? store.getAddress().getLatitude() : null,
-                store.getAddress() != null ? store.getAddress().getLongitude() : null,
-                store.getHonbobLevel() != null ? store.getHonbobLevel().getValue() : null
+                address != null ? address.getAddress() : null,
+                address != null ? address.getLatitude() : null,
+                address != null ? address.getLongitude() : null,
+                honbobLevel != null ? honbobLevel.getValue() : null
         );
     }
 }
