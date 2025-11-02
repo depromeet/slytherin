@@ -3,8 +3,10 @@ package com.bobeat.backend.domain.store.controller;
 import com.bobeat.backend.domain.store.dto.request.EditProposalRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.SearchHistoryDto;
+import com.bobeat.backend.domain.store.dto.response.SimilarStoreResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
+import com.bobeat.backend.domain.store.service.SimilarStoreService;
 import com.bobeat.backend.domain.store.service.StoreService;
 import com.bobeat.backend.global.response.ApiResponse;
 import com.bobeat.backend.global.response.CursorPageResponse;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class StoreController {
     private final StoreService storeService;
+    private final SimilarStoreService similarStoreService;
 
     @Operation(summary = "위치 기반 식당 검색", description = "현재 위치를 기반으로 식당을 검색하고 필터링합니다.")
     @PostMapping
@@ -71,6 +74,15 @@ public class StoreController {
     @GetMapping("/history")
     public ApiResponse<List<SearchHistoryDto>> getSearchHistory() {
         List<SearchHistoryDto> response = storeService.findSearchHistory();
+        return ApiResponse.success(response);
+    }
+
+    @Operation(summary = "유사 가게 추천", description = "해당 가게와 유사한 가게를 3km 이내에서 최대 5개 추천합니다.")
+    @GetMapping("/{storeId}/similar")
+    public ApiResponse<List<SimilarStoreResponse>> getSimilarStores(
+            @Parameter(description = "식당 ID") @PathVariable("storeId") Long storeId
+    ) {
+        List<SimilarStoreResponse> response = similarStoreService.findSimilarStores(storeId);
         return ApiResponse.success(response);
     }
 }
