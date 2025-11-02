@@ -5,7 +5,9 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 식당 점수 계산 가중치 설정
@@ -42,11 +44,18 @@ public class StoreScoringConfig {
      */
     private PriceThreshold priceThreshold = new PriceThreshold();
 
-    /**
-     * 카테고리별 가중치 비율 (0.0 ~ 1.0)
-     * 예: "패스트푸드": 1.0, "중식": 0.2
-     */
-    private Map<String, Double> categoryWeights = Map.of();
+    private List<CategoryWeightItem> categoryWeights = List.of();
+
+    private Map<String, Double> categoryWeightMap;
+
+    public double getCategoryWeightRatio(String category) {
+        if (this.categoryWeightMap == null) {
+            this.categoryWeightMap = categoryWeights.stream()
+                    .collect(Collectors.toMap(CategoryWeightItem::getName, CategoryWeightItem::getRatio));
+        }
+
+        return categoryWeightMap.getOrDefault(category, 0.5);
+    }
 
     @Getter
     @Setter
@@ -62,11 +71,10 @@ public class StoreScoringConfig {
         private Integer high = 20000;
     }
 
-    /**
-     * 특정 카테고리의 가중치 비율 반환
-     * 설정에 없으면 기본값 0.5 반환
-     */
-    public double getCategoryWeightRatio(String category) {
-        return categoryWeights.getOrDefault(category, 0.5);
+    @Getter
+    @Setter
+    public static class CategoryWeightItem {
+        private String name;
+        private Double ratio;
     }
 }
