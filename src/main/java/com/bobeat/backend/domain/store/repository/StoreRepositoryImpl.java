@@ -1,34 +1,37 @@
 package com.bobeat.backend.domain.store.repository;
 
-import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.entity.Menu;
-import com.bobeat.backend.domain.store.entity.QMenu;
-import com.bobeat.backend.domain.store.entity.QSeatOption;
 import com.bobeat.backend.domain.store.entity.Store;
+import com.bobeat.backend.domain.store.repository.query.StoreQueryFilterBuilder;
+import com.bobeat.backend.domain.store.repository.query.StoreQuerySortBuilder;
 import com.bobeat.backend.global.util.KeysetCursor;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
 
-import static com.bobeat.backend.domain.common.PostgisExpressions.*;
+import static com.bobeat.backend.domain.common.PostgisExpressions.distanceMeters;
 import static com.bobeat.backend.domain.store.entity.QMenu.menu;
 import static com.bobeat.backend.domain.store.entity.QSeatOption.seatOption;
 import static com.bobeat.backend.domain.store.entity.QStore.store;
 
+/**
+ * Store 검색 QueryDSL 구현체
+ * Builder 패턴을 적용하여 필터/정렬 로직을 분리
+ */
 @Repository
 @RequiredArgsConstructor
 public class StoreRepositoryImpl implements StoreRepositoryCustom {
     private final JPAQueryFactory queryFactory;
-    private static final int DEFAULT_RADIUS_METERS = 5000;
+    private final StoreQueryFilterBuilder filterBuilder;
+    private final StoreQuerySortBuilder sortBuilder;
 
     @Override
     public List<StoreRow> findStoresSlice(StoreFilteringRequest request, int limitPlusOne) {
@@ -37,18 +40,16 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
         NumberExpression<Integer> distanceExpr = distanceMeters(store.address.location, centerLat, centerLon);
 
+        // Builder를 사용한 필터 구축
         BooleanExpression filters = andAll(
-                buildLocationFilter(request, centerLat, centerLon),
-                levelLoe(request),
-                categoriesIn(request),
-                recommendedMenuPriceInRange(request),
-                seatTypesIn(request)
+                filterBuilder.buildAllFilters(request, centerLat, centerLon),
+                filterBuilder.buildPriceFilter(request),
+                filterBuilder.buildSeatTypeFilter(request),
+                applyKeyset(request, distanceExpr)
         );
 
-        filters = andAll(filters, applyKeyset(request, distanceExpr));
-
-        // sortBy에 따른 정렬 기준 결정
-        OrderSpecifier<?>[] orders = buildOrderSpecifiers(request, distanceExpr);
+        // Builder를 사용한 정렬 구축
+        OrderSpecifier<?>[] orders = sortBuilder.buildOrderSpecifiers(request, distanceExpr);
 
         List<Tuple> rows = queryFactory
                 .select(store, distanceExpr)
@@ -58,14 +59,43 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 .limit(limitPlusOne)
                 .fetch();
 
-        List<StoreRow> result = new ArrayList<>(rows.size());
-        for (Tuple t : rows) {
-            Store s = t.get(store);
-            Integer d = t.get(distanceExpr);
-            result.add(new StoreRow(s, d != null ? d : 0));
-        }
-        return result;
+        return convertToStoreRows(rows, distanceExpr);
     }
+
+    @Override
+    public Map<Long, StoreSearchResultDto.SignatureMenu> findRepresentativeMenus(List<Long> storeIds) {
+        if (storeIds.isEmpty()) return Map.of();
+
+        // 대표 메뉴 선택 기준: 추천 메뉴 우선, 가격 낮은 순
+        List<Menu> menus = queryFactory
+                .selectFrom(menu)
+                .where(menu.store.id.in(storeIds))
+                .orderBy(
+                        menu.store.id.asc(),
+                        menu.recommend.desc(),
+                        menu.price.asc(),
+                        menu.id.asc()
+                )
+                .fetch();
+
+        return convertToSignatureMenuMap(menus);
+    }
+
+    @Override
+    public Map<Long, List<String>> findSeatTypes(List<Long> storeIds) {
+        if (storeIds.isEmpty()) return Map.of();
+
+        List<Tuple> rows = queryFactory
+                .select(seatOption.store.id, seatOption.seatType)
+                .from(seatOption)
+                .where(seatOption.store.id.in(storeIds))
+                .orderBy(seatOption.store.id.asc(), seatOption.seatType.asc())
+                .fetch();
+
+        return convertToSeatTypeMap(rows);
+    }
+
+    // ==================== Private Helper Methods ====================
 
     private BooleanExpression applyKeyset(StoreFilteringRequest req, NumberExpression<Integer> distanceExpr) {
         if (req.paging() == null) return null;
@@ -80,15 +110,17 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 .or(distanceExpr.eq(lastDist).and(store.id.gt(lastId)));
     }
 
-    @Override
-    public Map<Long, StoreSearchResultDto.SignatureMenu> findRepresentativeMenus(List<Long> storeIds) {
-        if (storeIds.isEmpty()) return Map.of();
+    private List<StoreRow> convertToStoreRows(List<Tuple> tuples, NumberExpression<Integer> distanceExpr) {
+        List<StoreRow> result = new ArrayList<>(tuples.size());
+        for (Tuple t : tuples) {
+            Store s = t.get(store);
+            Integer d = t.get(distanceExpr);
+            result.add(new StoreRow(s, Objects.requireNonNullElse(d, 0)));
+        }
+        return result;
+    }
 
-        List<Menu> menus = queryFactory
-                .selectFrom(menu)
-                .where(menu.store.id.in(storeIds))
-                .fetch();
-
+    private Map<Long, StoreSearchResultDto.SignatureMenu> convertToSignatureMenuMap(List<Menu> menus) {
         Map<Long, StoreSearchResultDto.SignatureMenu> map = new LinkedHashMap<>();
         for (Menu m : menus) {
             Long sid = m.getStore().getId();
@@ -99,161 +131,15 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         return map;
     }
 
-    @Override
-    public Map<Long, List<String>> findSeatTypes(List<Long> storeIds) {
-        if (storeIds.isEmpty()) return Map.of();
-
-        QSeatOption so = seatOption;
-
-        List<Tuple> rows = queryFactory
-                .select(so.store.id, so.seatType)
-                .from(so)
-                .where(so.store.id.in(storeIds))
-                .orderBy(so.store.id.asc(), so.seatType.asc())
-                .fetch();
-
+    private Map<Long, List<String>> convertToSeatTypeMap(List<Tuple> rows) {
         Map<Long, List<String>> result = new LinkedHashMap<>();
         for (Tuple t : rows) {
-            Long sid = t.get(so.store.id);
-            String seat = Objects.requireNonNull(t.get(so.seatType)).name();
+            Long sid = t.get(seatOption.store.id);
+            String seat = Objects.requireNonNull(t.get(seatOption.seatType)).name();
             result.computeIfAbsent(sid, k -> new ArrayList<>()).add(seat);
         }
         result.replaceAll((k, v) -> v.stream().distinct().toList());
         return result;
-    }
-
-    private Map<Long, StoreSearchResultDto.SignatureMenu> loadRepresentativeMenus(List<Long> storeIds) {
-        if (storeIds.isEmpty()) return Map.of();
-
-        List<Menu> menus = queryFactory
-                .selectFrom(QMenu.menu)
-                .where(QMenu.menu.store.id.in(storeIds))
-                .orderBy(
-                        QMenu.menu.store.id.asc(),
-                        QMenu.menu.recommend.desc(),
-                        QMenu.menu.price.asc(),
-                        QMenu.menu.id.asc()
-                )
-                .fetch();
-
-        Map<Long, StoreSearchResultDto.SignatureMenu> map = new LinkedHashMap<>();
-        for (Menu m : menus) {
-            Long sid = m.getStore().getId();
-            if (!map.containsKey(sid)) {
-                map.put(sid, new StoreSearchResultDto.SignatureMenu(m.getName(), m.getPrice()));
-            }
-        }
-        return map;
-    }
-
-    /**
-     * sortBy 파라미터에 따른 정렬 기준 생성
-     * - DISTANCE (null 포함): 거리순 100%
-     * - RECOMMENDED: 복합 점수 (내부점수 30% + 거리 70%)
-     */
-    private OrderSpecifier<?>[] buildOrderSpecifiers(StoreFilteringRequest request, NumberExpression<Integer> distanceExpr) {
-        // sortBy가 null이거나 DISTANCE면 거리순 정렬
-        if (request.sortBy() == null || request.sortBy() == StoreFilteringRequest.SortBy.DISTANCE) {
-            return new OrderSpecifier<?>[]{
-                    distanceExpr.asc(),    // 거리 가까운 순
-                    store.id.asc()         // 동점일 때 ID 오름차순
-            };
-        }
-
-        // RECOMMENDED: 복합 점수 기반 정렬
-        // compositeScore = COALESCE(internalScore, 50) * 0.3 - distance * 0.0007
-        // (거리 계수 0.0007은 1000m당 약 0.7점 감소를 의미)
-        NumberExpression<Double> compositeScore = store.internalScore
-                .coalesce(50.0)  // null이면 50점 기본값
-                .multiply(0.3)
-                .subtract(distanceExpr.multiply(0.0007));
-
-        return new OrderSpecifier<?>[]{
-                compositeScore.desc(),  // 복합 점수 높은 순
-                store.id.asc()          // 동점일 때 ID 오름차순
-        };
-    }
-
-    private BooleanExpression buildLocationFilter(StoreFilteringRequest req, double centerLat, double centerLon) {
-        // 1) 유효한 BBox면 BBox만 적용
-        if (hasValidBbox(req)) {
-            var nw = req.bbox().nw();
-            var se = req.bbox().se();
-            return intersectsEnvelope(store.address.location, nw.lat(), nw.lon(), se.lat(), se.lon());
-        }
-        // 2) BBox 없고, center만 있으면 반경 필터 적용
-        return stDWithin(store.address.location, centerLat, centerLon, DEFAULT_RADIUS_METERS);
-    }
-
-    private boolean hasValidBbox(StoreFilteringRequest req) {
-        if (req == null || req.bbox() == null || req.bbox().nw() == null || req.bbox().se() == null) return false;
-        var nw = req.bbox().nw();
-        var se = req.bbox().se();
-        return nw.lat() != null && nw.lon() != null && se.lat() != null && se.lon() != null;
-    }
-
-    private BooleanExpression levelLoe(StoreFilteringRequest request) {
-        if(request.filters() == null || request.filters().honbobLevel() == null) {
-            return null;
-        }
-        Level target = Level.fromValue(request.filters().honbobLevel());
-        return store.honbobLevel.loe(target);
-    }
-
-    private BooleanExpression categoriesIn(StoreFilteringRequest request) {
-        if (request.filters().categories() == null || request.filters().categories().isEmpty()) {
-            return null;
-        }
-        List<String> categories = request.filters().categories();
-        return store.categories.primaryCategory.primaryType.in(categories);
-    }
-
-    // TODO: 가격 범위 쿼리 방식 재검토(AS-IS: 서브쿼리 방식으로 추천메뉴 중 가격 조건에 맞는 메뉴가 하나라도 있는지 확인)
-    private BooleanExpression recommendedMenuPriceInRange(StoreFilteringRequest request) {
-        if(request.filters() == null || request.filters().price() == null) {
-            return null;
-        }
-        Integer min = request.filters().price().min();
-        Integer max = request.filters().price().max();
-
-        if(min == null && max == null) {
-            return null;
-        }
-        BooleanExpression priceCondition;
-
-        if(min != null && max != null) {
-            priceCondition = menu.price.between(min, max);
-        } else if(min != null) {
-            priceCondition = menu.price.goe(min);
-        } else {
-            priceCondition = menu.price.loe(max);
-        }
-
-        return JPAExpressions
-                .selectOne()
-                .from(menu)
-                .where(
-                        menu.store.eq(store),
-                        menu.recommend.isTrue(),
-                        priceCondition
-                )
-                .exists();
-    }
-
-    private BooleanExpression seatTypesIn(StoreFilteringRequest request) {
-        if (request.filters().seatTypes() == null || request.filters().seatTypes().isEmpty()) {
-            return null;
-        }
-        var types = request.filters().seatTypes();
-
-        return JPAExpressions
-                .selectOne()
-                .from(seatOption)
-                .where(
-                        seatOption.store.eq(store),
-                        seatOption.seatType.in(types)
-                )
-                .exists();
     }
 
     private BooleanExpression andAll(BooleanExpression... exprs) {
