@@ -3,13 +3,13 @@ package com.bobeat.backend.domain.store.repository.query;
 import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.JPAExpressions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.bobeat.backend.domain.common.PostgisExpressions.*;
+import static com.bobeat.backend.domain.common.PostgisExpressions.intersectsEnvelope;
+import static com.bobeat.backend.domain.common.PostgisExpressions.stDWithin;
 import static com.bobeat.backend.domain.store.entity.QMenu.menu;
 import static com.bobeat.backend.domain.store.entity.QSeatOption.seatOption;
 import static com.bobeat.backend.domain.store.entity.QStore.store;
@@ -27,9 +27,7 @@ public class StoreQueryFilterBuilder {
     /**
      * 모든 필터 조합
      */
-    public BooleanExpression buildAllFilters(StoreFilteringRequest request,
-                                              double centerLat,
-                                              double centerLon) {
+    public BooleanExpression buildAllFilters(StoreFilteringRequest request, double centerLat, double centerLon) {
         return andAll(
             buildLocationFilter(request, centerLat, centerLon),
             buildHonbobLevelFilter(request),
@@ -40,9 +38,7 @@ public class StoreQueryFilterBuilder {
     /**
      * 위치 필터 (BBox 또는 반경)
      */
-    public BooleanExpression buildLocationFilter(StoreFilteringRequest request,
-                                                   double centerLat,
-                                                   double centerLon) {
+    public BooleanExpression buildLocationFilter(StoreFilteringRequest request, double centerLat, double centerLon) {
         if (hasValidBbox(request)) {
             var nw = request.bbox().nw();
             var se = request.bbox().se();
@@ -76,19 +72,43 @@ public class StoreQueryFilterBuilder {
     }
 
     /**
-     * 가격 필터 (서브쿼리 방식)
-     * TODO: 성능 개선을 위해 JOIN 방식으로 전환 고려
+     * 가격 필터 존재 여부 확인
      */
-    public BooleanExpression buildPriceFilter(StoreFilteringRequest request) {
+    public boolean needsPriceJoin(StoreFilteringRequest request) {
         if (request.filters() == null || request.filters().price() == null) {
+            return false;
+        }
+        var price = request.filters().price();
+        return price.min() != null || price.max() != null;
+    }
+
+    /**
+     * 좌석 타입 필터 존재 여부 확인
+     */
+    public boolean needsSeatJoin(StoreFilteringRequest request) {
+        return request.filters() != null
+                && request.filters().seatTypes() != null
+                && !request.filters().seatTypes().isEmpty();
+    }
+
+    /**
+     * JOIN이 필요한 필터가 있는지 확인
+     */
+    public boolean needsJoin(StoreFilteringRequest request) {
+        return needsPriceJoin(request) || needsSeatJoin(request);
+    }
+
+    /**
+     * 가격 필터를 JOIN 조건으로 빌드
+     * 2단계 쿼리의 1단계(Store ID 조회)에서 사용
+     */
+    public BooleanExpression buildPriceJoinFilter(StoreFilteringRequest request) {
+        if (!needsPriceJoin(request)) {
             return null;
         }
+
         Integer min = request.filters().price().min();
         Integer max = request.filters().price().max();
-
-        if (min == null && max == null) {
-            return null;
-        }
 
         BooleanExpression priceCondition;
         if (min != null && max != null) {
@@ -99,37 +119,18 @@ public class StoreQueryFilterBuilder {
             priceCondition = menu.price.loe(max);
         }
 
-        return JPAExpressions
-            .selectOne()
-            .from(menu)
-            .where(
-                menu.store.eq(store),
-                menu.recommend.isTrue(),
-                priceCondition
-            )
-            .exists();
+        return menu.recommend.isTrue().and(priceCondition);
     }
 
     /**
-     * 좌석 타입 필터 (서브쿼리 방식)
-     * TODO: 성능 개선을 위해 JOIN 방식으로 전환 고려
+     * 좌석 타입 필터를 JOIN 조건으로 빌드
+     * 2단계 쿼리의 1단계(Store ID 조회)에서 사용
      */
-    public BooleanExpression buildSeatTypeFilter(StoreFilteringRequest request) {
-        if (request.filters() == null
-            || request.filters().seatTypes() == null
-            || request.filters().seatTypes().isEmpty()) {
+    public BooleanExpression buildSeatJoinFilter(StoreFilteringRequest request) {
+        if (!needsSeatJoin(request)) {
             return null;
         }
-
-        var types = request.filters().seatTypes();
-        return JPAExpressions
-            .selectOne()
-            .from(seatOption)
-            .where(
-                seatOption.store.eq(store),
-                seatOption.seatType.in(types)
-            )
-            .exists();
+        return seatOption.seatType.in(request.filters().seatTypes());
     }
 
     // ==================== Helper Methods ====================

@@ -40,11 +40,14 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
         NumberExpression<Integer> distanceExpr = distanceMeters(store.address.location, centerLat, centerLon);
 
+        // 가격 또는 좌석 필터가 있으면 JOIN 사용, 없으면 일반 쿼리
+        if (filterBuilder.needsJoin(request)) {
+            return findStoresWithJoins(request, limitPlusOne, distanceExpr, centerLat, centerLon);
+        }
+
         // Builder를 사용한 필터 구축
         BooleanExpression filters = andAll(
                 filterBuilder.buildAllFilters(request, centerLat, centerLon),
-                filterBuilder.buildPriceFilter(request),
-                filterBuilder.buildSeatTypeFilter(request),
                 applyKeyset(request, distanceExpr)
         );
 
@@ -60,6 +63,80 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
                 .fetch();
 
         return convertToStoreRows(rows, distanceExpr);
+    }
+
+    /**
+     * 가격/좌석 필터가 있을 때 2단계 쿼리로 조회
+     *
+     * 전략:
+     * 1단계 - JOIN으로 필터링된 Store ID만 조회 (DISTINCT)
+     * 2단계 - ID로 Store + distance 조회 (중복 없음, 정렬 정확)
+     *
+     * 이유:
+     * - 상관 서브쿼리는 각 Store마다 반복 실행되어 느림
+     * - 단순 JOIN은 중복 발생 (1 Store : N Menu)
+     * - DISTINCT + ORDER BY는 PostgreSQL 에러 발생
+     * - GROUP BY 모든 컬럼은 코드가 지저분함
+     *
+     * 상세 설명: SUBQUERY_OPTIMIZATION.md 참고
+     */
+    private List<StoreRow> findStoresWithJoins(StoreFilteringRequest request, int limitPlusOne, NumberExpression<Integer> distanceExpr, double centerLat, double centerLon) {
+        // 1단계: JOIN으로 필터링된 Store ID만 조회
+        List<Long> filteredStoreIds = findFilteredStoreIds(request, centerLat, centerLon, limitPlusOne);
+
+        if (filteredStoreIds.isEmpty()) {
+            return List.of();
+        }
+
+        // 2단계: ID로 Store + distance 조회 (중복 없음)
+        BooleanExpression filters = andAll(
+                filterBuilder.buildAllFilters(request, centerLat, centerLon),
+                applyKeyset(request, distanceExpr),
+                store.id.in(filteredStoreIds)
+        );
+
+        OrderSpecifier<?>[] orders = sortBuilder.buildOrderSpecifiers(request, distanceExpr);
+
+        List<Tuple> rows = queryFactory
+                .select(store, distanceExpr)
+                .from(store)
+                .where(filters)
+                .orderBy(orders)
+                .limit(limitPlusOne)
+                .fetch();
+
+        return convertToStoreRows(rows, distanceExpr);
+    }
+
+    /**
+     * JOIN 조건으로 필터링된 Store ID 목록 조회 (1단계)
+     */
+    private List<Long> findFilteredStoreIds(StoreFilteringRequest request, double centerLat, double centerLon, int limitPlusOne) {
+        // 기본 필터
+        BooleanExpression baseFilters = filterBuilder.buildAllFilters(request, centerLat, centerLon);
+
+        // JOIN 필터 (Builder를 통해 생성)
+        BooleanExpression priceJoinFilter = filterBuilder.buildPriceJoinFilter(request);
+        BooleanExpression seatJoinFilter = filterBuilder.buildSeatJoinFilter(request);
+
+        // 쿼리 빌드
+        var query = queryFactory
+                .select(store.id)
+                .distinct()  // Store ID만 조회하므로 DISTINCT 사용 가능
+                .from(store);
+
+        // JOIN 추가 (Builder를 통해 확인)
+        if (filterBuilder.needsPriceJoin(request)) {
+            query = query.join(menu).on(menu.store.eq(store));
+        }
+        if (filterBuilder.needsSeatJoin(request)) {
+            query = query.join(seatOption).on(seatOption.store.eq(store));
+        }
+
+        // WHERE 조건
+        query = query.where(andAll(baseFilters, priceJoinFilter, seatJoinFilter));
+
+        return query.limit((long) limitPlusOne * 2).fetch();
     }
 
     @Override

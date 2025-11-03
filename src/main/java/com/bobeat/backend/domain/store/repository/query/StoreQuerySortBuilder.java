@@ -23,8 +23,7 @@ public class StoreQuerySortBuilder {
     /**
      * sortBy에 따른 정렬 기준 생성
      */
-    public OrderSpecifier<?>[] buildOrderSpecifiers(StoreFilteringRequest request,
-                                                      NumberExpression<Integer> distanceExpr) {
+    public OrderSpecifier<?>[] buildOrderSpecifiers(StoreFilteringRequest request, NumberExpression<Integer> distanceExpr) {
         if (request.sortBy() == null || request.sortBy() == StoreFilteringRequest.SortBy.DISTANCE) {
             return buildDistanceSort(distanceExpr);
         }
