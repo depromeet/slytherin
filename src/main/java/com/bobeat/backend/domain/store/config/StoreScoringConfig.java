@@ -1,5 +1,6 @@
 package com.bobeat.backend.domain.store.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -46,6 +47,11 @@ public class StoreScoringConfig {
 
     private List<CategoryWeightItem> categoryWeights = List.of();
 
+    /**
+     * 복합 점수 계산 설정 (추천순 정렬용)
+     */
+    private CompositeScoreConfig composite = new CompositeScoreConfig();
+
     private Map<String, Double> categoryWeightMap;
 
     public double getCategoryWeightRatio(String category) {
@@ -76,5 +82,39 @@ public class StoreScoringConfig {
     public static class CategoryWeightItem {
         private String name;
         private Double ratio;
+    }
+
+    @Getter
+    @Setter
+    public static class CompositeScoreConfig {
+        /**
+         * 내부 점수 가중치 (0.0 ~ 1.0)
+         */
+        private Double internalScoreWeight = 0.3;
+
+        /**
+         * 거리 가중치 (0.0 ~ 1.0)
+         */
+        private Double distanceWeight = 0.7;
+
+        /**
+         * 최대 검색 반경 (미터)
+         */
+        private Integer maxSearchRadius = 5000;
+
+        /**
+         * 내부 점수 기본값 (점수 없을 때)
+         */
+        private Double defaultInternalScore = 50.0;
+
+        @PostConstruct
+        public void validate() {
+            double sum = internalScoreWeight + distanceWeight;
+            if (Math.abs(sum - 1.0) > 0.001) {
+                throw new IllegalStateException(
+                    "Internal score weight and distance weight must sum to 1.0, but got: " + sum
+                );
+            }
+        }
     }
 }
