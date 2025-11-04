@@ -7,6 +7,8 @@ import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.member.repository.MemberRepository;
 import com.bobeat.backend.domain.search.dto.response.StoreSearchHistoryResponse;
 import com.bobeat.backend.domain.search.entity.SearchHistory;
+import com.bobeat.backend.domain.search.entity.SearchHistoryEmbedding;
+import com.bobeat.backend.domain.search.repository.SearchHistoryEmbeddingRepository;
 import com.bobeat.backend.domain.search.repository.SearchHistoryRepository;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto.Coordinate;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,11 +48,11 @@ public class SearchService {
     private final ClovaEmbeddingClient clovaEmbeddingClient;
     private final StoreEmbeddingQueryRepository storeEmbeddingQueryRepository;
     private final SeatOptionRepository seatOptionRepository;
+    private final SearchHistoryEmbeddingRepository searchHistoryEmbeddingRepository;
 
-    public CursorPageResponse<StoreSearchResultDto> searchStore(Long userId, String query,
+    public CursorPageResponse<StoreSearchResultDto> searchStore(Long memberId, String query,
                                                                 CursorPaginationRequest request) {
-
-        List<Float> embedding = clovaEmbeddingClient.getEmbeddingSync(query);
+        List<Float> embedding = CheckAndSaveQueryEmbedding(query);
         Float lastKnown = null;
         if (request.lastKnown() != null) {
             lastKnown = Float.valueOf(request.lastKnown());
@@ -73,7 +76,7 @@ public class SearchService {
         Map<Long, SignatureMenu> repMenus = storeRepository.findRepresentativeMenus(storeIds);
         Map<Long, List<String>> seatTypes = storeRepository.findSeatTypes(storeIds);
 
-        saveSearchHistory(userId, query);
+        saveSearchHistory(memberId, query);
         List<StoreSearchResultDto> storeSearchResultDtos = stores.stream()
                 .map(store -> {
                             StoreImage storeImage = storeImageRepository.findByStoreAndIsMainTrue(store);
@@ -139,6 +142,29 @@ public class SearchService {
         searchHistoryRepository.delete(searchHistory);
     }
 
+    public List<Float> CheckAndSaveQueryEmbedding(String query) {
+        SearchHistoryEmbedding searchHistoryEmbeddings = searchHistoryEmbeddingRepository.findByQuery(query);
+        if (searchHistoryEmbeddings != null) {
+            float[] embedding = searchHistoryEmbeddings.getEmbedding();
+            return IntStream.range(0, embedding.length)
+                    .mapToObj(i -> embedding[i])
+                    .collect(Collectors.toList());
+        }
+        List<Float> embedding = clovaEmbeddingClient.getEmbeddingSync(query);
+
+        float[] embeddingArray = new float[embedding.size()];
+        for (int i = 0; i < embedding.size(); i++) {
+            embeddingArray[i] = embedding.get(i);
+        }
+
+        SearchHistoryEmbedding searchHistoryEmbedding = SearchHistoryEmbedding.builder()
+                .embedding(embeddingArray)
+                .query(query)
+                .build();
+        searchHistoryEmbeddingRepository.save(searchHistoryEmbedding);
+        return embedding;
+    }
+
     private CursorPageResponse<StoreSearchResultDto> buildStoreSearchResponse(List<Store> stores,
                                                                               CursorPaginationRequest paging) {
         final int temporaryDistance = 20;
@@ -193,7 +219,7 @@ public class SearchService {
         return false;
     }
 
-    public String findNextCursor(List<StoreEmbedding> storeEmbeddings, List<Float> compareEmbedding) {
+    private String findNextCursor(List<StoreEmbedding> storeEmbeddings, List<Float> compareEmbedding) {
         if (storeEmbeddings.isEmpty()) {
             throw new CustomException("마지막 인덱스입니다.", INTERNAL_SERVER);
         }

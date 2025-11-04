@@ -1,40 +1,36 @@
 package com.bobeat.backend.domain.search.entity;
 
-import com.bobeat.backend.domain.common.BaseTimeEntity;
-import com.bobeat.backend.domain.member.entity.Member;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Array;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(name = "search_history")
+@Table(name = "search_history_embedding")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class SearchHistory extends BaseTimeEntity {
+public class SearchHistoryEmbedding {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column
+    @JdbcTypeCode(SqlTypes.VECTOR)
+    @Array(length = 1024)
+    private float[] embedding;
+
     private String query;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Member member;
-
-    
-    public void updateUpdatedAt() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }
