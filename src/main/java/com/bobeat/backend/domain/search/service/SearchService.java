@@ -9,15 +9,19 @@ import com.bobeat.backend.domain.search.entity.SearchHistory;
 import com.bobeat.backend.domain.search.repository.SearchHistoryRepository;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.entity.Store;
-import com.bobeat.backend.domain.store.entity.StoreImage;
+import com.bobeat.backend.domain.store.entity.StoreEmbedding;
+import com.bobeat.backend.domain.store.external.clova.service.ClovaEmbeddingClient;
+import com.bobeat.backend.domain.store.repository.StoreEmbeddingQueryRepository;
 import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
 import com.bobeat.backend.domain.store.service.StoreService;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.request.CursorPaginationRequest;
+import com.bobeat.backend.global.response.CursorPageResponse;
+import com.bobeat.backend.global.util.KeysetCursor;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,31 +35,30 @@ public class SearchService {
     private final StoreService storeService;
     private final SearchHistoryRepository searchHistoryRepository;
     private final MemberRepository memberRepository;
+    private final ClovaEmbeddingClient clovaEmbeddingClient;
+    private final StoreEmbeddingQueryRepository storeEmbeddingQueryRepository;
 
-    public List<StoreSearchResultDto> searchStore(Long userId, String query) {
+    public CursorPageResponse<StoreSearchResultDto> searchStoreV2(Long userId, String query,
+                                                                  CursorPaginationRequest paging) {
 
-        List<Store> stores = storeRepository.findAll().stream()
-                .limit(5)
+        List<Double> embedding = clovaEmbeddingClient.getEmbeddingSync(query);
+        String vectorLiteral = "[" + embedding.stream()
+                .map(d -> String.format("%.6f", d))
+                .collect(Collectors.joining(",")) + "]";
+
+        List<StoreEmbedding> storeEmbeddings = storeEmbeddingQueryRepository.findSimilarEmbeddingsWithCursor(
+                embedding, paging.lastKnown(), paging.limit());
+        List<Store> stores = storeEmbeddings.stream()
+                .map(StoreEmbedding::getStore)
                 .toList();
 
-        List<Long> storeIds = stores.stream()
-                .map(Store::getId)
-                .toList();
-        Map<Long, List<String>> seatTypes = storeRepository.findSeatTypes(storeIds);
-
-        List<StoreSearchResultDto> storeSearchResultDtos = stores.stream()
-                .map(store -> {
-                    StoreImage storeimage = storeImageRepository.findByStoreAndIsMainTrue(store);
-                    List<String> seatTypeNames = seatTypes.getOrDefault(store.getId(), List.of());
-                    List<String> tagNames = storeService.buildTagsFromCategories(store.getCategories());
-                    return StoreSearchResultDto.of(store, storeimage, seatTypeNames, tagNames);
-                })
-                .toList();
+        storeEmbeddings.stream()
+                .map(StoreEmbedding::getStore)
+                .forEach(store -> System.out.println("store = " + store.getName()));
         saveSearchHistory(userId, query);
 
-        return storeSearchResultDtos;
+        return test(stores, paging);
     }
-
 
     @Transactional
     public void saveSearchHistory(Long memberId, String query) {
@@ -100,5 +103,51 @@ public class SearchService {
             throw new CustomException(SEARCH_HISTORY_ACCESS_DENIED);
         }
         searchHistoryRepository.delete(searchHistory);
+    }
+
+    private CursorPageResponse<StoreSearchResultDto> test(List<Store> stores, CursorPaginationRequest paging) {
+        final int temporaryDistance = 20;
+        final int temporaryWorkingDistance = 20;
+
+        final int pageSize = paging != null ? paging.limit() : 20;
+
+        boolean hasNext = stores.size() > paging.limit();
+
+        List<Long> storeIds = stores.stream()
+                .map(Store::getId)
+                .toList();
+
+        var repMenuMap = storeRepository.findRepresentativeMenus(storeIds);
+        var seatTypesMap = storeRepository.findSeatTypes(storeIds);
+
+        List<StoreSearchResultDto> data = stores.stream()
+                .map(store -> {
+                    var mainImage = storeImageRepository.findByStoreAndIsMainTrue(store);
+
+                    long id = store.getId();
+
+                    return new StoreSearchResultDto(
+                            store.getId(),
+                            store.getName(),
+                            mainImage.getImageUrl(),
+                            repMenuMap.getOrDefault(id, new StoreSearchResultDto.SignatureMenu(null, 0)),
+                            new StoreSearchResultDto.Coordinate(store.getAddress().getLatitude(),
+                                    store.getAddress().getLongitude()),
+                            temporaryDistance,
+                            temporaryWorkingDistance,
+                            seatTypesMap.getOrDefault(id, List.of()),
+                            storeService.buildTagsFromCategories(store.getCategories()),
+                            store.getHonbobLevel() != null ? store.getHonbobLevel().getValue() : 0
+                    );
+                })
+                .collect(Collectors.toList());
+
+        String nextCursor = null;
+        if (hasNext && !stores.isEmpty()) {
+            Store lastStore = stores.getLast();
+            nextCursor = KeysetCursor.encode(temporaryDistance, lastStore.getId());
+        }
+
+        return new CursorPageResponse<>(data, nextCursor, hasNext, null);
     }
 }

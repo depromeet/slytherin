@@ -5,6 +5,7 @@ import com.bobeat.backend.domain.search.service.SearchService;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.global.request.CursorPaginationRequest;
 import com.bobeat.backend.global.response.ApiResponse;
+import com.bobeat.backend.global.response.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -31,9 +32,10 @@ public class SearchController {
 
     @Operation(summary = "식당 검색", description = "식당 검색 및 검색 결과를 반환한다")
     @GetMapping()
-    public ApiResponse<List<StoreSearchResultDto>> searchStore(@AuthenticationPrincipal Long memberId,
-                                                               @RequestParam("query") String query) {
-        List<StoreSearchResultDto> response = searchService.searchStore(memberId, query);
+    public ApiResponse<CursorPageResponse<StoreSearchResultDto>> searchStore(@AuthenticationPrincipal Long memberId,
+                                                                             @RequestParam("query") String query,
+                                                                             CursorPaginationRequest paging) {
+        CursorPageResponse<StoreSearchResultDto> response = searchService.searchStoreV2(memberId, query, paging);
         return ApiResponse.success(response);
     }
 
