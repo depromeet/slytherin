@@ -1,5 +1,6 @@
 package com.bobeat.backend.domain.search.service;
 
+import static com.bobeat.backend.global.exception.ErrorCode.INTERNAL_SERVER;
 import static com.bobeat.backend.global.exception.ErrorCode.SEARCH_HISTORY_ACCESS_DENIED;
 
 import com.bobeat.backend.domain.member.entity.Member;
@@ -8,9 +9,13 @@ import com.bobeat.backend.domain.search.dto.response.StoreSearchHistoryResponse;
 import com.bobeat.backend.domain.search.entity.SearchHistory;
 import com.bobeat.backend.domain.search.repository.SearchHistoryRepository;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
+import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto.Coordinate;
+import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto.SignatureMenu;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.entity.StoreEmbedding;
+import com.bobeat.backend.domain.store.entity.StoreImage;
 import com.bobeat.backend.domain.store.external.clova.service.ClovaEmbeddingClient;
+import com.bobeat.backend.domain.store.repository.SeatOptionRepository;
 import com.bobeat.backend.domain.store.repository.StoreEmbeddingQueryRepository;
 import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
@@ -19,7 +24,9 @@ import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.request.CursorPaginationRequest;
 import com.bobeat.backend.global.response.CursorPageResponse;
 import com.bobeat.backend.global.util.KeysetCursor;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -37,23 +44,54 @@ public class SearchService {
     private final MemberRepository memberRepository;
     private final ClovaEmbeddingClient clovaEmbeddingClient;
     private final StoreEmbeddingQueryRepository storeEmbeddingQueryRepository;
+    private final SeatOptionRepository seatOptionRepository;
 
-    public CursorPageResponse<StoreSearchResultDto> searchStoreV2(Long userId, String query,
-                                                                  CursorPaginationRequest paging) {
+    public CursorPageResponse<StoreSearchResultDto> searchStore(Long userId, String query,
+                                                                CursorPaginationRequest request) {
 
         List<Double> embedding = clovaEmbeddingClient.getEmbeddingSync(query);
-        String vectorLiteral = "[" + embedding.stream()
-                .map(d -> String.format("%.6f", d))
-                .collect(Collectors.joining(",")) + "]";
+        Double lastKnown = null;
+        if (request.lastKnown() != null) {
+            lastKnown = Double.valueOf(request.lastKnown());
+        }
+        List<StoreEmbedding> storeEmbeddings = storeEmbeddingQueryRepository.findSimilarEmbeddingsWithCursor(embedding,
+                lastKnown, request.limit() + 1);
+        boolean hasNext = checkHasNext(storeEmbeddings, request.limit());
 
-        List<StoreEmbedding> storeEmbeddings = storeEmbeddingQueryRepository.findSimilarEmbeddingsWithCursor(
-                embedding, paging.lastKnown(), paging.limit());
-        List<Store> stores = storeEmbeddings.stream()
+        List<StoreEmbedding> actualStoreEmbeddings = storeEmbeddings.stream()
+                .limit(request.limit())
+                .toList();
+        String nextCursor = findNextCursor(actualStoreEmbeddings, embedding);
+
+        List<Store> stores = actualStoreEmbeddings.stream()
                 .map(StoreEmbedding::getStore)
                 .toList();
-        saveSearchHistory(userId, query);
 
-        return test(stores, paging);
+        List<Long> storeIds = stores.stream()
+                .map(Store::getId)
+                .toList();
+        Map<Long, SignatureMenu> repMenus = storeRepository.findRepresentativeMenus(storeIds);
+        Map<Long, List<String>> seatTypes = storeRepository.findSeatTypes(storeIds);
+
+        saveSearchHistory(userId, query);
+        List<StoreSearchResultDto> storeSearchResultDtos = stores.stream()
+                .map(store -> {
+                            StoreImage storeImage = storeImageRepository.findByStoreAndIsMainTrue(store);
+                            SignatureMenu signatureMenu = repMenus.get(store.getId());
+                            Coordinate coordinate = new Coordinate(store.getAddress().getLatitude(),
+                                    store.getAddress().getLongitude());
+                            List<String> seatTypeStrings = seatTypes.get(store.getId());
+
+                            List<String> categoryStrings = storeService.buildTagsFromCategories(store.getCategories());
+                            return new StoreSearchResultDto(store.getId(), store.getName(), storeImage.getImageUrl(),
+                                    signatureMenu, coordinate, 0, 0, seatTypeStrings, categoryStrings,
+                                    store.getHonbobLevel() != null ? store.getHonbobLevel().getValue() : 0);
+                        }
+                )
+                .toList();
+
+        return new CursorPageResponse<>(storeSearchResultDtos, nextCursor, hasNext, null);
+        //return buildStoreSearchResponse(stores, paging);
     }
 
     @Transactional
@@ -101,7 +139,8 @@ public class SearchService {
         searchHistoryRepository.delete(searchHistory);
     }
 
-    private CursorPageResponse<StoreSearchResultDto> test(List<Store> stores, CursorPaginationRequest paging) {
+    private CursorPageResponse<StoreSearchResultDto> buildStoreSearchResponse(List<Store> stores,
+                                                                              CursorPaginationRequest paging) {
         final int temporaryDistance = 20;
         final int temporaryWorkingDistance = 20;
 
@@ -145,5 +184,32 @@ public class SearchService {
         }
 
         return new CursorPageResponse<>(data, nextCursor, hasNext, null);
+    }
+
+    private boolean checkHasNext(List<StoreEmbedding> storeEmbeddings, @NotNull int limit) {
+        if (storeEmbeddings.size() > limit) {
+            return true;
+        }
+        return false;
+    }
+
+    public String findNextCursor(List<StoreEmbedding> storeEmbeddings, List<Double> embedding) {
+        if (storeEmbeddings.size() == 0) {
+            throw new CustomException("마지막 인덱스입니다.", INTERNAL_SERVER);
+        }
+        StoreEmbedding storeEmbedding = storeEmbeddings.get(storeEmbeddings.size() - 1);
+        List<Double> compareEmbedding = storeEmbedding.getEmbedding();
+        double dot = 0.0;
+        double normA = 0.0;
+        double normB = 0.0;
+
+        for (int i = 0; i < compareEmbedding.size(); i++) {
+            dot += compareEmbedding.get(i) * embedding.get(i);
+            normA += Math.pow(compareEmbedding.get(i), 2);
+            normB += Math.pow(embedding.get(i), 2);
+        }
+
+        double cosineSimilarity = dot / (Math.sqrt(normA) * Math.sqrt(normB));
+        return String.valueOf(1 - cosineSimilarity);
     }
 }

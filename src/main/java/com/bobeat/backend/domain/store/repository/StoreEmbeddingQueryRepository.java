@@ -14,24 +14,29 @@ public class StoreEmbeddingQueryRepository {
 
     private final EntityManager em;
 
-    public List<StoreEmbedding> findSimilarEmbeddingsWithCursor(List<Double> embedding, String lastKnown, int limit) {
+    public List<StoreEmbedding> findSimilarEmbeddingsWithCursor(
+            List<Double> embedding,
+            Double lastScore,
+            int limit
+    ) {
         String vectorLiteral = PgVectorUtils.toLiteral(embedding);
-
+        if (lastScore == null) {
+            lastScore = Double.valueOf(0.0);
+        }
         String sql = """
-                    SELECT se.*
+                    SELECT 
+                        se.*
                     FROM store_embedding se
-                    JOIN store s 
-                    ON s.id = se.store_id
-                    WHERE se.id > COALESCE(CAST(:lastId AS BIGINT), 0)
-                    ORDER BY se.embedding <=> CAST(:embedding AS vector(1024))
+                    JOIN store s ON s.id = se.store_id
+                    WHERE (se.embedding <=> CAST(:embedding AS vector(1024))) > :lastScore
+                    ORDER BY (se.embedding <=> CAST(:embedding AS vector(1024))) ASC, s.id ASC
                     LIMIT :limit
                 """;
 
         Query query = em.createNativeQuery(sql, StoreEmbedding.class);
         query.setParameter("embedding", vectorLiteral);
         query.setParameter("limit", limit);
-        query.setParameter("lastId", lastKnown);
-
+        query.setParameter("lastScore", lastScore);
         return query.getResultList();
     }
 }

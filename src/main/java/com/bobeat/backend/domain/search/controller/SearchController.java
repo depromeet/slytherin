@@ -36,7 +36,7 @@ public class SearchController {
     @PostMapping
     public ApiResponse<CursorPageResponse<StoreSearchResultDto>> searchStore(@AuthenticationPrincipal Long memberId,
                                                                              @RequestBody @Valid StoreSearchRequest request) {
-        CursorPageResponse<StoreSearchResultDto> response = searchService.searchStoreV2(memberId, request.query(),
+        CursorPageResponse<StoreSearchResultDto> response = searchService.searchStore(memberId, request.query(),
                 request.paging());
         return ApiResponse.success(response);
     }
