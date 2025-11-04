@@ -2,7 +2,6 @@ package com.bobeat.backend.domain.store.controller;
 
 import com.bobeat.backend.domain.store.dto.request.EditProposalRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
-import com.bobeat.backend.domain.store.dto.response.SearchHistoryDto;
 import com.bobeat.backend.domain.store.dto.response.SimilarStoreResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
@@ -17,13 +16,11 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Store", description = "가게(식당) 관련 API")
@@ -60,21 +57,6 @@ public class StoreController {
             @RequestBody EditProposalRequest request
     ) {
         return ApiResponse.successOnly();
-    }
-
-    @Operation(summary = "식당 검색", description = "식당 검색 및 검색 결과를 반환한다")
-    @GetMapping("/search")
-    public ApiResponse<List<StoreSearchResultDto>> searchStore(@AuthenticationPrincipal Long memberId,
-                                                               @RequestParam("query") String query) {
-        List<StoreSearchResultDto> response = storeService.searchStore(memberId, query);
-        return ApiResponse.success(response);
-    }
-
-    @Operation(summary = "식당 검색 히스토리 조회", description = "사용자의 검색 히스토리를 날짜 기준 내림차순으로 제공")
-    @GetMapping("/history")
-    public ApiResponse<List<SearchHistoryDto>> getSearchHistory() {
-        List<SearchHistoryDto> response = storeService.findSearchHistory();
-        return ApiResponse.success(response);
     }
 
     @Operation(summary = "유사 가게 추천", description = "해당 가게와 유사한 가게를 3km 이내에서 최대 5개 추천합니다.")

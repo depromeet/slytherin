@@ -45,8 +45,11 @@ public enum ErrorCode {
     TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "J005", "토큰을 찾을 수 없습니다."),
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "J006", "리프레시 토큰을 찾을 수 없습니다."),
     REFRESH_TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "J007", "리프레시 토큰이 일치하지 않습니다."),
-    CONCURRENCY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G501", "동시성 처리 중 오류가 발생했습니다.");
+    CONCURRENCY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G501", "동시성 처리 중 오류가 발생했습니다."),
 
+    //검색
+    SEARCH_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "검색 기록을 찾을 수 없습니다."),
+    SEARCH_HISTORY_ACCESS_DENIED(HttpStatus.UNAUTHORIZED, "S002", "접근 불가한 검색 기록입니다");
 
     private final HttpStatus httpStatus;
 
