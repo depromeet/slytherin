@@ -15,11 +15,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query("SELECT m FROM Member m LEFT JOIN FETCH m.onboardingProfile WHERE m.id = :id")
     Optional<Member> findByIdWithOnboardingProfile(@Param("id") Long id);
 
-    default Member findByMemberId(Long memberId) {
-        return findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-    }
-
     default Member findByIdOrElseThrow(Long id) {
         return findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));

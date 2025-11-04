@@ -58,7 +58,7 @@ public class SearchService {
 
     @Transactional
     public void saveSearchHistory(Long memberId, String query) {
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = memberRepository.findByIdOrElseThrow(memberId);
         Optional<SearchHistory> searchHistoryOptional = searchHistoryRepository.findByQueryAndMember(query, member);
 
         if (searchHistoryOptional.isEmpty()) {
@@ -86,7 +86,7 @@ public class SearchService {
 
     @Transactional
     public void deleteStoreSearchHistory(Long memberId) {
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = memberRepository.findByIdOrElseThrow(memberId);
         searchHistoryRepository.deleteByMember(member);
     }
 
