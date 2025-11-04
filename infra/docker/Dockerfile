@@ -1,5 +1,5 @@
 # Base image 선택 (Java 21)
-FROM openjdk:21-jdk
+FROM amazoncorretto:21
 
 # 작업 디렉토리 설정
 WORKDIR /app
