@@ -2,11 +2,7 @@ package com.bobeat.backend.domain.store.controller;
 
 import com.bobeat.backend.domain.store.dto.request.EditProposalRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
-<<<<<<< HEAD
-=======
-import com.bobeat.backend.domain.store.dto.response.SearchHistoryDto;
 import com.bobeat.backend.domain.store.dto.response.SimilarStoreResponse;
->>>>>>> 0717c4773d284280a274c13aa6be54babf11f482
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.service.SimilarStoreService;

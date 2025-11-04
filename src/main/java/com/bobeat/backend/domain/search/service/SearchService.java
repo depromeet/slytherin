@@ -49,10 +49,10 @@ public class SearchService {
     public CursorPageResponse<StoreSearchResultDto> searchStore(Long userId, String query,
                                                                 CursorPaginationRequest request) {
 
-        List<Double> embedding = clovaEmbeddingClient.getEmbeddingSync(query);
-        Double lastKnown = null;
+        List<Float> embedding = clovaEmbeddingClient.getEmbeddingSync(query);
+        Float lastKnown = null;
         if (request.lastKnown() != null) {
-            lastKnown = Double.valueOf(request.lastKnown());
+            lastKnown = Float.valueOf(request.lastKnown());
         }
         List<StoreEmbedding> storeEmbeddings = storeEmbeddingQueryRepository.findSimilarEmbeddingsWithCursor(embedding,
                 lastKnown, request.limit() + 1);
@@ -193,23 +193,26 @@ public class SearchService {
         return false;
     }
 
-    public String findNextCursor(List<StoreEmbedding> storeEmbeddings, List<Double> embedding) {
-        if (storeEmbeddings.size() == 0) {
+    public String findNextCursor(List<StoreEmbedding> storeEmbeddings, List<Float> compareEmbedding) {
+        if (storeEmbeddings.isEmpty()) {
             throw new CustomException("마지막 인덱스입니다.", INTERNAL_SERVER);
         }
+
         StoreEmbedding storeEmbedding = storeEmbeddings.get(storeEmbeddings.size() - 1);
-        List<Double> compareEmbedding = storeEmbedding.getEmbedding();
-        double dot = 0.0;
-        double normA = 0.0;
-        double normB = 0.0;
+        float[] storeVector = storeEmbedding.getEmbedding();
+
+        float dot = 0.0f;
+        float normA = 0.0f;
+        float normB = 0.0f;
 
         for (int i = 0; i < compareEmbedding.size(); i++) {
-            dot += compareEmbedding.get(i) * embedding.get(i);
-            normA += Math.pow(compareEmbedding.get(i), 2);
-            normB += Math.pow(embedding.get(i), 2);
+            dot += compareEmbedding.get(i) * storeVector[i];
+            normA += compareEmbedding.get(i) * compareEmbedding.get(i);
+            normB += storeVector[i] * storeVector[i];
         }
 
         double cosineSimilarity = dot / (Math.sqrt(normA) * Math.sqrt(normB));
-        return String.valueOf(1 - cosineSimilarity);
+        double distance = 1 - cosineSimilarity;
+        return String.valueOf(distance);
     }
 }

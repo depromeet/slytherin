@@ -15,13 +15,13 @@ public class StoreEmbeddingQueryRepository {
     private final EntityManager em;
 
     public List<StoreEmbedding> findSimilarEmbeddingsWithCursor(
-            List<Double> embedding,
-            Double lastScore,
+            List<Float> embedding,
+            Float lastScore,
             int limit
     ) {
         String vectorLiteral = PgVectorUtils.toLiteral(embedding);
         if (lastScore == null) {
-            lastScore = Double.valueOf(0.0);
+            lastScore = Float.valueOf(0.0f);
         }
         String sql = """
                     SELECT 

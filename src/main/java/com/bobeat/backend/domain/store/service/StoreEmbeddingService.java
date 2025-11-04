@@ -2,6 +2,7 @@ package com.bobeat.backend.domain.store.service;
 
 import com.bobeat.backend.domain.store.controller.StoreEmbeddingTestController.EmbeddingTestResponse;
 import com.bobeat.backend.domain.store.controller.StoreEmbeddingTestController.StoreTextResponse;
+import com.bobeat.backend.domain.store.entity.EmbeddingStatus;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.Store;
@@ -36,7 +37,6 @@ public class StoreEmbeddingService {
      * 포함 정보: - 가게 이름 - 설명 - 혼밥 난이도 - 카테고리 (Primary, Secondary) - 위치 (주소) - 메뉴 (이름, 가격) - 좌석 유형
      *
      * @param store Store 엔티티
-     *
      * @return 1024차원의 임베딩 벡터
      */
     public Mono<List<Float>> generateStoreEmbedding(Store store) {
@@ -48,7 +48,6 @@ public class StoreEmbeddingService {
      * Store 엔티티의 모든 정보를 결합하여 임베딩 벡터를 동기식으로 생성합니다.
      *
      * @param store Store 엔티티
-     *
      * @return 1024차원의 임베딩 벡터
      */
     public List<Float> generateStoreEmbeddingSync(Store store) {
@@ -102,7 +101,6 @@ public class StoreEmbeddingService {
      * Store 엔티티의 모든 정보를 하나의 텍스트로 결합합니다.
      *
      * @param store Store 엔티티
-     *
      * @return 결합된 텍스트
      */
     private String buildStoreText(Store store) {
@@ -169,7 +167,6 @@ public class StoreEmbeddingService {
      * 가격을 천 단위 구분자로 포맷팅합니다.
      *
      * @param price 가격
-     *
      * @return 포맷팅된 가격 문자열
      */
     private String formatPrice(int price) {
