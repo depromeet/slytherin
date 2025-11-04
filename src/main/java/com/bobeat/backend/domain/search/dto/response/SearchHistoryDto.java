@@ -1,4 +1,4 @@
-package com.bobeat.backend.domain.store.dto.response;
+package com.bobeat.backend.domain.search.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;

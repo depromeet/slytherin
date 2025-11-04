@@ -1,5 +1,12 @@
 package com.bobeat.backend.domain.store.repository;
 
+import static com.bobeat.backend.domain.common.PostgisExpressions.distanceMeters;
+import static com.bobeat.backend.domain.common.PostgisExpressions.intersectsEnvelope;
+import static com.bobeat.backend.domain.common.PostgisExpressions.stDWithin;
+import static com.bobeat.backend.domain.store.entity.QMenu.menu;
+import static com.bobeat.backend.domain.store.entity.QSeatOption.seatOption;
+import static com.bobeat.backend.domain.store.entity.QStore.store;
+
 import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
@@ -14,15 +21,13 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-
-import java.util.*;
-
-import static com.bobeat.backend.domain.common.PostgisExpressions.*;
-import static com.bobeat.backend.domain.store.entity.QMenu.menu;
-import static com.bobeat.backend.domain.store.entity.QSeatOption.seatOption;
-import static com.bobeat.backend.domain.store.entity.QStore.store;
 
 @Repository
 @RequiredArgsConstructor
@@ -70,13 +75,17 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     }
 
     private BooleanExpression applyKeyset(StoreFilteringRequest req, NumberExpression<Integer> distanceExpr) {
-        if (req.paging() == null) return null;
+        if (req.paging() == null) {
+            return null;
+        }
 
         var cursor = KeysetCursor.decodeOrNull(req.paging().lastKnown());
-        if (cursor == null) return null;
+        if (cursor == null) {
+            return null;
+        }
 
-        int  lastDist = cursor.distance();
-        long lastId   = cursor.id();
+        int lastDist = cursor.distance();
+        long lastId = cursor.id();
 
         return distanceExpr.gt(lastDist)
                 .or(distanceExpr.eq(lastDist).and(store.id.gt(lastId)));
@@ -84,7 +93,9 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
     @Override
     public Map<Long, StoreSearchResultDto.SignatureMenu> findRepresentativeMenus(List<Long> storeIds) {
-        if (storeIds.isEmpty()) return Map.of();
+        if (storeIds.isEmpty()) {
+            return Map.of();
+        }
 
         List<Menu> menus = queryFactory
                 .selectFrom(menu)
@@ -103,7 +114,9 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
     @Override
     public Map<Long, List<String>> findSeatTypes(List<Long> storeIds) {
-        if (storeIds.isEmpty()) return Map.of();
+        if (storeIds.isEmpty()) {
+            return Map.of();
+        }
 
         QSeatOption so = seatOption;
 
@@ -125,7 +138,9 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     }
 
     private Map<Long, StoreSearchResultDto.SignatureMenu> loadRepresentativeMenus(List<Long> storeIds) {
-        if (storeIds.isEmpty()) return Map.of();
+        if (storeIds.isEmpty()) {
+            return Map.of();
+        }
 
         List<Menu> menus = queryFactory
                 .selectFrom(QMenu.menu)
@@ -167,14 +182,16 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     }
 
     private boolean hasValidBbox(StoreFilteringRequest req) {
-        if (req == null || req.bbox() == null || req.bbox().nw() == null || req.bbox().se() == null) return false;
+        if (req == null || req.bbox() == null || req.bbox().nw() == null || req.bbox().se() == null) {
+            return false;
+        }
         var nw = req.bbox().nw();
         var se = req.bbox().se();
         return nw.lat() != null && nw.lon() != null && se.lat() != null && se.lon() != null;
     }
 
     private BooleanExpression levelLoe(StoreFilteringRequest request) {
-        if(request.filters() == null || request.filters().honbobLevel() == null) {
+        if (request.filters() == null || request.filters().honbobLevel() == null) {
             return null;
         }
         Level target = Level.fromValue(request.filters().honbobLevel());
@@ -191,20 +208,20 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
     // TODO: 가격 범위 쿼리 방식 재검토(AS-IS: 서브쿼리 방식으로 추천메뉴 중 가격 조건에 맞는 메뉴가 하나라도 있는지 확인)
     private BooleanExpression recommendedMenuPriceInRange(StoreFilteringRequest request) {
-        if(request.filters() == null || request.filters().price() == null) {
+        if (request.filters() == null || request.filters().price() == null) {
             return null;
         }
         Integer min = request.filters().price().min();
         Integer max = request.filters().price().max();
 
-        if(min == null && max == null) {
+        if (min == null && max == null) {
             return null;
         }
         BooleanExpression priceCondition;
 
-        if(min != null && max != null) {
+        if (min != null && max != null) {
             priceCondition = menu.price.between(min, max);
-        } else if(min != null) {
+        } else if (min != null) {
             priceCondition = menu.price.goe(min);
         } else {
             priceCondition = menu.price.loe(max);
@@ -240,7 +257,9 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     private BooleanExpression andAll(BooleanExpression... exprs) {
         BooleanExpression acc = null;
         for (BooleanExpression e : exprs) {
-            if (e == null) continue;
+            if (e == null) {
+                continue;
+            }
             acc = (acc == null) ? e : acc.and(e);
         }
         return acc;
