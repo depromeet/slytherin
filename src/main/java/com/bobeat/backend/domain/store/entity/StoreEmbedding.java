@@ -39,4 +39,8 @@ public class StoreEmbedding {
 
     @OneToOne
     private Store store;
+
+    public void update(StoreEmbedding updated) {
+        this.embedding = updated.getEmbedding();
+    }
 }
