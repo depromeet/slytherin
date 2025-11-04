@@ -50,7 +50,7 @@ public class SearchService {
     private final SeatOptionRepository seatOptionRepository;
     private final SearchHistoryEmbeddingRepository searchHistoryEmbeddingRepository;
 
-    public CursorPageResponse<StoreSearchResultDto> searchStore(Long memberId, String query,
+    public CursorPageResponse<StoreSearchResultDto> searchStore(String query,
                                                                 CursorPaginationRequest request) {
         List<Float> embedding = CheckAndSaveQueryEmbedding(query);
         Float lastKnown = null;
@@ -76,7 +76,6 @@ public class SearchService {
         Map<Long, SignatureMenu> repMenus = storeRepository.findRepresentativeMenus(storeIds);
         Map<Long, List<String>> seatTypes = storeRepository.findSeatTypes(storeIds);
 
-        saveSearchHistory(memberId, query);
         List<StoreSearchResultDto> storeSearchResultDtos = stores.stream()
                 .map(store -> {
                             StoreImage storeImage = storeImageRepository.findByStoreAndIsMainTrue(store);
@@ -94,6 +93,13 @@ public class SearchService {
                 .toList();
 
         return new CursorPageResponse<>(storeSearchResultDtos, nextCursor, hasNext, null);
+    }
+
+    public CursorPageResponse<StoreSearchResultDto> searchStoreWithMember(Long memberId, String query,
+                                                                          CursorPaginationRequest request) {
+        CursorPageResponse<StoreSearchResultDto> response = searchStore(query, request);
+        saveSearchHistory(memberId, query);
+        return response;
     }
 
     @Transactional
