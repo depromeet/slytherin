@@ -94,7 +94,6 @@ public class SearchService {
                 .toList();
 
         return new CursorPageResponse<>(storeSearchResultDtos, nextCursor, hasNext, null);
-        //return buildStoreSearchResponse(stores, paging);
     }
 
     @Transactional
