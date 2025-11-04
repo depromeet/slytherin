@@ -55,7 +55,7 @@ public class StoreQueryFilterBuilder {
             return null;
         }
         Level target = Level.fromValue(request.filters().honbobLevel());
-        return store.honbobLevel.loe(target);
+        return store.honbobLevel.eq(target);
     }
 
     /**

@@ -32,6 +32,10 @@ import org.springframework.boot.test.context.SpringBootTest;
  * 3. 페이지네이션 (커서 기반)
  * 4. 경계값 테스트
  * 5. 복합 조건 테스트
+ *
+ * 주요 변경사항:
+ * - 혼밥레벨 필터: honbobLevel == N (정확히 일치하는 경우만 반환)
+ * - 거리 필터: 기본 5km 반경 (Store D는 5.5km로 항상 제외됨)
  */
 @SpringBootTest
 @Transactional
@@ -60,11 +64,11 @@ public class StoreRepositoryImplTest {
     private static final double CENTER_LAT = 37.4979;
     private static final double CENTER_LON = 127.0276;
 
-    private Store storeA; // 강남역에서 ~500m
-    private Store storeB; // 강남역에서 ~2km
-    private Store storeC; // 강남역에서 ~4km
+    private Store storeA; // 강남역에서 ~417m
+    private Store storeB; // 강남역에서 ~2579m
+    private Store storeC; // 강남역에서 ~2543m
     private Store storeD; // 강남역에서 ~5.5km (범위 밖)
-    private Store storeE; // 강남역에서 ~3km
+    private Store storeE; // 강남역에서 ~2743m
 
     private PrimaryCategory categoryKorean;
     private PrimaryCategory categoryJapanese;
@@ -83,10 +87,10 @@ public class StoreRepositoryImplTest {
             PrimaryCategory.builder().primaryType("패스트푸드").build()
         );
 
-        // Store A: 강남역 근처 (~500m), 한식, 혼밥레벨 1, 저렴, 1인석 O
+        // Store A: 강남역 근처 (~417m), 한식, 혼밥레벨 1, 저렴, 1인석 O
         storeA = createStore(
             "Store A",
-            37.5013, 127.0296,  // ~500m
+            37.5013, 127.0296,  // ~417m
             Level.LEVEL_1,
             categoryKorean,
             50.0
@@ -96,10 +100,10 @@ public class StoreRepositoryImplTest {
         createSeatOption(storeA, SeatType.FOR_ONE);
         createSeatOption(storeA, SeatType.FOR_TWO);
 
-        // Store B: 강남역에서 ~2km, 일식, 혼밥레벨 2, 중간 가격, 바테이블 O
+        // Store B: 강남역에서 ~2579m, 일식, 혼밥레벨 2, 중간 가격, 바테이블 O
         storeB = createStore(
             "Store B",
-            37.5065, 127.0547,  // ~2km
+            37.5065, 127.0547,  // ~2579m
             Level.LEVEL_2,
             categoryJapanese,
             70.0
@@ -109,10 +113,10 @@ public class StoreRepositoryImplTest {
         createSeatOption(storeB, SeatType.BAR_TABLE);
         createSeatOption(storeB, SeatType.FOR_TWO);
 
-        // Store C: 강남역에서 ~4km, 패스트푸드, 혼밥레벨 1, 저렴, 1인석 O
+        // Store C: 강남역에서 ~2543m, 패스트푸드, 혼밥레벨 1, 저렴, 1인석 O
         storeC = createStore(
             "Store C",
-            37.5200, 127.0200,  // ~4km
+            37.5200, 127.0200,  // ~2543m
             Level.LEVEL_1,
             categoryFastFood,
             90.0
@@ -133,10 +137,10 @@ public class StoreRepositoryImplTest {
         createMenu(storeD, "비빔밥", 10000, true);
         createSeatOption(storeD, SeatType.FOR_FOUR);
 
-        // Store E: 강남역에서 ~3km, 일식, 혼밥레벨 4, 비쌈
+        // Store E: 강남역에서 ~2743m, 일식, 혼밥레벨 4, 비쌈
         storeE = createStore(
             "Store E",
-            37.5150, 127.0500,  // ~3km
+            37.5150, 127.0500,  // ~2743m
             Level.LEVEL_4,
             categoryJapanese,
             40.0
@@ -152,13 +156,13 @@ public class StoreRepositoryImplTest {
     class FilteringTests {
 
         @Test
-        @DisplayName("위치 필터 - 반경 5km 내 매장만 조회")
+        @DisplayName("위치 필터 - 반경 5km 내 매장만 조회 (혼밥레벨 필터 없음)")
         void testLocationFilter_Radius() {
-            // given
+            // given: 혼밥레벨 필터 없이 거리만 필터
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, null, null, null),
                 null,
                 null
             );
@@ -166,32 +170,27 @@ public class StoreRepositoryImplTest {
             // when
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
-            // DEBUG: Print actual results
-            System.out.println("=== DEBUG: testLocationFilter_Radius ===");
-            result.forEach(row -> System.out.printf("%s: %dm%n", row.store().getName(), row.distance()));
-
-            // then
-            assertThat(result).hasSize(4); // A, B, C, E만 (D는 범위 밖)
+            // then: 5km 이내인 A, B, C, E만 (D는 5.5km로 제외)
+            assertThat(result).hasSize(4);
             assertThat(result)
                 .extracting(row -> row.store().getName())
+                .containsExactlyInAnyOrder("Store A", "Store B", "Store C", "Store E")
                 .doesNotContain("Store D");
         }
 
         @Test
         @DisplayName("위치 필터 - BoundingBox 내 매장만 조회")
         void testLocationFilter_BBox() {
-            // given: A, B만 포함하는 좁은 BBox
+            // given: A, B만 포함하는 좁은 BBox (혼밥레벨 필터 없음)
             // Store A: (37.5013, 127.0296), Store B: (37.5065, 127.0547)
-            // Store C: (37.5200, 127.0200) - lat=37.52 초과로 제외
-            // Store E: (37.5150, 127.0500) - 포함하지 않도록 lat 범위 축소
             StoreFilteringRequest.BoundingBox bbox = new StoreFilteringRequest.BoundingBox(
-                new StoreFilteringRequest.Coordinate(37.508, 127.02),   // NW (lat 범위 축소)
+                new StoreFilteringRequest.Coordinate(37.508, 127.02),   // NW
                 new StoreFilteringRequest.Coordinate(37.49, 127.055)    // SE
             );
             StoreFilteringRequest request = createRequest(
                 bbox,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, null, null, null),
                 null,
                 null
             );
@@ -199,16 +198,40 @@ public class StoreRepositoryImplTest {
             // when
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
-            // then: Store A(37.5013, 127.0296), Store B(37.5065, 127.0547)만 포함
+            // then: BBox 내 Store A, Store B만 포함
             assertThat(result)
                 .extracting(row -> row.store().getName())
                 .containsExactlyInAnyOrder("Store A", "Store B");
         }
 
         @Test
-        @DisplayName("혼밥레벨 필터 - level <= 2 매장만 조회")
-        void testHonbobLevelFilter() {
-            // given
+        @DisplayName("혼밥레벨 필터 - Level 1 매장만 조회 (정확히 일치)")
+        void testHonbobLevelFilter_Level1() {
+            // given: honbobLevel == 1
+            StoreFilteringRequest request = createRequest(
+                null,
+                centerAt(CENTER_LAT, CENTER_LON),
+                new StoreFilteringRequest.Filters(null, 1, null, null),
+                null,
+                null
+            );
+
+            // when
+            List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
+
+            // then: Level 1인 Store A, Store C만 (5km 이내)
+            assertThat(result)
+                .extracting(row -> row.store().getHonbobLevel())
+                .allMatch(level -> level == Level.LEVEL_1);
+            assertThat(result)
+                .extracting(row -> row.store().getName())
+                .containsExactlyInAnyOrder("Store A", "Store C");
+        }
+
+        @Test
+        @DisplayName("혼밥레벨 필터 - Level 2 매장만 조회")
+        void testHonbobLevelFilter_Level2() {
+            // given: honbobLevel == 2
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
@@ -220,23 +243,21 @@ public class StoreRepositoryImplTest {
             // when
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
-            // then
-            assertThat(result)
-                .extracting(row -> row.store().getHonbobLevel())
-                .allMatch(level -> level.getValue() <= 2);
+            // then: Level 2인 Store B만
+            assertThat(result).hasSize(1);
             assertThat(result)
                 .extracting(row -> row.store().getName())
-                .containsExactlyInAnyOrder("Store A", "Store B", "Store C");
+                .containsExactly("Store B");
         }
 
         @Test
-        @DisplayName("카테고리 필터 - 한식/일식만 조회")
-        void testCategoryFilter() {
-            // given
+        @DisplayName("혼밥레벨 필터 - Level 4 매장만 조회")
+        void testHonbobLevelFilter_Level4() {
+            // given: honbobLevel == 4
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, List.of("한식", "일식")),
+                new StoreFilteringRequest.Filters(null, 4, null, null),
                 null,
                 null
             );
@@ -244,7 +265,29 @@ public class StoreRepositoryImplTest {
             // when
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
-            // then
+            // then: Level 4인 Store E만
+            assertThat(result).hasSize(1);
+            assertThat(result)
+                .extracting(row -> row.store().getName())
+                .containsExactly("Store E");
+        }
+
+        @Test
+        @DisplayName("카테고리 필터 - 한식/일식만 조회 (혼밥레벨 필터 없음)")
+        void testCategoryFilter() {
+            // given
+            StoreFilteringRequest request = createRequest(
+                null,
+                centerAt(CENTER_LAT, CENTER_LON),
+                new StoreFilteringRequest.Filters(null, null, null, List.of("한식", "일식")),
+                null,
+                null
+            );
+
+            // when
+            List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
+
+            // then: 한식(A), 일식(B, E) - 5km 이내만
             assertThat(result)
                 .extracting(row -> row.store().getName())
                 .containsExactlyInAnyOrder("Store A", "Store B", "Store E");
@@ -253,13 +296,13 @@ public class StoreRepositoryImplTest {
         @Test
         @DisplayName("가격 필터 - 추천 메뉴 8000~15000원 매장만 조회")
         void testPriceFilter() {
-            // given
+            // given: 혼밥레벨 필터 없음
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
                 new StoreFilteringRequest.Filters(
                     new StoreFilteringRequest.PriceRange(8000, 15000),
-                    4,
+                    null,
                     null,
                     null
                 ),
@@ -270,22 +313,22 @@ public class StoreRepositoryImplTest {
             // when
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
-            // then: Store D(비빔밥 10000원)는 5km 밖이므로 제외됨
+            // then: Store B(12000원)만 - Store D(10000원)는 5km 밖이므로 제외
             assertThat(result)
                 .extracting(row -> row.store().getName())
-                .containsExactlyInAnyOrder("Store B");
+                .containsExactly("Store B");
         }
 
         @Test
         @DisplayName("가격 필터 - min만 지정 (8000원 이상)")
         void testPriceFilter_MinOnly() {
-            // given
+            // given: 혼밥레벨 필터 없음
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
                 new StoreFilteringRequest.Filters(
                     new StoreFilteringRequest.PriceRange(8000, null),
-                    4,
+                    null,
                     null,
                     null
                 ),
@@ -296,20 +339,25 @@ public class StoreRepositoryImplTest {
             // when
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
-            // then: Store D(비빔밥 10000원)는 5km 밖이므로 제외됨
+            // then: Store B(12000원), Store E(50000원) - Store D는 5km 밖
             assertThat(result)
                 .extracting(row -> row.store().getName())
                 .containsExactlyInAnyOrder("Store B", "Store E");
         }
 
         @Test
-        @DisplayName("좌석 타입 필터 - 1인석 있는 매장만 조회")
-        void testSeatTypeFilter_ForOne() {
+        @DisplayName("가격 필터 - max만 지정 (10000원 이하)")
+        void testPriceFilter_MaxOnly() {
             // given
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, List.of(SeatType.FOR_ONE), null),
+                new StoreFilteringRequest.Filters(
+                    new StoreFilteringRequest.PriceRange(null, 10000),
+                    null,
+                    null,
+                    null
+                ),
                 null,
                 null
             );
@@ -317,22 +365,64 @@ public class StoreRepositoryImplTest {
             // when
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
-            // then
+            // then: Store A(7000원), Store C(6000원)
             assertThat(result)
                 .extracting(row -> row.store().getName())
                 .containsExactlyInAnyOrder("Store A", "Store C");
         }
 
         @Test
-        @DisplayName("복합 필터 - 혼밥레벨 + 카테고리 + 가격 + 좌석")
-        void testComplexFilter() {
-            // given: 혼밥레벨 2 이하, 한식/패스트푸드, 가격 5000~10000, 1인석
+        @DisplayName("좌석 타입 필터 - 1인석 있는 매장만 조회")
+        void testSeatTypeFilter_ForOne() {
+            // given: 혼밥레벨 필터 없음
+            StoreFilteringRequest request = createRequest(
+                null,
+                centerAt(CENTER_LAT, CENTER_LON),
+                new StoreFilteringRequest.Filters(null, null, List.of(SeatType.FOR_ONE), null),
+                null,
+                null
+            );
+
+            // when
+            List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
+
+            // then: Store A, Store C (5km 이내)
+            assertThat(result)
+                .extracting(row -> row.store().getName())
+                .containsExactlyInAnyOrder("Store A", "Store C");
+        }
+
+        @Test
+        @DisplayName("좌석 타입 필터 - 바테이블 있는 매장만 조회")
+        void testSeatTypeFilter_BarTable() {
+            // given
+            StoreFilteringRequest request = createRequest(
+                null,
+                centerAt(CENTER_LAT, CENTER_LON),
+                new StoreFilteringRequest.Filters(null, null, List.of(SeatType.BAR_TABLE), null),
+                null,
+                null
+            );
+
+            // when
+            List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
+
+            // then: Store B만
+            assertThat(result)
+                .extracting(row -> row.store().getName())
+                .containsExactly("Store B");
+        }
+
+        @Test
+        @DisplayName("복합 필터 - 혼밥레벨 1 + 1인석 + 한식/패스트푸드")
+        void testComplexFilter_Level1_ForOne_Category() {
+            // given: Level 1 + 1인석 + 한식/패스트푸드
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
                 new StoreFilteringRequest.Filters(
-                    new StoreFilteringRequest.PriceRange(5000, 10000),
-                    2,
+                    null,
+                    1,
                     List.of(SeatType.FOR_ONE),
                     List.of("한식", "패스트푸드")
                 ),
@@ -343,10 +433,36 @@ public class StoreRepositoryImplTest {
             // when
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
-            // then
+            // then: Store A(Level1, 한식, 1인석), Store C(Level1, 패스트푸드, 1인석)
             assertThat(result)
                 .extracting(row -> row.store().getName())
                 .containsExactlyInAnyOrder("Store A", "Store C");
+        }
+
+        @Test
+        @DisplayName("복합 필터 - 혼밥레벨 2 + 가격 10000~15000원")
+        void testComplexFilter_Level2_Price() {
+            // given: Level 2 + 가격 10000~15000원
+            StoreFilteringRequest request = createRequest(
+                null,
+                centerAt(CENTER_LAT, CENTER_LON),
+                new StoreFilteringRequest.Filters(
+                    new StoreFilteringRequest.PriceRange(10000, 15000),
+                    2,
+                    null,
+                    null
+                ),
+                null,
+                null
+            );
+
+            // when
+            List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
+
+            // then: Store B(Level2, 12000원)만
+            assertThat(result)
+                .extracting(row -> row.store().getName())
+                .containsExactly("Store B");
         }
     }
 
@@ -357,13 +473,13 @@ public class StoreRepositoryImplTest {
     class SortingTests {
 
         @Test
-        @DisplayName("거리순 정렬 - 가까운 순서대로 조회")
+        @DisplayName("거리순 정렬 - 가까운 순서대로 조회 (혼밥레벨 필터 없음)")
         void testDistanceSort() {
-            // given
+            // given: 혼밥레벨 필터 없음
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, null, null, null),
                 null,
                 StoreFilteringRequest.SortBy.DISTANCE
             );
@@ -371,10 +487,15 @@ public class StoreRepositoryImplTest {
             // when
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
-            // then
+            // DEBUG: 실제 거리 출력
+            System.out.println("=== 거리순 정렬 결과 ===");
+            result.forEach(row -> System.out.printf("%s: %dm%n", row.store().getName(), row.distance()));
+
+            // then: 실제 거리 순 A < C < B < E
+            assertThat(result).hasSize(4); // D는 5km 밖
             assertThat(result)
                 .extracting(row -> row.store().getName())
-                .containsExactly("Store A", "Store C", "Store B", "Store E"); // 거리 순
+                .containsExactly("Store A", "Store C", "Store B", "Store E");
 
             // 거리가 오름차순인지 확인
             for (int i = 0; i < result.size() - 1; i++) {
@@ -384,13 +505,13 @@ public class StoreRepositoryImplTest {
         }
 
         @Test
-        @DisplayName("추천순 정렬 - 복합 점수 기준")
+        @DisplayName("추천순 정렬 - 복합 점수 기준 (혼밥레벨 필터 없음)")
         void testRecommendedSort() {
-            // given
+            // given: 혼밥레벨 필터 없음
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, null, null, null),
                 null,
                 StoreFilteringRequest.SortBy.RECOMMENDED
             );
@@ -399,11 +520,12 @@ public class StoreRepositoryImplTest {
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
             // then: 복합 점수 = (internalScore * 0.3) + ((5000-distance)/5000*100 * 0.7)
-            // Store A: (50*0.3) + ((5000-417)/5000*100*0.7) = 15 + 64.2 = 79.2 (가장 높음)
-            // Store C: (90*0.3) + ((5000-2543)/5000*100*0.7) = 27 + 34.4 = 61.4
-            // Store B: (70*0.3) + ((5000-2579)/5000*100*0.7) = 21 + 33.9 = 54.9
-            // Store E: (40*0.3) + ((5000-2743)/5000*100*0.7) = 12 + 31.6 = 43.6 (가장 낮음)
+            // Store A: (50*0.3) + ((5000-417)/5000*100*0.7) ≈ 15 + 64.2 = 79.2 (가장 높음)
+            // Store B: (70*0.3) + ((5000-2079)/5000*100*0.7) ≈ 21 + 40.9 = 61.9
+            // Store E: (40*0.3) + ((5000-2743)/5000*100*0.7) ≈ 12 + 31.6 = 43.6
+            // Store C: (90*0.3) + ((5000-4543)/5000*100*0.7) ≈ 27 + 6.4 = 33.4
 
+            assertThat(result).hasSize(4);
             assertThat(result)
                 .extracting(row -> row.store().getName())
                 .startsWith("Store A"); // 거리가 가까워서 가장 높은 점수
@@ -412,11 +534,11 @@ public class StoreRepositoryImplTest {
         @Test
         @DisplayName("정렬 기본값 - sortBy null이면 거리순")
         void testDefaultSort() {
-            // given: sortBy = null
+            // given: sortBy = null, 혼밥레벨 필터 없음
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, null, null, null),
                 null,
                 null  // sortBy null
             );
@@ -441,11 +563,11 @@ public class StoreRepositoryImplTest {
         @Test
         @DisplayName("첫 페이지 조회 - limit=2")
         void testFirstPage() {
-            // given
+            // given: 혼밥레벨 필터 없음
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, null, null, null),
                 new CursorPaginationRequest(2, null),
                 StoreFilteringRequest.SortBy.DISTANCE
             );
@@ -463,11 +585,11 @@ public class StoreRepositoryImplTest {
         @Test
         @DisplayName("다음 페이지 조회 - 커서 기반")
         void testNextPage() {
-            // given: 첫 페이지 조회
+            // given: 첫 페이지 조회 (혼밥레벨 필터 없음)
             StoreFilteringRequest firstRequest = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, null, null, null),
                 new CursorPaginationRequest(2,null),
                 StoreFilteringRequest.SortBy.DISTANCE
             );
@@ -481,14 +603,14 @@ public class StoreRepositoryImplTest {
             StoreFilteringRequest nextRequest = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, null, null, null),
                 new CursorPaginationRequest(2, cursor),
                 StoreFilteringRequest.SortBy.DISTANCE
             );
             List<StoreRepositoryCustom.StoreRow> nextPage = storeRepositoryImpl.findStoresSlice(nextRequest, 3);
 
-            // then
-            assertThat(nextPage).hasSize(2); // Store B, Store E (거리순: A < C < B < E)
+            // then: 거리순 A < C < B < E 중 B, E
+            assertThat(nextPage).hasSize(2);
             assertThat(nextPage)
                 .extracting(row -> row.store().getName())
                 .containsExactly("Store B", "Store E");
@@ -506,11 +628,11 @@ public class StoreRepositoryImplTest {
         @Test
         @DisplayName("마지막 페이지 - hasNext 판단")
         void testLastPage() {
-            // given: 전체 4개 중 limit=5로 조회
+            // given: 전체 4개 중 limit=5로 조회 (혼밥레벨 필터 없음)
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, null, null, null),
                 new CursorPaginationRequest(5,null),
                 StoreFilteringRequest.SortBy.DISTANCE
             );
@@ -533,8 +655,6 @@ public class StoreRepositoryImplTest {
         @DisplayName("정확히 5000m 거리의 매장 - 포함되어야 함")
         void testExactly5000mDistance() {
             // given: 강남역에서 정확히 5000m 거리에 매장 생성
-            // 위도 1도 ≈ 111km, 경도 1도 ≈ 88km (서울 기준)
-            // 5km ≈ 0.045도 (위도 기준)
             Store exactStore = createStore(
                 "Exact 5km Store",
                 CENTER_LAT + 0.045, CENTER_LON,
@@ -546,7 +666,7 @@ public class StoreRepositoryImplTest {
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, null, null, null),
                 null,
                 null
             );
@@ -569,7 +689,7 @@ public class StoreRepositoryImplTest {
                 centerAt(CENTER_LAT, CENTER_LON),
                 new StoreFilteringRequest.Filters(
                     new StoreFilteringRequest.PriceRange(12000, 12000),
-                    4,
+                    null,
                     null,
                     null
                 ),
@@ -587,28 +707,9 @@ public class StoreRepositoryImplTest {
         }
 
         @Test
-        @DisplayName("혼밥레벨 경계값 - level=4 (최대값)")
-        void testHonbobLevelBoundary_Max() {
-            // given
-            StoreFilteringRequest request = createRequest(
-                null,
-                centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
-                null,
-                null
-            );
-
-            // when
-            List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
-
-            // then: 모든 매장 포함 (level <= 4)
-            assertThat(result).hasSize(4);
-        }
-
-        @Test
         @DisplayName("혼밥레벨 경계값 - level=1 (최소값)")
         void testHonbobLevelBoundary_Min() {
-            // given
+            // given: honbobLevel == 1
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
@@ -620,7 +721,7 @@ public class StoreRepositoryImplTest {
             // when
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
-            // then
+            // then: Level 1인 Store A, Store C만
             assertThat(result)
                 .extracting(row -> row.store().getName())
                 .containsExactlyInAnyOrder("Store A", "Store C");
@@ -633,7 +734,7 @@ public class StoreRepositoryImplTest {
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, List.of("중식")),
+                new StoreFilteringRequest.Filters(null, null, null, List.of("중식")),
                 null,
                 null
             );
@@ -642,6 +743,25 @@ public class StoreRepositoryImplTest {
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
             // then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("빈 결과 - 존재하지 않는 혼밥레벨")
+        void testEmptyResult_InvalidHonbobLevel() {
+            // given: Level 3 매장 요청 (Store D는 5km 밖)
+            StoreFilteringRequest request = createRequest(
+                null,
+                centerAt(CENTER_LAT, CENTER_LON),
+                new StoreFilteringRequest.Filters(null, 3, null, null),
+                null,
+                null
+            );
+
+            // when
+            List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
+
+            // then: Store D만 Level 3이지만 5km 밖이므로 빈 결과
             assertThat(result).isEmpty();
         }
     }
@@ -653,13 +773,13 @@ public class StoreRepositoryImplTest {
     class DistanceCalculationTests {
 
         @Test
-        @DisplayName("거리 계산 정확도 검증")
+        @DisplayName("거리 계산 정확도 검증 - Level 2 매장")
         void testDistanceCalculation() {
-            // given
+            // given: Level 2 매장만 조회 (Store B만 해당)
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, 2, null, null),
                 null,
                 StoreFilteringRequest.SortBy.DISTANCE
             );
@@ -667,26 +787,47 @@ public class StoreRepositoryImplTest {
             // when
             List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
 
-            // then: Store A가 가장 가까워야 함
-            assertThat(result.get(0).store().getName()).isEqualTo("Store A");
-            assertThat(result.get(0).distance()).isLessThan(1000); // ~500m
+            // then: Store B가 ~2579m
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).store().getName()).isEqualTo("Store B");
+            assertThat(result.get(0).distance()).isBetween(2500, 2650); // ~2579m
+        }
 
-            // Store C는 두 번째 (거리순: A < C < B < E)
+        @Test
+        @DisplayName("거리 계산 정확도 검증 - Level 1 매장 (거리 순)")
+        void testDistanceCalculation_Level1() {
+            // given: Level 1 매장만 조회 (Store A, Store C)
+            StoreFilteringRequest request = createRequest(
+                null,
+                centerAt(CENTER_LAT, CENTER_LON),
+                new StoreFilteringRequest.Filters(null, 1, null, null),
+                null,
+                StoreFilteringRequest.SortBy.DISTANCE
+            );
+
+            // when
+            List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
+
+            // then: Store A(~417m)가 Store C(~2543m)보다 가까움
+            assertThat(result).hasSize(2);
+            assertThat(result.get(0).store().getName()).isEqualTo("Store A");
+            assertThat(result.get(0).distance()).isBetween(400, 500); // ~417m
             assertThat(result.get(1).store().getName()).isEqualTo("Store C");
-            assertThat(result.get(1).distance()).isBetween(2000, 3000); // ~2.5km
+            assertThat(result.get(1).distance()).isBetween(2500, 2600); // ~2543m
         }
 
         @Test
         @DisplayName("동일 거리 매장 - ID 오름차순 정렬")
         void testSameDistance_SortById() {
-            // given: 정확히 같은 위치에 두 매장 생성
+            // given: 정확히 같은 위치에 두 매장 생성 (Level 1)
             Store store1 = createStore("Same Location 1", CENTER_LAT, CENTER_LON, Level.LEVEL_1, categoryKorean, 50.0);
             Store store2 = createStore("Same Location 2", CENTER_LAT, CENTER_LON, Level.LEVEL_1, categoryKorean, 50.0);
 
+            // Level 1 매장만 조회
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, 1, null, null),
                 null,
                 StoreFilteringRequest.SortBy.DISTANCE
             );
