@@ -51,10 +51,6 @@ public class SearchService {
         List<Store> stores = storeEmbeddings.stream()
                 .map(StoreEmbedding::getStore)
                 .toList();
-
-        storeEmbeddings.stream()
-                .map(StoreEmbedding::getStore)
-                .forEach(store -> System.out.println("store = " + store.getName()));
         saveSearchHistory(userId, query);
 
         return test(stores, paging);
