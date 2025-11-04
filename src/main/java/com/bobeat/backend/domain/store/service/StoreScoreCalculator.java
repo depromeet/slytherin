@@ -39,7 +39,7 @@ public class StoreScoreCalculator {
 
     /**
      * 업데이트가 필요한 식당들의 내부 점수만 계산하고 업데이트 (증분 업데이트)
-     * internalScore가 null이거나 scoreUpdateFlag가 true인 경우만 처리
+     * internalScore가 null인 경우만 처리
      */
     @Transactional
     public int calculateAndUpdatePendingScores() {

@@ -19,7 +19,7 @@ public class StoreScoreScheduler {
 
     /**
      * 매일 자정에 실행 - 증분 업데이트만 수행
-     * internalScore가 null이거나 scoreUpdateFlag가 true인 경우만 업데이트
+     * internalScore가 null인 경우만 업데이트
      * cron: 초 분 시 일 월 요일
      * "0 0 0 * * *" = 매일 00시 00분 00초
      */

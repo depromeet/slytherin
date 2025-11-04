@@ -19,8 +19,8 @@ public interface StoreRepository extends JpaRepository<Store, Long>, StoreReposi
 
     /**
      * 점수 업데이트가 필요한 식당들을 조회
-     * (internalScore가 null이거나 scoreUpdateFlag가 true인 경우)
+     * (internalScore가 null인 경우)
      */
-    @Query("SELECT s FROM Store s WHERE s.internalScore IS NULL OR s.scoreUpdateFlag = true")
+    @Query("SELECT s FROM Store s WHERE s.internalScore IS NULL")
     List<Store> findStoresNeedingScoreUpdate();
 }
