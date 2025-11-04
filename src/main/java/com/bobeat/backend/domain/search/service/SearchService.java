@@ -1,5 +1,7 @@
 package com.bobeat.backend.domain.search.service;
 
+import static com.bobeat.backend.global.exception.ErrorCode.SEARCH_HISTORY_ACCESS_DENIED;
+
 import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.member.repository.MemberRepository;
 import com.bobeat.backend.domain.search.dto.response.StoreSearchHistoryResponse;
@@ -11,6 +13,7 @@ import com.bobeat.backend.domain.store.entity.StoreImage;
 import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
 import com.bobeat.backend.domain.store.service.StoreService;
+import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.request.CursorPaginationRequest;
 import java.util.List;
 import java.util.Map;
@@ -80,5 +83,22 @@ public class SearchService {
         return searchHistories.stream()
                 .map(StoreSearchHistoryResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    public void deleteStoreSearchHistory(Long memberId) {
+        Member member = memberRepository.findByMemberId(memberId);
+        searchHistoryRepository.deleteByMember(member);
+    }
+
+    @Transactional
+    public void deleteStoreSearchHistoryById(Long memberId, Long id) {
+        SearchHistory searchHistory = searchHistoryRepository.findBySearchHistoryId(id);
+        Long findMemberId = searchHistory.getMember().getId();
+
+        if (!findMemberId.equals(memberId)) {
+            throw new CustomException(SEARCH_HISTORY_ACCESS_DENIED);
+        }
+        searchHistoryRepository.delete(searchHistory);
     }
 }

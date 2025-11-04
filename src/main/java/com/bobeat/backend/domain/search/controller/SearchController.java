@@ -11,7 +11,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,10 +38,25 @@ public class SearchController {
     }
 
     @Operation(summary = "검색 히스토리 조회", description = "식당 검색 히스토리를 조회한다")
-    @PostMapping("/history")
+    @PostMapping("")
     public ApiResponse<List<StoreSearchHistoryResponse>> getStoreSearchHistory(@AuthenticationPrincipal Long memberId,
                                                                                @RequestBody CursorPaginationRequest paging) {
         List<StoreSearchHistoryResponse> response = searchService.getStoreSearchHistory(memberId, paging);
         return ApiResponse.success(response);
+    }
+
+    @Operation(summary = "검색 히스토리 전체 삭제", description = "식당 검색 히스토리를 모두 삭제한다")
+    @DeleteMapping
+    public ApiResponse<Void> deleteStoreSearchHistory(@AuthenticationPrincipal Long memberId) {
+        searchService.deleteStoreSearchHistory(memberId);
+        return ApiResponse.successOnly();
+    }
+
+    @Operation(summary = "검색 히스토리 삭제", description = "식당 검색 히스토리를 모두 삭제한다")
+    @DeleteMapping("{searchHistoryId}")
+    public ApiResponse<Void> deleteStoreSearchHistory(@AuthenticationPrincipal Long memberId,
+                                                      @PathVariable("searchHistoryId") Long searchHistoryId) {
+        searchService.deleteStoreSearchHistoryById(memberId, searchHistoryId);
+        return ApiResponse.successOnly();
     }
 }
