@@ -20,6 +20,6 @@ public class ClovaEmbeddingResponse {
     @AllArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Result {
-        private List<Double> embedding;
+        private List<Float> embedding;
     }
 }

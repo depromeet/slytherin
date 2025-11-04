@@ -6,15 +6,11 @@ import com.bobeat.backend.domain.store.entity.StoreImage;
 import com.bobeat.backend.domain.store.repository.SimilarStoreRepository;
 import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
-import com.bobeat.backend.global.exception.CustomException;
-import com.bobeat.backend.global.exception.ErrorCode;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 유사 가게 추천 서비스
@@ -57,13 +53,11 @@ public class SimilarStoreService {
                 RESULT_LIMIT
         );
 
-        List<SimilarStoreResponse> responses = similarStores.stream()
+        return similarStores.stream()
                 .map(store -> {
                     StoreImage mainImage = storeImageRepository.findByStoreAndIsMainTrue(store);
                     return SimilarStoreResponse.of(store, mainImage);
                 })
                 .toList();
-
-        return responses;
     }
 }

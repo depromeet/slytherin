@@ -9,7 +9,6 @@ import com.bobeat.backend.domain.store.entity.StoreEmbedding;
 import com.bobeat.backend.domain.store.vo.Address;
 import com.bobeat.backend.global.db.PostgreSQLTestContainer;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -49,8 +48,10 @@ class SimilarStoreRepositoryImplTest {
 
     /**
      * JTS Point 생성 헬퍼 메서드
+     *
      * @param lat 위도
      * @param lon 경도
+     *
      * @return Point 객체 (SRID 4326)
      */
     private static Point createPoint(double lat, double lon) {
@@ -273,14 +274,15 @@ class SimilarStoreRepositoryImplTest {
 
         /**
          * 1024차원 임베딩 벡터 생성 헬퍼 메서드
+         *
          * @param seed 시드값 (벡터 특성 결정)
+         *
          * @return 1024차원 임베딩 벡터
          */
-        private List<Double> createEmbeddingVector(double seed) {
-            List<Double> vector = new ArrayList<>(1024);
+        private float[] createEmbeddingVector(float seed) {
+            float[] vector = new float[1024];
             for (int i = 0; i < 1024; i++) {
-                // seed 값에 따라 벡터 생성 (간단한 패턴)
-                vector.add(Math.sin(seed + i * 0.01));
+                vector[i] = (float) (Math.sin(seed + i * 0.01f));
             }
             return vector;
         }
@@ -348,25 +350,25 @@ class SimilarStoreRepositoryImplTest {
 
             storeEmbeddingRepository.save(StoreEmbedding.builder()
                     .store(embeddingTargetStore)
-                    .embedding(createEmbeddingVector(1.0))
+                    .embedding(createEmbeddingVector(1.0f))
                     .embeddingStatus(EmbeddingStatus.COMPLETED)
                     .build());
 
             storeEmbeddingRepository.save(StoreEmbedding.builder()
                     .store(similarStore1)
-                    .embedding(createEmbeddingVector(1.1))
+                    .embedding(createEmbeddingVector(1.1f))
                     .embeddingStatus(EmbeddingStatus.COMPLETED)
                     .build());
 
             storeEmbeddingRepository.save(StoreEmbedding.builder()
                     .store(similarStore2)
-                    .embedding(createEmbeddingVector(1.2))
+                    .embedding(createEmbeddingVector(1.2f))
                     .embeddingStatus(EmbeddingStatus.COMPLETED)
                     .build());
 
             storeEmbeddingRepository.save(StoreEmbedding.builder()
                     .store(differentStore)
-                    .embedding(createEmbeddingVector(5.0))
+                    .embedding(createEmbeddingVector(5.0f))
                     .embeddingStatus(EmbeddingStatus.COMPLETED)
                     .build());
         }
@@ -456,7 +458,7 @@ class SimilarStoreRepositoryImplTest {
 
             storeEmbeddingRepository.save(StoreEmbedding.builder()
                     .store(pendingStore)
-                    .embedding(createEmbeddingVector(1.05))
+                    .embedding(createEmbeddingVector(1.05f))
                     .embeddingStatus(EmbeddingStatus.PENDING) // PENDING 상태
                     .build());
 

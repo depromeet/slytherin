@@ -36,9 +36,10 @@ public class StoreEmbeddingService {
      * 포함 정보: - 가게 이름 - 설명 - 혼밥 난이도 - 카테고리 (Primary, Secondary) - 위치 (주소) - 메뉴 (이름, 가격) - 좌석 유형
      *
      * @param store Store 엔티티
+     *
      * @return 1024차원의 임베딩 벡터
      */
-    public Mono<List<Double>> generateStoreEmbedding(Store store) {
+    public Mono<List<Float>> generateStoreEmbedding(Store store) {
         String combinedText = buildStoreText(store);
         return clovaEmbeddingClient.getEmbedding(combinedText);
     }
@@ -47,9 +48,10 @@ public class StoreEmbeddingService {
      * Store 엔티티의 모든 정보를 결합하여 임베딩 벡터를 동기식으로 생성합니다.
      *
      * @param store Store 엔티티
+     *
      * @return 1024차원의 임베딩 벡터
      */
-    public List<Double> generateStoreEmbeddingSync(Store store) {
+    public List<Float> generateStoreEmbeddingSync(Store store) {
         String combinedText = buildStoreText(store);
         return clovaEmbeddingClient.getEmbeddingSync(combinedText);
     }
@@ -58,10 +60,15 @@ public class StoreEmbeddingService {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_STORE));
         String combinedText = buildStoreText(store);
-        List<Double> embedding = generateStoreEmbeddingSync(store);
+        List<Float> embedding = generateStoreEmbeddingSync(store);
+        float[] embeddingArray = new float[embedding.size()];
+
+        for (int i = 0; i < embedding.size(); i++) {
+            embeddingArray[i] = embedding.get(i);
+        }
 
         StoreEmbedding storeEmbedding = StoreEmbedding.builder()
-                .embedding(embedding)
+                .embedding(embeddingArray)
                 .embeddingStatus(EmbeddingStatus.COMPLETED)
                 .store(store)
                 .build();
@@ -94,6 +101,7 @@ public class StoreEmbeddingService {
      * Store 엔티티의 모든 정보를 하나의 텍스트로 결합합니다.
      *
      * @param store Store 엔티티
+     *
      * @return 결합된 텍스트
      */
     private String buildStoreText(Store store) {
@@ -160,6 +168,7 @@ public class StoreEmbeddingService {
      * 가격을 천 단위 구분자로 포맷팅합니다.
      *
      * @param price 가격
+     *
      * @return 포맷팅된 가격 문자열
      */
     private String formatPrice(int price) {
