@@ -3,6 +3,7 @@ package com.bobeat.backend.domain.search.entity;
 import com.bobeat.backend.domain.common.BaseTimeEntity;
 import com.bobeat.backend.domain.member.entity.Member;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,7 +30,7 @@ public class SearchHistory extends BaseTimeEntity {
 
     private String query;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Member member;
 
     public void updateUpdatedAt() {

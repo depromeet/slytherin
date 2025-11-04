@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SearchHistoryRepository extends JpaRepository<SearchHistory, Long> {
+public interface SearchHistoryRepository extends JpaRepository<SearchHistory, Long>, SearchHistoryRepositoryCustom {
 
     Optional<SearchHistory> findByQueryAndMember(String query, Member member);
 }

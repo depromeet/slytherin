@@ -4,7 +4,6 @@ import static com.bobeat.backend.global.exception.ErrorCode.NOT_FOUND_STORE;
 
 import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.member.service.MemberService;
-import com.bobeat.backend.domain.search.dto.response.SearchHistoryDto;
 import com.bobeat.backend.domain.store.dto.request.StoreCreateRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
@@ -166,10 +165,6 @@ public class StoreService {
         createSeatOptions(request.seatOptions(), savedStore);
 
         return savedStore.getId();
-    }
-
-    public List<SearchHistoryDto> findSearchHistory() {
-        return List.of();
     }
 
     private Address createAddress(StoreCreateRequest.AddressRequest addressRequest) {

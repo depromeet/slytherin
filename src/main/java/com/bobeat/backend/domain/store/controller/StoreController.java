@@ -1,6 +1,5 @@
 package com.bobeat.backend.domain.store.controller;
 
-import com.bobeat.backend.domain.search.dto.response.SearchHistoryDto;
 import com.bobeat.backend.domain.store.dto.request.EditProposalRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
@@ -12,7 +11,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,12 +53,5 @@ public class StoreController {
             @RequestBody EditProposalRequest request
     ) {
         return ApiResponse.successOnly();
-    }
-
-    @Operation(summary = "식당 검색 히스토리 조회", description = "사용자의 검색 히스토리를 날짜 기준 내림차순으로 제공")
-    @GetMapping("/history")
-    public ApiResponse<List<SearchHistoryDto>> getSearchHistory() {
-        List<SearchHistoryDto> response = storeService.findSearchHistory();
-        return ApiResponse.success(response);
     }
 }

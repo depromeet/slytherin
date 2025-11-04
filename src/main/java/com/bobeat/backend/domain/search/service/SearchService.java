@@ -2,6 +2,7 @@ package com.bobeat.backend.domain.search.service;
 
 import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.member.repository.MemberRepository;
+import com.bobeat.backend.domain.search.dto.response.StoreSearchHistoryResponse;
 import com.bobeat.backend.domain.search.entity.SearchHistory;
 import com.bobeat.backend.domain.search.repository.SearchHistoryRepository;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
@@ -10,6 +11,7 @@ import com.bobeat.backend.domain.store.entity.StoreImage;
 import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
 import com.bobeat.backend.domain.store.service.StoreService;
+import com.bobeat.backend.global.request.CursorPaginationRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,5 +69,16 @@ public class SearchService {
         }
         SearchHistory searchHistory = searchHistoryOptional.get();
         searchHistory.updateUpdatedAt();
+        searchHistoryRepository.saveAndFlush(searchHistory);
+    }
+
+
+    public List<StoreSearchHistoryResponse> getStoreSearchHistory(Long memberId, CursorPaginationRequest paging) {
+        List<SearchHistory> searchHistories = searchHistoryRepository.findByMemberWithCursor(memberId,
+                paging.lastKnown(), paging.limit());
+
+        return searchHistories.stream()
+                .map(StoreSearchHistoryResponse::from)
+                .toList();
     }
 }

@@ -1,7 +1,9 @@
 package com.bobeat.backend.domain.search.controller;
 
+import com.bobeat.backend.domain.search.dto.response.StoreSearchHistoryResponse;
 import com.bobeat.backend.domain.search.service.SearchService;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
+import com.bobeat.backend.global.request.CursorPaginationRequest;
 import com.bobeat.backend.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +32,14 @@ public class SearchController {
     public ApiResponse<List<StoreSearchResultDto>> searchStore(@AuthenticationPrincipal Long memberId,
                                                                @RequestParam("query") String query) {
         List<StoreSearchResultDto> response = searchService.searchStore(memberId, query);
+        return ApiResponse.success(response);
+    }
+
+    @Operation(summary = "검색 히스토리 조회", description = "식당 검색 히스토리를 조회한다")
+    @PostMapping("/history")
+    public ApiResponse<List<StoreSearchHistoryResponse>> getStoreSearchHistory(@AuthenticationPrincipal Long memberId,
+                                                                               @RequestBody CursorPaginationRequest paging) {
+        List<StoreSearchHistoryResponse> response = searchService.getStoreSearchHistory(memberId, paging);
         return ApiResponse.success(response);
     }
 }
