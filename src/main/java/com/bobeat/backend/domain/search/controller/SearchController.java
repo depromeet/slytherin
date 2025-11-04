@@ -1,9 +1,8 @@
 package com.bobeat.backend.domain.search.controller;
 
+import com.bobeat.backend.domain.search.service.SearchService;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
-import com.bobeat.backend.domain.store.service.StoreService;
 import com.bobeat.backend.global.response.ApiResponse;
-import com.bobeat.backend.global.response.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -22,18 +21,13 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class SearchController {
 
-    private final StoreService storeService;
-
-    @GetMapping
-    public ApiResponse<CursorPageResponse<StoreSearchResultDto>> searchStores() {
-
-    }
+    private final SearchService searchService;
 
     @Operation(summary = "식당 검색", description = "식당 검색 및 검색 결과를 반환한다")
     @GetMapping()
     public ApiResponse<List<StoreSearchResultDto>> searchStore(@AuthenticationPrincipal Long memberId,
                                                                @RequestParam("query") String query) {
-        List<StoreSearchResultDto> response = storeService.searchStore(memberId, query);
+        List<StoreSearchResultDto> response = searchService.searchStore(memberId, query);
         return ApiResponse.success(response);
     }
 }
