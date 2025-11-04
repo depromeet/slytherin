@@ -23,7 +23,7 @@ public class ClovaEmbeddingClient {
     private String embeddingApiUrl;
 
 
-    public Mono<List<Double>> getEmbedding(String text) {
+    public Mono<List<Float>> getEmbedding(String text) {
         ClovaEmbeddingRequest requestBody = new ClovaEmbeddingRequest(text);
         String requestId = UUID.randomUUID().toString();
 
@@ -45,7 +45,7 @@ public class ClovaEmbeddingClient {
                 .timeout(Duration.ofSeconds(10));
     }
 
-    public List<Double> getEmbeddingSync(String text) {
+    public List<Float> getEmbeddingSync(String text) {
         return getEmbedding(text).block();
     }
 }

@@ -9,7 +9,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,7 +32,7 @@ public class StoreEmbedding {
     @Column
     @JdbcTypeCode(SqlTypes.VECTOR)
     @Array(length = 1024)
-    private List<Double> embedding;
+    private float[] embedding;
 
     @Enumerated(EnumType.STRING)
     private EmbeddingStatus embeddingStatus;

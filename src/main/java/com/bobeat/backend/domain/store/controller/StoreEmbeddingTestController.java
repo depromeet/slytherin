@@ -43,7 +43,7 @@ public class StoreEmbeddingTestController {
         private Long storeId;
         private String storeName;
         private String combinedText;
-        private List<Double> embedding;
+        private List<Float> embedding;
         private int embeddingDimension;
     }
 
