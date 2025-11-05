@@ -4,14 +4,7 @@ import com.bobeat.backend.domain.common.BaseTimeEntity;
 import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.vo.Address;
 import com.bobeat.backend.domain.store.vo.Categories;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -44,4 +37,11 @@ public class Store extends BaseTimeEntity {
 
     @Embedded
     private Categories categories;
+
+    @Column(name = "internal_score")
+    private Double internalScore;
+
+    public void updateInternalScore(Double score) {
+        this.internalScore = score;
+    }
 }

@@ -28,6 +28,7 @@ import com.bobeat.backend.global.util.KeysetCursor;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
@@ -54,6 +55,7 @@ public class StoreService {
     public CursorPageResponse<StoreSearchResultDto> search(StoreFilteringRequest request) {
         final int pageSize = request.paging() != null ? request.paging().limit() : 20;
 
+        // DB 쿼리 레벨에서 복합 점수 기반으로 정렬됨 (30% 내부점수 + 70% 거리)
         List<StoreRepositoryCustom.StoreRow> rows = storeRepository.findStoresSlice(request, pageSize + 1);
 
         boolean hasNext = rows.size() > pageSize;
@@ -65,13 +67,20 @@ public class StoreService {
                 .map(r -> r.store().getId())
                 .toList();
 
+        // N+1 해결: 배치 조회
         var repMenuMap = storeRepository.findRepresentativeMenus(storeIds);
         var seatTypesMap = storeRepository.findSeatTypes(storeIds);
+        var mainImageMap = storeImageRepository.findMainImagesByStoreIds(storeIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        img -> img.getStore().getId(),
+                        img -> img
+                ));
 
         List<StoreSearchResultDto> data = rows.stream()
                 .map(r -> {
                     var store = r.store();
-                    var mainImage = storeImageRepository.findByStoreAndIsMainTrue(store);
+                    var mainImage = mainImageMap.get(store.getId());
 
                     long id = store.getId();
                     int distance = r.distance();
@@ -80,7 +89,7 @@ public class StoreService {
                     return new StoreSearchResultDto(
                             store.getId(),
                             store.getName(),
-                            mainImage.getImageUrl(),
+                            mainImage != null ? mainImage.getImageUrl() : null, // Null 안전성
                             repMenuMap.getOrDefault(id, new StoreSearchResultDto.SignatureMenu(null, 0)),
                             new StoreSearchResultDto.Coordinate(store.getAddress().getLatitude(),
                                     store.getAddress().getLongitude()),
