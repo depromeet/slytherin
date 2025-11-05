@@ -2,6 +2,7 @@ package com.bobeat.backend.domain.store.service;
 
 import com.bobeat.backend.domain.store.controller.StoreEmbeddingTestController.EmbeddingTestResponse;
 import com.bobeat.backend.domain.store.controller.StoreEmbeddingTestController.StoreTextResponse;
+import com.bobeat.backend.domain.store.entity.EmbeddingStatus;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.Store;
@@ -38,7 +39,7 @@ public class StoreEmbeddingService {
      * @param store Store 엔티티
      * @return 1024차원의 임베딩 벡터
      */
-    public Mono<List<Double>> generateStoreEmbedding(Store store) {
+    public Mono<List<Float>> generateStoreEmbedding(Store store) {
         String combinedText = buildStoreText(store);
         return clovaEmbeddingClient.getEmbedding(combinedText);
     }
@@ -49,7 +50,7 @@ public class StoreEmbeddingService {
      * @param store Store 엔티티
      * @return 1024차원의 임베딩 벡터
      */
-    public List<Double> generateStoreEmbeddingSync(Store store) {
+    public List<Float> generateStoreEmbeddingSync(Store store) {
         String combinedText = buildStoreText(store);
         return clovaEmbeddingClient.getEmbeddingSync(combinedText);
     }
@@ -59,10 +60,16 @@ public class StoreEmbeddingService {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_STORE));
         String combinedText = buildStoreText(store);
-        List<Double> embedding = generateStoreEmbeddingSync(store);
+        List<Float> embedding = generateStoreEmbeddingSync(store);
+        float[] embeddingArray = new float[embedding.size()];
+
+        for (int i = 0; i < embedding.size(); i++) {
+            embeddingArray[i] = embedding.get(i);
+        }
 
         StoreEmbedding storeEmbedding = StoreEmbedding.builder()
-                .embedding(embedding)
+                .embedding(embeddingArray)
+                .embeddingStatus(EmbeddingStatus.COMPLETED)
                 .store(store)
                 .build();
 

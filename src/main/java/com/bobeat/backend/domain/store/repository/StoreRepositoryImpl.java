@@ -1,5 +1,6 @@
 package com.bobeat.backend.domain.store.repository;
 
+
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.entity.Menu;
@@ -187,13 +188,17 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     // ==================== Private Helper Methods ====================
 
     private BooleanExpression applyKeyset(StoreFilteringRequest req, NumberExpression<Integer> distanceExpr) {
-        if (req.paging() == null) return null;
+        if (req.paging() == null) {
+            return null;
+        }
 
         var cursor = KeysetCursor.decodeOrNull(req.paging().lastKnown());
-        if (cursor == null) return null;
+        if (cursor == null) {
+            return null;
+        }
 
-        int  lastDist = cursor.distance();
-        long lastId   = cursor.id();
+        int lastDist = cursor.distance();
+        long lastId = cursor.id();
 
         return distanceExpr.gt(lastDist)
                 .or(distanceExpr.eq(lastDist).and(store.id.gt(lastId)));
@@ -234,7 +239,9 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     private BooleanExpression andAll(BooleanExpression... exprs) {
         BooleanExpression acc = null;
         for (BooleanExpression e : exprs) {
-            if (e == null) continue;
+            if (e == null) {
+                continue;
+            }
             acc = (acc == null) ? e : acc.and(e);
         }
         return acc;

@@ -1,13 +1,10 @@
-package com.bobeat.backend.domain.store.entity;
+package com.bobeat.backend.domain.search.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -19,12 +16,13 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(name = "store_embedding")
+@Table(name = "search_history_embedding")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class StoreEmbedding {
+public class SearchHistoryEmbedding {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,13 +32,5 @@ public class StoreEmbedding {
     @Array(length = 1024)
     private float[] embedding;
 
-    @Enumerated(EnumType.STRING)
-    private EmbeddingStatus embeddingStatus;
-
-    @OneToOne
-    private Store store;
-
-    public void update(StoreEmbedding updated) {
-        this.embedding = updated.getEmbedding();
-    }
+    private String query;
 }
