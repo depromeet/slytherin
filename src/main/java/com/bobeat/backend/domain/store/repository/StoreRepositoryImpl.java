@@ -109,7 +109,17 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     }
 
     /**
-     * JOIN 조건으로 필터링된 Store ID 목록 조회 (1단계)
+     * JOIN 조건으로 필터링된 Store ID 목록 조회 (1단계) //TODO: 데이터가 많아져 성능저하 시 고민 필요
+     *
+     * 전략:
+     * - DISTINCT로 중복 제거하여 유효한 모든 Store ID를 조회
+     * - LIMIT을 적용하지 않음 → 2단계에서 키셋 페이징으로 정확하게 제어
+     * - 이 방식으로 무한 스크롤에서 데이터 누락 방지
+     *
+     * 트레이드오프:
+     * - 장점: 키셋 페이징이 정확하게 동작, 데이터 누락 없음
+     * - 단점: 필터링된 Store가 많으면 1단계에서 많은 ID를 가져올 수 있음
+     * - 일반적으로 위치 필터(반경 5km)로 인해 결과 집합은 제한적
      */
     private List<Long> findFilteredStoreIds(StoreFilteringRequest request, double centerLat, double centerLon, int limitPlusOne) {
         // 기본 필터
@@ -136,7 +146,9 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
         // WHERE 조건
         query = query.where(andAll(baseFilters, priceJoinFilter, seatJoinFilter));
 
-        return query.limit((long) limitPlusOne * 2).fetch();
+        // LIMIT 없이 모든 유효한 Store ID 조회
+        // 2단계에서 키셋 페이징과 정렬을 정확하게 적용
+        return query.fetch();
     }
 
     @Override

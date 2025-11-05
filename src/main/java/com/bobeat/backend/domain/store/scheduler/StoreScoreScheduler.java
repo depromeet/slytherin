@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * 식당 내부 점수를 주기적으로 계산하는 스케줄러
-ㅍ * 매일 자정(00:00)에 업데이트가 필요한 식당들만 증분 업데이트
+ * 매일 자정(00:00)에 업데이트가 필요한 식당들만 증분 업데이트
  */
 @Component
 @RequiredArgsConstructor
