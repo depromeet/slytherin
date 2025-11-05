@@ -32,23 +32,13 @@ public class StoreAdminController {
     public ApiResponse<RecalculateResponse> recalculateAllScores() {
         log.info("Admin API: Starting full recalculation of all store scores");
 
-        try {
-            int updatedCount = storeScoreCalculator.calculateAndUpdateAllScores();
-            log.info("Admin API: Successfully recalculated {} store scores", updatedCount);
+        int updatedCount = storeScoreCalculator.calculateAndUpdateAllScores();
+        log.info("Admin API: Successfully recalculated {} store scores", updatedCount);
 
-            return ApiResponse.success(new RecalculateResponse(
-                true,
-                "전체 식당 점수 재계산이 완료되었습니다.",
-                updatedCount
-            ));
-        } catch (Exception e) {
-            log.error("Admin API: Error during full score recalculation", e);
-            return ApiResponse.success(new RecalculateResponse(
-                false,
-                "점수 재계산 중 오류가 발생했습니다: " + e.getMessage(),
-                0
-            ));
-        }
+        return ApiResponse.success(new RecalculateResponse(
+            "전체 식당 점수 재계산이 완료되었습니다.",
+            updatedCount
+        ));
     }
 
     @Operation(
@@ -60,30 +50,24 @@ public class StoreAdminController {
     public ApiResponse<RecalculateResponse> calculatePendingScores() {
         log.info("Admin API: Starting incremental score calculation for pending stores");
 
-        try {
-            int updatedCount = storeScoreCalculator.calculateAndUpdatePendingScores();
-            log.info("Admin API: Successfully calculated {} pending store scores", updatedCount);
+        int updatedCount = storeScoreCalculator.calculateAndUpdatePendingScores();
+        log.info("Admin API: Successfully calculated {} pending store scores", updatedCount);
 
-            return ApiResponse.success(new RecalculateResponse(
-                true,
-                "대기 중인 식당 점수 계산이 완료되었습니다.",
-                updatedCount
-            ));
-        } catch (Exception e) {
-            log.error("Admin API: Error during pending score calculation", e);
-            return ApiResponse.success(new RecalculateResponse(
-                false,
-                "점수 계산 중 오류가 발생했습니다: " + e.getMessage(),
-                0
-            ));
-        }
+        return ApiResponse.success(new RecalculateResponse(
+            "대기 중인 식당 점수 계산이 완료되었습니다.",
+            updatedCount
+        ));
     }
 
     /**
      * 점수 재계산 결과 응답 DTO
+     *
+     * 개선사항:
+     * - success 플래그 제거: HTTP 상태 코드로 성공/실패 구분
+     * - 에러는 GlobalExceptionHandler에서 HTTP 500으로 자동 처리
+     * - REST API 표준 준수
      */
     public record RecalculateResponse(
-        boolean success,
         String message,
         int updatedCount
     ) {}

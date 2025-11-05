@@ -46,11 +46,24 @@ public class StoreScoreCalculator {
         log.info("Starting incremental score calculation for stores needing update");
 
         List<Store> stores = storeRepository.findStoresNeedingScoreUpdate();
+
+        if (stores.isEmpty()) {
+            log.info("No stores need score update");
+            return 0;
+        }
+
+        // 배치 쿼리로 모든 메뉴와 좌석 옵션을 한 번에 조회
+        java.util.Map<Long, List<Menu>> menusByStoreId = groupMenusByStoreId(stores);
+        java.util.Map<Long, List<SeatOption>> seatsByStoreId = groupSeatsByStoreId(stores);
+
         int updatedCount = 0;
 
         for (Store store : stores) {
             try {
-                double score = calculateStoreScore(store);
+                List<Menu> menus = menusByStoreId.getOrDefault(store.getId(), List.of());
+                List<SeatOption> seatOptions = seatsByStoreId.getOrDefault(store.getId(), List.of());
+
+                double score = calculateStoreScore(store, menus, seatOptions);
                 store.updateInternalScore(score);
                 updatedCount++;
             } catch (Exception e) {
@@ -75,11 +88,24 @@ public class StoreScoreCalculator {
         log.info("Starting FULL score recalculation for all stores");
 
         List<Store> stores = storeRepository.findAll();
+
+        if (stores.isEmpty()) {
+            log.info("No stores found");
+            return 0;
+        }
+
+        // 배치 쿼리로 모든 메뉴와 좌석 옵션을 한 번에 조회
+        java.util.Map<Long, List<Menu>> menusByStoreId = groupMenusByStoreId(stores);
+        java.util.Map<Long, List<SeatOption>> seatsByStoreId = groupSeatsByStoreId(stores);
+
         int updatedCount = 0;
 
         for (Store store : stores) {
             try {
-                double score = calculateStoreScore(store);
+                List<Menu> menus = menusByStoreId.getOrDefault(store.getId(), List.of());
+                List<SeatOption> seatOptions = seatsByStoreId.getOrDefault(store.getId(), List.of());
+
+                double score = calculateStoreScore(store, menus, seatOptions);
                 store.updateInternalScore(score);
                 updatedCount++;
             } catch (Exception e) {
@@ -93,19 +119,52 @@ public class StoreScoreCalculator {
     }
 
     /**
-     * 개별 식당의 점수 계산
+     * 배치 쿼리로 조회한 메뉴를 Store ID별로 그룹화
+     */
+    private java.util.Map<Long, List<Menu>> groupMenusByStoreId(List<Store> stores) {
+        List<Menu> allMenus = menuRepository.findByStoreIn(stores);
+        return allMenus.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        menu -> menu.getStore().getId()
+                ));
+    }
+
+    /**
+     * 배치 쿼리로 조회한 좌석 옵션을 Store ID별로 그룹화
+     */
+    private java.util.Map<Long, List<SeatOption>> groupSeatsByStoreId(List<Store> stores) {
+        List<SeatOption> allSeatOptions = seatOptionRepository.findByStoreIn(stores);
+        return allSeatOptions.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        seatOption -> seatOption.getStore().getId()
+                ));
+    }
+
+    /**
+     * 개별 식당의 점수 계산 (외부 호출용)
+     * 단일 가게 점수 계산시 사용
      */
     public double calculateStoreScore(Store store) {
+        List<Menu> menus = menuRepository.findByStore(store);
+        List<SeatOption> seatOptions = seatOptionRepository.findByStore(store);
+        return calculateStoreScore(store, menus, seatOptions);
+    }
+
+    /**
+     * 개별 식당의 점수 계산 (배치 처리용)
+     * 메뉴와 좌석 옵션을 파라미터로 받아 DB 조회 없이 계산
+     */
+    private double calculateStoreScore(Store store, List<Menu> menus, List<SeatOption> seatOptions) {
         double score = 0.0;
 
         // 1. 혼밥레벨 점수 (레벨이 낮을수록 높은 점수)
         score += calculateHonbobLevelScore(store);
 
         // 2. 가격 점수 (가격이 낮을수록 높은 점수)
-        score += calculatePriceScore(store);
+        score += calculatePriceScore(menus);
 
         // 3. 좌석 점수 (1인석/바좌석이 많을수록 높은 점수)
-        score += calculateSeatScore(store);
+        score += calculateSeatScore(seatOptions);
 
         // 4. 카테고리 점수
         score += calculateCategoryScore(store);
@@ -139,30 +198,26 @@ public class StoreScoreCalculator {
     }
 
     /**
-     * 메뉴 가격 기반 점수 계산
+     * 메뉴 가격 기반 점수 계산 (배치 처리용)
      * 대표 메뉴의 최저가를 기준으로 계산
      * YAML 설정의 임계값 사용
      */
-    private double calculatePriceScore(Store store) {
+    private double calculatePriceScore(List<Menu> menus) {
         double weight = scoringConfig.getPriceWeight();
         int lowThreshold = scoringConfig.getPriceThreshold().getLow();
         int highThreshold = scoringConfig.getPriceThreshold().getHigh();
-
-        List<Menu> menus = menuRepository.findByStore(store);
 
         if (menus.isEmpty()) {
             return weight / 2; // 메뉴 정보 없으면 중간 점수
         }
 
-        // 대표 메뉴 중 최저가 찾기
+        // 대표 메뉴 중 최저가 찾기: 추천 메뉴 우선 → 가격 낮은 순
         int minPrice = menus.stream()
-                .filter(Menu::isRecommend)
-                .mapToInt(Menu::getPrice)
-                .min()
-                .orElse(menus.stream()
-                        .mapToInt(Menu::getPrice)
-                        .min()
-                        .orElse(15000)); // 기본값 15,000원
+                .min(java.util.Comparator
+                        .comparing(Menu::isRecommend).reversed()  // 추천 메뉴 우선 (true가 먼저)
+                        .thenComparingInt(Menu::getPrice))        // 가격 낮은 순
+                .map(Menu::getPrice)
+                .orElse(15000); // 기본값 15,000원
 
         if (minPrice <= lowThreshold) {
             return weight;
@@ -176,13 +231,11 @@ public class StoreScoreCalculator {
     }
 
     /**
-     * 좌석 옵션 기반 점수 계산
+     * 좌석 옵션 기반 점수 계산 (배치 처리용)
      * 1인석/바좌석이 있으면 각각 가산점
      */
-    private double calculateSeatScore(Store store) {
+    private double calculateSeatScore(List<SeatOption> seatOptions) {
         double weight = scoringConfig.getSeatTypeWeight();
-
-        List<SeatOption> seatOptions = seatOptionRepository.findByStore(store);
 
         if (seatOptions.isEmpty()) {
             return 0.0;
