@@ -80,7 +80,7 @@ public class AppleService implements OAuth2Service {
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             return (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
         } catch (Exception exception) {
-            exception.printStackTrace();
+            log.error("애플 공개키 생성 중 문제가 발생했습니다.", exception);
             throw new RuntimeException("애플 공개키 생성중 문제가 발생했습니다");
         }
     }
