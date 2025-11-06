@@ -8,8 +8,11 @@ import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
@@ -37,67 +40,27 @@ public class AppleService implements OAuth2Service {
     @Override
     public OAuth2UserInfo getUser(String idToken) {
         List<ApplePublicKey> applePublicKeys = applePublicKeyRepository.findAll();
-        List<RSAPublicKey> rsaPublicKeys = applePublicKeys.stream()
-                .map(ApplePublicKey::getEncodedPublicKey)
-                .map(this::decodingRSAKey)
-                .toList();
-        for (RSAPublicKey rsaPublicKey : rsaPublicKeys) {
-            try {
-                Jws<Claims> jws = Jwts.parserBuilder()
-                        .setSigningKey(rsaPublicKey)
-                        .build()
-                        .parseClaimsJws(idToken);
-                Claims claims = jws.getBody();
-                return AppleUserInfo.from(claims);
-
-            } catch (io.jsonwebtoken.SignatureException | io.jsonwebtoken.MalformedJwtException |
-                     IllegalArgumentException e) {
-                log.debug("Apple ID 토큰 서명 검증 실패. 다른 키로 계속 진행합니다.", e);
-            } catch (io.jsonwebtoken.ExpiredJwtException e) {
-                log.warn("만료된 Apple ID 토큰입니다.", e);
-                throw new CustomException(ErrorCode.JWT_EXPIRED);
-            } catch (Exception ex) {
-                log.warn("Apple ID 토큰 처리 중 예상치 못한 오류가 발생했습니다.", ex);
-
+        for (ApplePublicKey storedKey : applePublicKeyRepository.findAll()) {
+            RSAPublicKey rsaKey = decodingRSAKey(storedKey.getEncodedPublicKey());
+            OAuth2UserInfo oAuth2UserInfo = validateToken(idToken, rsaKey);
+            if (oAuth2UserInfo != null) {
+                return oAuth2UserInfo;
             }
         }
 
-        List<JsonNode> jsonNodes = fetchAppleKeyEndpoint();
-        for (JsonNode jsonNode : jsonNodes) {
-            try {
-                String n = jsonNode.get("n").asText();
-                String e = jsonNode.get("e").asText();
-                RSAPublicKey rsaPublicKey = generateRSAPublicKey(n, e);
-                Jws<Claims> jws = Jwts.parserBuilder()
-                        .setSigningKey(rsaPublicKey)
-                        .build()
-                        .parseClaimsJws(idToken);
-                Claims claims = jws.getBody();
-                return AppleUserInfo.from(claims);
-            } catch (io.jsonwebtoken.SignatureException | io.jsonwebtoken.MalformedJwtException |
-                     IllegalArgumentException e) {
-                log.debug("Apple ID 토큰 서명 검증 실패. 다른 키로 계속 진행합니다.", e);
-            } catch (io.jsonwebtoken.ExpiredJwtException e) {
-                log.warn("만료된 Apple ID 토큰입니다.", e);
-                throw new CustomException(ErrorCode.JWT_EXPIRED);
-            } catch (Exception ex) {
-                log.warn("Apple ID 토큰 처리 중 예상치 못한 오류가 발생했습니다.", ex);
+        List<JsonNode> freshKeys = fetchAppleKeyEndpoint();
+        for (JsonNode node : freshKeys) {
+            String n = node.get("n").asText();
+            String e = node.get("e").asText();
+            RSAPublicKey rsaKey = generateRSAPublicKey(n, e);
+
+            OAuth2UserInfo oAuth2UserInfo = validateToken(idToken, rsaKey);
+            if (oAuth2UserInfo != null) {
+                return oAuth2UserInfo;
             }
         }
+
         throw new CustomException(ErrorCode.APPLE_TOKEN_VALIDATION_FAIL);
-    }
-
-    private List<JsonNode> fetchAppleKeyEndpoint() {
-        return webClient.get()
-                .uri(APPLE_KEY_ENDPOINT)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .map(jsonNode -> {
-                    List<JsonNode> list = new ArrayList<>();
-                    jsonNode.get("keys").forEach(list::add);
-                    return list;
-                })
-                .block();
     }
 
     @Scheduled(cron = "0 0 */6 * * *")
@@ -125,7 +88,38 @@ public class AppleService implements OAuth2Service {
         applePublicKeyRepository.saveAll(applePublicKeys);
     }
 
-    public RSAPublicKey generateRSAPublicKey(JsonNode jsonNode) {
+    private OAuth2UserInfo validateToken(String idToken, RSAPublicKey rsaPublicKey) {
+        try {
+            Jws<Claims> jws = Jwts.parserBuilder()
+                    .setSigningKey(rsaPublicKey)
+                    .build()
+                    .parseClaimsJws(idToken);
+            return AppleUserInfo.from(jws.getBody());
+        } catch (ExpiredJwtException e) {
+            log.warn("만료된 Apple ID 토큰입니다.", e);
+            throw new CustomException(ErrorCode.JWT_EXPIRED);
+        } catch (SignatureException | MalformedJwtException | IllegalArgumentException e) {
+            log.debug("Apple ID 토큰 서명 검증 실패 - 다른 키로 시도합니다.");
+        } catch (Exception ex) {
+            log.warn("Apple ID 토큰 처리 중 오류 발생", ex);
+        }
+        return null;
+    }
+
+    private List<JsonNode> fetchAppleKeyEndpoint() {
+        return webClient.get()
+                .uri(APPLE_KEY_ENDPOINT)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .map(jsonNode -> {
+                    List<JsonNode> list = new ArrayList<>();
+                    jsonNode.get("keys").forEach(list::add);
+                    return list;
+                })
+                .block();
+    }
+
+    private RSAPublicKey generateRSAPublicKey(JsonNode jsonNode) {
         String n = jsonNode.get("n").asText();
         String e = jsonNode.get("e").asText();
         return generateRSAPublicKey(n, e);
