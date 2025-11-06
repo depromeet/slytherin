@@ -42,8 +42,14 @@ public class AppleService implements OAuth2Service {
                         .parseClaimsJws(idToken);
                 Claims claims = jws.getBody();
                 return AppleUserInfo.from(claims);
+            } catch (io.jsonwebtoken.SignatureException | io.jsonwebtoken.MalformedJwtException |
+                     IllegalArgumentException e) {
+                log.debug("Apple ID 토큰 서명 검증 실패. 다른 키로 계속 진행합니다.", e);
+            } catch (io.jsonwebtoken.ExpiredJwtException e) {
+                log.warn("만료된 Apple ID 토큰입니다.", e);
+                throw new CustomException(ErrorCode.JWT_EXPIRED);
             } catch (Exception ex) {
-                continue;
+                log.warn("Apple ID 토큰 처리 중 예상치 못한 오류가 발생했습니다.", ex);
             }
         }
         throw new CustomException(ErrorCode.APPLE_TOKEN_VALIDATION_FAIL);
