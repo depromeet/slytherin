@@ -1,7 +1,7 @@
 package com.bobeat.backend.domain.security.oauth.dto;
 
 import com.bobeat.backend.domain.member.entity.SocialProvider;
-import com.fasterxml.jackson.databind.JsonNode;
+import io.jsonwebtoken.Claims;
 import lombok.Builder;
 import lombok.ToString;
 
@@ -12,10 +12,12 @@ public class AppleUserInfo implements OAuth2UserInfo {
     private String providerId;
     private String email;
 
-    public static AppleUserInfo from(JsonNode response) {
+    public static AppleUserInfo from(Claims claims) {
+        String sub = claims.getSubject();
+        String email = (String) claims.get("email");
         return AppleUserInfo.builder()
-                .providerId(response.get("sub").asText())
-                .email(response.has("email") ? response.get("email").asText() : "")
+                .providerId(sub)
+                .email(email)
                 .build();
     }
 
