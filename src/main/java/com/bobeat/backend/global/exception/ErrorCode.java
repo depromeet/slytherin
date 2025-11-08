@@ -38,6 +38,7 @@ public enum ErrorCode {
     KAKAO_TOKEN_VALIDATION_FAIL(HttpStatus.UNAUTHORIZED, "O001", "카카오 토큰 검증에 실패했습니다."),
     GOOGLE_TOKEN_VALIDATION_FAIL(HttpStatus.UNAUTHORIZED, "O002", "구글 토큰 검증에 실패했습니다."),
     PROVIDER_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "O003", "지원하지 않는 OAuth 프로바이더입니다."),
+    APPLE_TOKEN_VALIDATION_FAIL(HttpStatus.UNAUTHORIZED, "O004", "애플 토큰 검증에 실패했습니다."),
     JWT_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "J001", "유효하지 않은 JWT 토큰입니다."),
     JWT_EXPIRED(HttpStatus.UNAUTHORIZED, "J002", "만료된 JWT 토큰입니다."),
     JWT_UNSUPPORTED(HttpStatus.UNAUTHORIZED, "J003", "지원하지 않는 JWT 토큰입니다."),
