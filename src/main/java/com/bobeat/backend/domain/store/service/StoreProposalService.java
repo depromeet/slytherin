@@ -34,6 +34,21 @@ public class StoreProposalService {
                 .build();
 
         StoreProposal saveStoreProposal = storeProposalRepository.save(storeProposal);
+        return EditProposalResponse.from(saveStoreProposal);
+    }
+
+    @Transactional
+    public EditProposalResponse proposeEditWithoutMember(Long storeId,
+                                                         EditProposalRequest request) {
+        Store store = storeRepository.findByIdOrThrow(storeId);
+
+        StoreProposal storeProposal = StoreProposal.builder()
+                .proposalType(request.proposalType())
+                .content(request.content())
+                .store(store)
+                .build();
+
+        StoreProposal saveStoreProposal = storeProposalRepository.save(storeProposal);
         return EditProposalResponse.from(storeProposal);
     }
 }

@@ -61,7 +61,11 @@ public class StoreController {
             @Parameter(description = "식당 ID") @PathVariable Long storeId,
             @RequestBody EditProposalRequest request
     ) {
-        EditProposalResponse response = storeProposalService.proposeEdit(memberId, storeId, request);
+        if (memberId != null) {
+            EditProposalResponse response = storeProposalService.proposeEdit(memberId, storeId, request);
+            return ApiResponse.success(response);
+        }
+        EditProposalResponse response = storeProposalService.proposeEditWithoutMember(storeId, request);
         return ApiResponse.success(response);
     }
 
