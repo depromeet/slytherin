@@ -1,9 +1,17 @@
 package com.bobeat.backend.domain.security.oauth;
 
+import com.bobeat.backend.domain.member.repository.MemberRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Random;
 
+@Component
+@RequiredArgsConstructor
 public class NicknameGenerator {
+
+    private final MemberRepository memberRepository;
     private static final List<String> ADJECTIVES = List.of(
             "배고픈", "잠자는", "춤추는", "뛰어난", "멍때리는", "방황하는",
             "수다스러운", "귀차니즘", "흥분한", "뚝딱이는", "재채기하는", "뚜벅이는",
@@ -25,15 +33,29 @@ public class NicknameGenerator {
 
     private static final Random RANDOM = new Random();
 
-    public static String getRandomNickname() {
+    public String getRandomNickname() {
         String nickName;
+        int maxAttempts = 100; // 무한 루프 방지
+        int attempts = 0;
+
         do {
             String adjective = ADJECTIVES.get(RANDOM.nextInt(ADJECTIVES.size()));
-            String food = FOODS.get(RANDOM.nextInt(FOODS.size())); // 수정한 부분
-            nickName = adjective + " " + food; // 수정한 부분
-        }
-        while (nickName.length() > 11);
+            String food = FOODS.get(RANDOM.nextInt(FOODS.size()));
+            nickName = adjective + " " + food;
 
-        return nickName;
+            // 길이 체크를 먼저 수행
+            if (nickName.length() <= 11) {
+                // 길이가 통과되면 DB 중복 체크
+                if (!memberRepository.existsByNickname(nickName)) {
+                    return nickName;
+                }
+            }
+
+            attempts++;
+            if (attempts >= maxAttempts) {
+                throw new IllegalStateException("중복되지 않는 닉네임 생성에 실패했습니다");
+            }
+        }
+        while (true);
     }
 }
