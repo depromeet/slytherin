@@ -24,6 +24,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "회원을 찾을 수 없습니다."),
     INVALID_LEVEL_VALUE(HttpStatus.BAD_REQUEST, "M002", "유효하지 않은 레벨 값입니다."),
     INVALID_ONBOARDING_QUESTION(HttpStatus.BAD_REQUEST, "M003", "유효하지 않은 온보딩 질문 또는 옵션입니다."),
+    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "M004", "이미 사용 중인 닉네임입니다."),
 
     // 가게
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "가게를 찾을 수 없습니다."),
