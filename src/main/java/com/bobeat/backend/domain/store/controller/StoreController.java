@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Store", description = "가게(식당) 관련 API")
@@ -62,9 +63,11 @@ public class StoreController {
     @Operation(summary = "유사 가게 추천", description = "해당 가게와 유사한 가게를 3km 이내에서 최대 5개 추천합니다.")
     @GetMapping("/{storeId}/similar")
     public ApiResponse<List<SimilarStoreResponse>> getSimilarStores(
-            @Parameter(description = "식당 ID") @PathVariable("storeId") Long storeId
+            @Parameter(description = "식당 ID") @PathVariable("storeId") Long storeId,
+            @Parameter(description = "유저의 현재 위도", required = true) @RequestParam("latitude") Double latitude,
+            @Parameter(description = "유저의 현재 경도", required = true) @RequestParam("longitude") Double longitude
     ) {
-        List<SimilarStoreResponse> response = similarStoreService.findSimilarStores(storeId);
+        List<SimilarStoreResponse> response = similarStoreService.findSimilarStores(storeId, latitude, longitude);
         return ApiResponse.success(response);
     }
 }
