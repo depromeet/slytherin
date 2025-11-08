@@ -25,6 +25,7 @@ public class OauthService {
     private final MemberRepository memberRepository;
     private final OAuth2Factory oAuth2Factory;
     private final JwtService jwtService;
+    private final NicknameGenerator nicknameGenerator;
 
     @Value("${profile.default-image}")
     private String defaultProfileImage;
@@ -52,7 +53,7 @@ public class OauthService {
     private Member toEntity(OAuth2UserInfo userInfo) {
         return Member.builder()
                 .socialProvider(userInfo.getProviderType())
-                .nickname(NicknameGenerator.getRandomNickname())
+                .nickname(nicknameGenerator.getRandomNickname())
                 .providerId(userInfo.getProviderId())
                 .email(userInfo.getEmail())
                 .role(MemberRole.USER)

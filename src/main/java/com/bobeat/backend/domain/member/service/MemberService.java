@@ -2,10 +2,11 @@ package com.bobeat.backend.domain.member.service;
 
 import com.bobeat.backend.domain.member.dto.request.UpdateNicknameRequest;
 import com.bobeat.backend.domain.member.dto.response.MemberProfileResponse;
-import com.bobeat.backend.domain.member.dto.response.SavedStoreListResponse;
 import com.bobeat.backend.domain.member.dto.response.UpdateNicknameResponse;
 import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.member.repository.MemberRepository;
+import com.bobeat.backend.global.exception.CustomException;
+import com.bobeat.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,8 +38,14 @@ public class MemberService {
     public UpdateNicknameResponse updateNickname(Long memberId, UpdateNicknameRequest request) {
         Member member = memberRepository.findByIdOrElseThrow(memberId);
 
+        // 닉네임 중복 검사 (자신의 현재 닉네임은 제외)
+        if (!member.getNickname().equals(request.nickname())) {
+            if (memberRepository.existsByNickname(request.nickname())) {
+                throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+            }
+        }
         member.updateNickname(request.nickname());
-        
+
         return new UpdateNicknameResponse(request.nickname());
     }
 }
