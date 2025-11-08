@@ -2,10 +2,12 @@ package com.bobeat.backend.domain.store.controller;
 
 import com.bobeat.backend.domain.store.dto.request.EditProposalRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
+import com.bobeat.backend.domain.store.dto.response.EditProposalResponse;
 import com.bobeat.backend.domain.store.dto.response.SimilarStoreResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.service.SimilarStoreService;
+import com.bobeat.backend.domain.store.service.StoreProposalService;
 import com.bobeat.backend.domain.store.service.StoreService;
 import com.bobeat.backend.global.response.ApiResponse;
 import com.bobeat.backend.global.response.CursorPageResponse;
@@ -16,6 +18,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class StoreController {
     private final StoreService storeService;
     private final SimilarStoreService similarStoreService;
+    private final StoreProposalService storeProposalService;
 
     @Operation(summary = "위치 기반 식당 검색", description = "현재 위치를 기반으로 식당을 검색하고 필터링합니다.")
     @PostMapping
@@ -52,11 +56,13 @@ public class StoreController {
 
     @Operation(summary = "정보 수정 제안", description = "식당 정보 수정을 제안합니다.")
     @PostMapping("/{storeId}/proposals")
-    public ApiResponse<Void> proposeEdit(
+    public ApiResponse<EditProposalResponse> proposeEdit(
+            @AuthenticationPrincipal Long memberId,
             @Parameter(description = "식당 ID") @PathVariable Long storeId,
             @RequestBody EditProposalRequest request
     ) {
-        return ApiResponse.successOnly();
+        EditProposalResponse response = storeProposalService.proposeEdit(memberId, storeId, request);
+        return ApiResponse.success(response);
     }
 
     @Operation(summary = "유사 가게 추천", description = "해당 가게와 유사한 가게를 3km 이내에서 최대 5개 추천합니다.")

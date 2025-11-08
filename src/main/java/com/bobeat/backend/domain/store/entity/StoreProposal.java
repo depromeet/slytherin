@@ -30,6 +30,11 @@ public class StoreProposal {
     @Enumerated(EnumType.STRING)
     private ProposalType proposalType;
 
+    private String content;
+
     @ManyToOne
     private Member member;
+
+    @ManyToOne
+    private Store store;
 }
