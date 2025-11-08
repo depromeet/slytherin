@@ -49,7 +49,7 @@ class StoreControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    @DisplayName("유사 가게 추천 API 정상 호출 테스트")
+    @DisplayName("식당 정보 수정 제안 API테스트")
     @WithMockUser(username = "testUser", roles = {"USER"})
     void testProposeEdit() throws Exception {
         // given
