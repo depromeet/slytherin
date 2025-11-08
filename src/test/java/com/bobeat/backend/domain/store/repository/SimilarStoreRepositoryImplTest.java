@@ -124,10 +124,13 @@ class SimilarStoreRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("3km 이내 가게만 필터링 - 2개 반환")
+    @DisplayName("3km 이내 가게만 필터링 - honbobLevel 필터링 적용하여 1개 반환")
     void findNearbyStores_Within3km_Success() {
         // given
         double maxDistance = 3000.0; // 3km
+        // targetStore: honbobLevel = 3
+        // nearbyStore1: honbobLevel = 2 (1.5km) - 포함 (레벨 3 이하)
+        // nearbyStore2: honbobLevel = 4 (2.5km) - 제외 (레벨 3 초과)
 
         // when
         List<Long> nearbyStoreIds = similarStoreRepository.findNearbyStoreIds(
@@ -136,11 +139,9 @@ class SimilarStoreRepositoryImplTest {
         );
 
         // then
-        assertThat(nearbyStoreIds).hasSize(2);
-        assertThat(nearbyStoreIds).containsExactlyInAnyOrder(
-                nearbyStore1.getId(),
-                nearbyStore2.getId()
-        );
+        assertThat(nearbyStoreIds).hasSize(1);
+        assertThat(nearbyStoreIds).containsExactly(nearbyStore1.getId());
+        assertThat(nearbyStoreIds).doesNotContain(nearbyStore2.getId());
         assertThat(nearbyStoreIds).doesNotContain(farStore.getId());
     }
 
@@ -178,10 +179,14 @@ class SimilarStoreRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("10km 이내 가게 필터링 - 3개 반환 (먼 가게 포함)")
+    @DisplayName("10km 이내 가게 필터링 - honbobLevel 필터링 적용하여 2개 반환")
     void findNearbyStores_Within10km_AllStores() {
         // given
         double maxDistance = 10000.0; // 10km
+        // targetStore: honbobLevel = 3
+        // nearbyStore1: honbobLevel = 2 (1.5km) - 포함 (레벨 3 이하)
+        // nearbyStore2: honbobLevel = 4 (2.5km) - 제외 (레벨 3 초과)
+        // farStore: honbobLevel = 1 (5km) - 포함 (레벨 3 이하)
 
         // when
         List<Long> nearbyStoreIds = similarStoreRepository.findNearbyStoreIds(
@@ -190,12 +195,12 @@ class SimilarStoreRepositoryImplTest {
         );
 
         // then
-        assertThat(nearbyStoreIds).hasSize(3);
+        assertThat(nearbyStoreIds).hasSize(2);
         assertThat(nearbyStoreIds).containsExactlyInAnyOrder(
                 nearbyStore1.getId(),
-                nearbyStore2.getId(),
                 farStore.getId()
         );
+        assertThat(nearbyStoreIds).doesNotContain(nearbyStore2.getId());
     }
 
     @Test
@@ -258,6 +263,62 @@ class SimilarStoreRepositoryImplTest {
 
         // then
         assertThat(nearbyStoreIds).isEmpty();
+    }
+
+    @Test
+    @DisplayName("혼밥 레벨 필터링 - 기준 가게의 honbobLevel 이하인 가게만 반환")
+    void findNearbyStores_FilterByHonbobLevel() {
+        // given
+        double maxDistance = 10000.0; // 충분히 큰 거리 (10km)
+
+        // targetStore: honbobLevel = 3
+        // nearbyStore1: honbobLevel = 2 - 포함되어야 함 (레벨 3 이하)
+        // nearbyStore2: honbobLevel = 4 - 제외되어야 함 (레벨 3 초과)
+        // farStore: honbobLevel = 1 - 포함되어야 함 (레벨 3 이하)
+
+        // when
+        List<Long> nearbyStoreIds = similarStoreRepository.findNearbyStoreIds(
+                targetStore.getId(),
+                maxDistance
+        );
+
+        // then
+        assertThat(nearbyStoreIds).hasSize(2);
+        assertThat(nearbyStoreIds).containsExactlyInAnyOrder(
+                nearbyStore1.getId(), // honbobLevel = 2
+                farStore.getId()       // honbobLevel = 1
+        );
+        assertThat(nearbyStoreIds).doesNotContain(nearbyStore2.getId()); // honbobLevel = 4 (제외)
+    }
+
+    @Test
+    @DisplayName("혼밥 레벨 필터링 - 동일한 레벨도 포함")
+    void findNearbyStores_IncludeSameHonbobLevel() {
+        // given
+        // 기준 가게와 동일한 혼밥 레벨(3)을 가진 가게 추가
+        Store sameLevelStore = storeRepository.save(Store.builder()
+                .name("동일 레벨 가게")
+                .address(Address.builder()
+                        .address("서울시 강남구 테헤란로 100")
+                        .latitude(37.5100)
+                        .longitude(127.0276)
+                        .location(createPoint(37.5100, 127.0276))
+                        .build())
+                .honbobLevel(Level.fromValue(3)) // targetStore와 동일한 레벨
+                .description("동일 혼밥 레벨")
+                .phoneNumber("02-1111-2222")
+                .build());
+
+        double maxDistance = 10000.0; // 10km
+
+        // when
+        List<Long> nearbyStoreIds = similarStoreRepository.findNearbyStoreIds(
+                targetStore.getId(),
+                maxDistance
+        );
+
+        // then - 동일한 레벨(3)도 포함되어야 함
+        assertThat(nearbyStoreIds).contains(sameLevelStore.getId());
     }
 
     /**
