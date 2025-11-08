@@ -27,5 +27,13 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByProviderId(String providerId);
 
-    boolean existsByNickname(String nickname);
+    /**
+     * 닉네임 중복 여부를 확인합니다.
+     *
+     * 최적화: EXISTS 쿼리 사용으로 성능 향상
+     * - COUNT 대신 EXISTS를 사용하여 첫 번째 매칭 행에서 즉시 반환
+     * - 인덱스 스캔 최소화
+     */
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM member WHERE nickname = :nickname)", nativeQuery = true)
+    boolean existsByNickname(@Param("nickname") String nickname);
 }

@@ -13,7 +13,9 @@ import jakarta.persistence.Table;
 import lombok.*;
 
 @Entity
-@Table(name = "menu")
+@Table(name = "menu", indexes = {
+    @Index(name = "idx_menu_store_recommend_price", columnList = "store_id, recommend, price")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

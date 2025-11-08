@@ -8,6 +8,8 @@ import com.bobeat.backend.domain.store.repository.SimilarStoreRepository;
 import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -62,11 +64,19 @@ public class SimilarStoreService {
                 userLongitude
         );
 
+        // N+1 쿼리 해결: StoreImage를 배치 조회
+        List<Long> similarStoreIds = similarStoresWithDistance.stream()
+                .map(storeWithDistance -> storeWithDistance.getStore().getId())
+                .toList();
+
+        Map<Long, StoreImage> storeImageMap = storeImageRepository.findMainImagesByStoreIds(similarStoreIds).stream()
+                .collect(Collectors.toMap(img -> img.getStore().getId(), img -> img));
+
         return similarStoresWithDistance.stream()
                 .map(storeWithDistance -> {
                     Store store = storeWithDistance.getStore();
                     Integer distance = storeWithDistance.getDistance();
-                    StoreImage mainImage = storeImageRepository.findByStoreAndIsMainTrue(store);
+                    StoreImage mainImage = storeImageMap.get(store.getId());
                     return SimilarStoreResponse.of(store, mainImage, distance);
                 })
                 .toList();
