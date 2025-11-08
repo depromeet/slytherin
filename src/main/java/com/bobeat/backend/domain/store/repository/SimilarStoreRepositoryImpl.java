@@ -2,6 +2,7 @@ package com.bobeat.backend.domain.store.repository;
 
 import static com.bobeat.backend.domain.store.entity.QStore.store;
 
+import com.bobeat.backend.domain.common.PostgisExpressions;
 import com.bobeat.backend.domain.store.dto.StoreWithDistance;
 import com.bobeat.backend.domain.store.entity.EmbeddingStatus;
 import com.bobeat.backend.domain.store.entity.QStore;
@@ -88,19 +89,11 @@ public class SimilarStoreRepositoryImpl implements SimilarStoreRepository {
                 targetSe.embedding
         );
 
-        // PostGIS ST_Distance로 유저 위치와 가게 간 거리 계산 (미터 단위)
-        // geography 타입으로 변환하여 구면 좌표계 기준 정확한 거리 계산
-        // ST_SetSRID로 WGS84 좌표계(4326) 명시 후 정수로 변환
-        NumberExpression<Integer> distance = Expressions.numberTemplate(
-                Integer.class,
-                "CAST(" +
-                        "  function('ST_Distance', {0}, " +
-                        "    function('geography', function('ST_SetSRID', function('ST_MakePoint', {1}, {2}), 4326))" +
-                        "  ) AS integer" +
-                        ")",
+        // PostGIS로 유저 위치와 가게 간 거리 계산 (미터 단위)
+        NumberExpression<Integer> distance = PostgisExpressions.distanceMeters(
                 store.address.location,
-                userLongitude,
-                userLatitude
+                userLatitude,
+                userLongitude
         );
 
         return queryFactory
