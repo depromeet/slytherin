@@ -2,10 +2,12 @@ package com.bobeat.backend.domain.store.repository;
 
 import static com.bobeat.backend.domain.store.entity.QStore.store;
 
+import com.bobeat.backend.domain.common.PostgisExpressions;
+import com.bobeat.backend.domain.store.dto.StoreWithDistance;
 import com.bobeat.backend.domain.store.entity.EmbeddingStatus;
 import com.bobeat.backend.domain.store.entity.QStore;
 import com.bobeat.backend.domain.store.entity.QStoreEmbedding;
-import com.bobeat.backend.domain.store.entity.Store;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -57,15 +59,20 @@ public class SimilarStoreRepositoryImpl implements SimilarStoreRepository {
     }
 
     /**
-     * 후보 가게들 중에서 기준 가게와 임베딩 벡터 유사도(코사인)가 높은 순으로 정렬하여 반환
+     * 후보 가게들 중에서 기준 가게와 임베딩 벡터 유사도(코사인)가 높은 순으로 정렬하여 반환 (유저와의 거리 정보 포함)
      *
      * @param storeId           기준 가게 ID
      * @param candidateStoreIds 후보 가게 ID 목록
      * @param limit             반환할 최대 개수
+     * @param userLatitude      유저의 현재 위도
+     * @param userLongitude     유저의 현재 경도
      *
-     * @return 임베딩 유사도 순으로 정렬된 Store 목록
+     * @return 임베딩 유사도 순으로 정렬된 Store와 유저와의 거리 정보 목록
      */
-    public List<Store> findSimilarByEmbedding(Long storeId, List<Long> candidateStoreIds, int limit) {
+    @Override
+    public List<StoreWithDistance> findSimilarByEmbeddingWithDistance(Long storeId, List<Long> candidateStoreIds,
+                                                                      int limit, Double userLatitude,
+                                                                      Double userLongitude) {
         if (candidateStoreIds == null || candidateStoreIds.isEmpty()) {
             return List.of();
         }
@@ -82,8 +89,19 @@ public class SimilarStoreRepositoryImpl implements SimilarStoreRepository {
                 targetSe.embedding
         );
 
+        // PostGIS로 유저 위치와 가게 간 거리 계산 (미터 단위)
+        NumberExpression<Integer> distance = PostgisExpressions.distanceMeters(
+                store.address.location,
+                userLatitude,
+                userLongitude
+        );
+
         return queryFactory
-                .select(store)
+                .select(Projections.constructor(
+                        StoreWithDistance.class,
+                        store,
+                        distance
+                ))
                 .from(store)
                 .innerJoin(se).on(store.id.eq(se.store.id))
                 .innerJoin(targetSe).on(targetSe.store.id.eq(storeId))

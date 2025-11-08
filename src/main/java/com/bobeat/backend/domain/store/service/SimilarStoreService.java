@@ -1,5 +1,6 @@
 package com.bobeat.backend.domain.store.service;
 
+import com.bobeat.backend.domain.store.dto.StoreWithDistance;
 import com.bobeat.backend.domain.store.dto.response.SimilarStoreResponse;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.entity.StoreImage;
@@ -34,9 +35,15 @@ public class SimilarStoreService {
 
     /**
      * 유사 가게 추천(최대 5개)
+     *
+     * @param storeId       기준 가게 ID
+     * @param userLatitude  유저의 현재 위도
+     * @param userLongitude 유저의 현재 경도
+     *
+     * @return 유사 가게 목록
      */
     @Transactional(readOnly = true)
-    public List<SimilarStoreResponse> findSimilarStores(Long storeId) {
+    public List<SimilarStoreResponse> findSimilarStores(Long storeId, Double userLatitude, Double userLongitude) {
         storeRepository.findByIdOrThrow(storeId);
 
         // 1단계: PostGIS로 3km 이내 가게 ID 추출
@@ -46,17 +53,21 @@ public class SimilarStoreService {
             return List.of();
         }
 
-        // 2단계: 임베딩 벡터 유사도로 정렬하여 상위 5개 추출
-        List<Store> similarStores = similarStoreRepository.findSimilarByEmbedding(
+        // 2단계: 임베딩 벡터 유사도로 정렬하여 상위 5개 추출 (유저와의 거리 정보 포함)
+        List<StoreWithDistance> similarStoresWithDistance = similarStoreRepository.findSimilarByEmbeddingWithDistance(
                 storeId,
                 nearbyStoreIds,
-                RESULT_LIMIT
+                RESULT_LIMIT,
+                userLatitude,
+                userLongitude
         );
 
-        return similarStores.stream()
-                .map(store -> {
+        return similarStoresWithDistance.stream()
+                .map(storeWithDistance -> {
+                    Store store = storeWithDistance.getStore();
+                    Integer distance = storeWithDistance.getDistance();
                     StoreImage mainImage = storeImageRepository.findByStoreAndIsMainTrue(store);
-                    return SimilarStoreResponse.of(store, mainImage);
+                    return SimilarStoreResponse.of(store, mainImage, distance);
                 })
                 .toList();
     }

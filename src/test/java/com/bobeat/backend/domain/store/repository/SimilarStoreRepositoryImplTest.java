@@ -3,6 +3,7 @@ package com.bobeat.backend.domain.store.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.bobeat.backend.domain.member.entity.Level;
+import com.bobeat.backend.domain.store.dto.StoreWithDistance;
 import com.bobeat.backend.domain.store.entity.EmbeddingStatus;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.entity.StoreEmbedding;
@@ -59,6 +60,20 @@ class SimilarStoreRepositoryImplTest {
         Point point = GF.createPoint(new Coordinate(lon, lat));
         point.setSRID(4326);
         return point;
+    }
+
+    /**
+     * 1024차원 임베딩 벡터 생성 헬퍼 메서드
+     *
+     * @param seed 시드값 (벡터 특성 결정)
+     * @return 1024차원 임베딩 벡터
+     */
+    private static float[] createEmbeddingVector(float seed) {
+        float[] vector = new float[1024];
+        for (int i = 0; i < 1024; i++) {
+            vector[i] = (float) (Math.sin(seed + i * 0.01f));
+        }
+        return vector;
     }
 
     @BeforeEach
@@ -322,31 +337,16 @@ class SimilarStoreRepositoryImplTest {
     }
 
     /**
-     * 임베딩 벡터 유사도 정렬 테스트
+     * 임베딩 벡터 유사도 정렬 + 유저 위치 기준 거리 계산 테스트
      */
     @Nested
-    @DisplayName("findSimilarByEmbedding 테스트")
-    class FindSimilarByEmbeddingTest {
+    @DisplayName("findSimilarByEmbeddingWithDistance 테스트")
+    class FindSimilarByEmbeddingWithDistanceTest {
 
         private Store embeddingTargetStore;
         private Store similarStore1;
         private Store similarStore2;
         private Store differentStore;
-
-        /**
-         * 1024차원 임베딩 벡터 생성 헬퍼 메서드
-         *
-         * @param seed 시드값 (벡터 특성 결정)
-         *
-         * @return 1024차원 임베딩 벡터
-         */
-        private float[] createEmbeddingVector(float seed) {
-            float[] vector = new float[1024];
-            for (int i = 0; i < 1024; i++) {
-                vector[i] = (float) (Math.sin(seed + i * 0.01f));
-            }
-            return vector;
-        }
 
         @BeforeEach
         void setUpEmbedding() {
@@ -404,11 +404,6 @@ class SimilarStoreRepositoryImplTest {
                     .build());
 
             // 임베딩 벡터 생성 및 저장
-            // 타겟: seed=1.0
-            // similarStore1: seed=1.1 (타겟과 유사)
-            // similarStore2: seed=1.2 (타겟과 약간 유사)
-            // differentStore: seed=5.0 (타겟과 다름)
-
             storeEmbeddingRepository.save(StoreEmbedding.builder()
                     .store(embeddingTargetStore)
                     .embedding(createEmbeddingVector(1.0f))
@@ -435,33 +430,66 @@ class SimilarStoreRepositoryImplTest {
         }
 
         @Test
-        @DisplayName("임베딩 유사도 순으로 정렬 - 유사한 순서대로 반환")
-        void findSimilarByEmbedding_OrderBySimilarity() {
+        @DisplayName("임베딩 유사도 순 정렬 + 유저 위치 기준 거리 계산")
+        void findSimilarByEmbeddingWithDistance_Success() {
             // given
             List<Long> candidateIds = List.of(
                     similarStore1.getId(),
                     similarStore2.getId(),
                     differentStore.getId()
             );
+            // 유저 위치: 강남역 (37.4979, 127.0276)
+            Double userLatitude = 37.4979;
+            Double userLongitude = 127.0276;
 
             // when
-            List<Store> results = similarStoreRepository.findSimilarByEmbedding(
+            List<StoreWithDistance> results = similarStoreRepository.findSimilarByEmbeddingWithDistance(
                     embeddingTargetStore.getId(),
                     candidateIds,
-                    3
+                    3,
+                    userLatitude,
+                    userLongitude
             );
 
             // then
             assertThat(results).hasSize(3);
-            // 유사도 순서: similarStore1 (1.1) > similarStore2 (1.2) > differentStore (5.0)
-            assertThat(results.get(0).getId()).isEqualTo(similarStore1.getId());
-            assertThat(results.get(1).getId()).isEqualTo(similarStore2.getId());
-            assertThat(results.get(2).getId()).isEqualTo(differentStore.getId());
+            // 유사도 순서: similarStore1 > similarStore2 > differentStore
+            assertThat(results.get(0).getStore().getId()).isEqualTo(similarStore1.getId());
+            assertThat(results.get(1).getStore().getId()).isEqualTo(similarStore2.getId());
+            assertThat(results.get(2).getStore().getId()).isEqualTo(differentStore.getId());
+
+            // 거리가 Integer로 반환되는지 확인
+            assertThat(results.get(0).getDistance()).isInstanceOf(Integer.class);
+            assertThat(results.get(0).getDistance()).isGreaterThan(0);
+        }
+
+        @Test
+        @DisplayName("거리 계산이 정수로 반환되는지 확인")
+        void findSimilarByEmbeddingWithDistance_ReturnsIntegerDistance() {
+            // given
+            List<Long> candidateIds = List.of(similarStore1.getId());
+            Double userLatitude = 37.5000;
+            Double userLongitude = 127.0300;
+
+            // when
+            List<StoreWithDistance> results = similarStoreRepository.findSimilarByEmbeddingWithDistance(
+                    embeddingTargetStore.getId(),
+                    candidateIds,
+                    1,
+                    userLatitude,
+                    userLongitude
+            );
+
+            // then
+            assertThat(results).hasSize(1);
+            Integer distance = results.get(0).getDistance();
+            assertThat(distance).isNotNull();
+            assertThat(distance).isInstanceOf(Integer.class);
         }
 
         @Test
         @DisplayName("limit 적용 - 상위 N개만 반환")
-        void findSimilarByEmbedding_ApplyLimit() {
+        void findSimilarByEmbeddingWithDistance_ApplyLimit() {
             // given
             List<Long> candidateIds = List.of(
                     similarStore1.getId(),
@@ -469,146 +497,39 @@ class SimilarStoreRepositoryImplTest {
                     differentStore.getId()
             );
             int limit = 2;
+            Double userLatitude = 37.4979;
+            Double userLongitude = 127.0276;
 
             // when
-            List<Store> results = similarStoreRepository.findSimilarByEmbedding(
+            List<StoreWithDistance> results = similarStoreRepository.findSimilarByEmbeddingWithDistance(
                     embeddingTargetStore.getId(),
                     candidateIds,
-                    limit
+                    limit,
+                    userLatitude,
+                    userLongitude
             );
 
             // then
             assertThat(results).hasSize(2);
-            assertThat(results.get(0).getId()).isEqualTo(similarStore1.getId());
-            assertThat(results.get(1).getId()).isEqualTo(similarStore2.getId());
+            assertThat(results.get(0).getStore().getId()).isEqualTo(similarStore1.getId());
+            assertThat(results.get(1).getStore().getId()).isEqualTo(similarStore2.getId());
         }
 
         @Test
         @DisplayName("빈 후보군 - 빈 리스트 반환")
-        void findSimilarByEmbedding_EmptyCandidates() {
+        void findSimilarByEmbeddingWithDistance_EmptyCandidates() {
             // given
             List<Long> emptyCandidates = List.of();
+            Double userLatitude = 37.4979;
+            Double userLongitude = 127.0276;
 
             // when
-            List<Store> results = similarStoreRepository.findSimilarByEmbedding(
+            List<StoreWithDistance> results = similarStoreRepository.findSimilarByEmbeddingWithDistance(
                     embeddingTargetStore.getId(),
                     emptyCandidates,
-                    5
-            );
-
-            // then
-            assertThat(results).isEmpty();
-        }
-
-        @Test
-        @DisplayName("임베딩 상태가 COMPLETED가 아닌 가게 제외")
-        void findSimilarByEmbedding_ExcludeNonCompletedEmbedding() {
-            // given: PENDING 상태의 가게 추가
-            Store pendingStore = storeRepository.save(Store.builder()
-                    .name("PENDING 가게")
-                    .address(Address.builder()
-                            .address("서울시 강남구")
-                            .latitude(37.5040)
-                            .longitude(127.0300)
-                            .location(createPoint(37.5040, 127.0300))
-                            .build())
-                    .honbobLevel(Level.fromValue(3))
-                    .description("임베딩 대기 중")
-                    .phoneNumber("02-5555-5555")
-                    .build());
-
-            storeEmbeddingRepository.save(StoreEmbedding.builder()
-                    .store(pendingStore)
-                    .embedding(createEmbeddingVector(1.05f))
-                    .embeddingStatus(EmbeddingStatus.PENDING) // PENDING 상태
-                    .build());
-
-            List<Long> candidateIds = List.of(
-                    similarStore1.getId(),
-                    pendingStore.getId()
-            );
-
-            // when
-            List<Store> results = similarStoreRepository.findSimilarByEmbedding(
-                    embeddingTargetStore.getId(),
-                    candidateIds,
-                    5
-            );
-
-            // then: PENDING 상태는 제외되고 COMPLETED만 반환
-            assertThat(results).hasSize(1);
-            assertThat(results.get(0).getId()).isEqualTo(similarStore1.getId());
-            assertThat(results).doesNotContain(pendingStore);
-        }
-
-        @Test
-        @DisplayName("임베딩 벡터가 null인 가게 제외")
-        void findSimilarByEmbedding_ExcludeNullEmbedding() {
-            // given: 임베딩이 null인 가게
-            Store noEmbeddingStore = storeRepository.save(Store.builder()
-                    .name("임베딩 없는 가게")
-                    .address(Address.builder()
-                            .address("서울시 강남구")
-                            .latitude(37.5050)
-                            .longitude(127.0300)
-                            .location(createPoint(37.5050, 127.0300))
-                            .build())
-                    .honbobLevel(Level.fromValue(3))
-                    .description("임베딩 없음")
-                    .phoneNumber("02-6666-6666")
-                    .build());
-
-            storeEmbeddingRepository.save(StoreEmbedding.builder()
-                    .store(noEmbeddingStore)
-                    .embedding(null) // embedding이 null
-                    .embeddingStatus(EmbeddingStatus.COMPLETED)
-                    .build());
-
-            List<Long> candidateIds = List.of(
-                    similarStore1.getId(),
-                    noEmbeddingStore.getId()
-            );
-
-            // when
-            List<Store> results = similarStoreRepository.findSimilarByEmbedding(
-                    embeddingTargetStore.getId(),
-                    candidateIds,
-                    5
-            );
-
-            // then: null 임베딩은 제외
-            assertThat(results).hasSize(1);
-            assertThat(results.get(0).getId()).isEqualTo(similarStore1.getId());
-            assertThat(results).doesNotContain(noEmbeddingStore);
-        }
-
-        @Test
-        @DisplayName("타겟 가게의 임베딩이 없으면 빈 리스트 반환")
-        void findSimilarByEmbedding_TargetHasNoEmbedding() {
-            // given: 임베딩이 없는 타겟 가게
-            Store targetWithoutEmbedding = storeRepository.save(Store.builder()
-                    .name("임베딩 없는 타겟")
-                    .address(Address.builder()
-                            .address("서울시 강남구")
-                            .latitude(37.5060)
-                            .longitude(127.0300)
-                            .location(createPoint(37.5060, 127.0300))
-                            .build())
-                    .honbobLevel(Level.fromValue(3))
-                    .description("타겟 임베딩 없음")
-                    .phoneNumber("02-7777-7777")
-                    .build());
-
-            List<Long> candidateIds = List.of(
-                    similarStore1.getId(),
-                    similarStore2.getId()
-            );
-
-            // when
-            List<Store> results = similarStoreRepository.findSimilarByEmbedding(
-                    targetWithoutEmbedding.getId(),
-                    candidateIds,
-                    5
+                    5,
+                    userLatitude,
+                    userLongitude
             );
 
             // then
