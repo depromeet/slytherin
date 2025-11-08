@@ -25,7 +25,6 @@ public class OauthService {
     private final MemberRepository memberRepository;
     private final OAuth2Factory oAuth2Factory;
     private final JwtService jwtService;
-    private final NicknameGenerator NicknameGenerator;
     private final NicknameGenerator nicknameGenerator;
 
     @Value("${profile.default-image}")

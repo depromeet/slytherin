@@ -39,11 +39,11 @@ public class MemberService {
         Member member = memberRepository.findByIdOrElseThrow(memberId);
 
         // 닉네임 중복 검사 (자신의 현재 닉네임은 제외)
-        if (!member.getNickname().equals(request.nickname())
-                && memberRepository.existsByNickname(request.nickname())) {
-            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+        if (!member.getNickname().equals(request.nickname())) {
+            if (memberRepository.existsByNickname(request.nickname())) {
+                throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+            }
         }
-
         member.updateNickname(request.nickname());
 
         return new UpdateNicknameResponse(request.nickname());
