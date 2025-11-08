@@ -2,6 +2,7 @@ package com.bobeat.backend.domain.store.service;
 
 import com.bobeat.backend.domain.store.controller.StoreEmbeddingTestController.EmbeddingTestResponse;
 import com.bobeat.backend.domain.store.controller.StoreEmbeddingTestController.StoreTextResponse;
+import com.bobeat.backend.domain.store.entity.EmbeddingStatus;
 import com.bobeat.backend.domain.store.entity.Menu;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.Store;

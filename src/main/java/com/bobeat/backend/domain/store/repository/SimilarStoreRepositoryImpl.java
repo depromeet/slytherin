@@ -50,7 +50,8 @@ public class SimilarStoreRepositoryImpl implements SimilarStoreRepository {
                         store.id.ne(storeId),
                         store.address.location.isNotNull(),
                         targetStore.address.location.isNotNull(),
-                        distanceFilter
+                        distanceFilter,
+                        store.honbobLevel.loe(targetStore.honbobLevel)
                 )
                 .fetch();
     }
