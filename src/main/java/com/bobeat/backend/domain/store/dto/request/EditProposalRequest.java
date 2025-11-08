@@ -10,7 +10,7 @@ public record EditProposalRequest(
 
         @Schema(description = "제안 타입")
         ProposalType proposalType,
-        @Schema(description = "제안 내용", maximum = "120")
+        @Schema(description = "제안 내용", maxLength = 120)
         String content
 ) {
 }

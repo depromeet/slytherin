@@ -49,6 +49,6 @@ public class StoreProposalService {
                 .build();
 
         StoreProposal saveStoreProposal = storeProposalRepository.save(storeProposal);
-        return EditProposalResponse.from(storeProposal);
+        return EditProposalResponse.from(saveStoreProposal);
     }
 }
