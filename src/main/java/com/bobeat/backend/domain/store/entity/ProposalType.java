@@ -3,7 +3,7 @@ package com.bobeat.backend.domain.store.entity;
 import lombok.Getter;
 
 @Getter
-public enum ReportType {
+public enum ProposalType {
     STORE_CLOSED("식당 페업"),
     STORE_INFO("식당 정보"),
     STORE_PHONE_NUMBER("전화 번호"),
@@ -12,7 +12,7 @@ public enum ReportType {
 
     private final String content;
 
-    ReportType(String content) {
+    ProposalType(String content) {
         this.content = content;
     }
 }
