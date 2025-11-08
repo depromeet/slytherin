@@ -12,12 +12,6 @@ import java.util.concurrent.Executor;
 
 /**
  * 비동기 처리 설정
- *
- * 외부 API 호출(임베딩 생성)을 병렬로 처리하여 성능을 향상시킵니다.
- *
- * 성능 개선:
- * - 10개 가게 등록 시: 10초 → 1-2초 (80-90% 개선)
- * - 외부 API 호출을 병렬로 처리하여 대기 시간 단축
  */
 @Slf4j
 @Configuration
@@ -31,13 +25,13 @@ public class AsyncConfig implements AsyncConfigurer {
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
-        executor.setCorePoolSize(10);
-        executor.setMaxPoolSize(50);
-        executor.setQueueCapacity(200);
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(16);
+        executor.setQueueCapacity(100);
         executor.setKeepAliveSeconds(60);
         executor.setThreadNamePrefix("async-");
         executor.setRejectedExecutionHandler((r, exec) -> {
-            log.warn("Task rejected. Queue is full. Task: {}", r.toString());
+            log.warn("비동기 작업 거부 - 큐가 가득 참: {}", r.toString());
         });
         executor.initialize();
 
@@ -45,24 +39,18 @@ public class AsyncConfig implements AsyncConfigurer {
     }
 
     /**
-     * 임베딩 생성 전용 스레드 풀
-     *
-     * 설정 설명:
-     * - corePoolSize: 5 - 기본 스레드 수 (동시 처리 가능한 최소 작업 수)
-     * - maxPoolSize: 20 - 최대 스레드 수 (트래픽 급증 시 확장)
-     * - queueCapacity: 100 - 대기 큐 크기 (작업이 많을 때 대기)
-     * - keepAliveSeconds: 60 - 유휴 스레드 유지 시간
+     * 임베딩 생성 전용 스레드 풀 (서버 CPU 코어 기반 설정)
      */
     @Bean(name = "embeddingTaskExecutor")
     public Executor embeddingTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(20);
-        executor.setQueueCapacity(100);
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(50);
         executor.setKeepAliveSeconds(60);
         executor.setThreadNamePrefix("embedding-async-");
         executor.setRejectedExecutionHandler((r, exec) -> {
-            log.warn("Embedding task rejected. Queue is full. Task: {}", r.toString());
+            log.warn("임베딩 작업 거부 - 큐가 가득 참: {}", r.toString());
         });
         executor.initialize();
         return executor;

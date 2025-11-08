@@ -91,9 +91,6 @@ public class StoreEmbeddingService {
     /**
      * 비동기로 Store 임베딩을 생성하고 저장합니다.
      *
-     * 외부 API 호출(CLOVA 임베딩)을 병렬로 처리하여 성능을 향상시킵니다.
-     * 10개 가게 등록 시: 10초 → 1-2초 (80-90% 개선)
-     *
      * @param storeId Store ID
      * @return CompletableFuture<Void>
      */
@@ -101,12 +98,10 @@ public class StoreEmbeddingService {
     @Transactional
     public CompletableFuture<Void> saveEmbeddingByStoreAsync(Long storeId) {
         try {
-            log.debug("Starting async embedding generation for storeId: {}", storeId);
             saveEmbeddingByStore(storeId);
-            log.debug("Completed async embedding generation for storeId: {}", storeId);
             return CompletableFuture.completedFuture(null);
         } catch (Exception e) {
-            log.error("Failed to generate embedding for storeId: {}", storeId, e);
+            log.error("임베딩 생성 실패 - storeId: {}", storeId, e);
             return CompletableFuture.failedFuture(e);
         }
     }

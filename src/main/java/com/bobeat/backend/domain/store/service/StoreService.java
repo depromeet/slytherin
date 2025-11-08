@@ -142,11 +142,11 @@ public class StoreService {
     }
 
     /**
-     * 여러 가게를 생성하고 임베딩을 병렬로 생성합니다.
+     * 여러 가게를 생성하고 임베딩을 비동기로 생성합니다.
      *
      * 성능 개선:
-     * - 10개 가게 등록 시: 10초 → 1-2초 (80-90% 개선)
-     * - 외부 API 호출(임베딩 생성)을 비동기 병렬 처리
+     * - 임베딩 생성을 비동기로 처리하여 API 응답시간 단축
+     * - Fire-and-forget 방식으로 백그라운드에서 임베딩 생성
      *
      * @param requests 가게 생성 요청 리스트
      * @return 생성된 가게 ID 리스트
@@ -158,15 +158,8 @@ public class StoreService {
                 .map(this::createStore)
                 .toList();
 
-        // 임베딩 생성을 병렬로 처리
-        log.info("Starting parallel embedding generation for {} stores", storeIds.size());
-        List<CompletableFuture<Void>> futures = storeIds.stream()
-                .map(storeEmbeddingService::saveEmbeddingByStoreAsync)
-                .toList();
-
-        // 모든 임베딩 생성 작업이 완료될 때까지 대기
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        log.info("Completed parallel embedding generation for {} stores", storeIds.size());
+        // 임베딩 생성을 비동기로 처리 (대기하지 않음)
+        storeIds.forEach(storeEmbeddingService::saveEmbeddingByStoreAsync);
 
         return storeIds;
     }
