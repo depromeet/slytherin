@@ -22,15 +22,15 @@ public class CrawlerService {
     private WebDriver driver;
 
     public CrawlerService() {
+    }
+
+    public KakaoStoreDto crawlingKakaoMap(String storeId) {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless=new", "--disable-gpu", "--window-size=1920,1080");
         options.addArguments("--disable-blink-features=AutomationControlled");
         options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
                 "(KHTML, like Gecko) Chrome/114.0.5735.110 Safari/537.36");
-        driver = new ChromeDriver(options);
-    }
-
-    public KakaoStoreDto crawlingKakaoMap(String storeId) {
+        WebDriver driver = new ChromeDriver(options);
         try {
             String url = "https://place.map.kakao.com/" + storeId;
             driver.get(url);
@@ -143,7 +143,7 @@ public class CrawlerService {
                 }
 
                 String imageUrl = null;
-                if (priceElement != null) {
+                if (imgElement != null) {
                     imageUrl = imgElement.getAttribute("src");
                 }
                 result.add(KakaoMenuDto.builder()
@@ -177,7 +177,9 @@ public class CrawlerService {
 
     private Long convertStringToInt(String price) {
         String cleaned = price.replaceAll("[^0-9]", "");
-
+        if (cleaned.isEmpty()) {
+            return null;
+        }
         return Long.valueOf(cleaned);
     }
 }
