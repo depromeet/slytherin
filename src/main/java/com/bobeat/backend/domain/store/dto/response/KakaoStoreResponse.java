@@ -93,6 +93,15 @@ public record KakaoStoreResponse(
     ) {
     }
 
+    public static AddressResponse of(KakaoDocument kakaoDocument) {
+        return AddressResponse.builder()
+                .address(kakaoDocument.addressName())
+                .longitude(Double.valueOf(kakaoDocument.x()))
+                .latitude(Double.valueOf(kakaoDocument.y()))
+                .build();
+
+    }
+
     public static StoreImageResponse of(String imageUrls) {
         return StoreImageResponse.builder()
                 .imageUrl(imageUrls)
@@ -109,6 +118,9 @@ public record KakaoStoreResponse(
     }
 
     public static KakaoStoreResponse of(KakaoDocument kakaoDocument, KakaoStoreDto kakaoStoreDto) {
+
+        AddressResponse addressResponse = of(kakaoDocument);
+
         List<StoreImageResponse> storeImages = kakaoStoreDto.imageUrls().stream()
                 .map(KakaoStoreResponse::of)
                 .toList();
@@ -118,6 +130,7 @@ public record KakaoStoreResponse(
 
         return KakaoStoreResponse.builder()
                 .name(kakaoStoreDto.name())
+                .address(addressResponse)
                 .phoneNumber(kakaoStoreDto.phoneNumber())
                 .storeImages(storeImages)
                 .menus(menuResponses)
