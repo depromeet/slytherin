@@ -17,11 +17,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class StoreCrawlerService {
+public class CrawlerService {
 
     private WebDriver driver;
 
-    public StoreCrawlerService() {
+    public CrawlerService() {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless=new", "--disable-gpu", "--window-size=1920,1080");
         options.addArguments("--disable-blink-features=AutomationControlled");
@@ -40,10 +40,12 @@ public class StoreCrawlerService {
             String address = parseStoreAddress(wait);
             List<String> imageUrls = parseStoreImageUrls(wait);
             List<KakaoMenuDto> menuDtos = parseStoreMenus(wait);
+            String phoneNumber = parsePhoneName(wait);
 
             return KakaoStoreDto.builder()
                     .name(name)
                     .address(address)
+                    .phoneNumber(phoneNumber)
                     .imageUrls(imageUrls)
                     .menuDtos(menuDtos)
                     .build();
@@ -74,7 +76,7 @@ public class StoreCrawlerService {
         return addressElement.getText();
     }
 
-    public List<String> parseStoreImageUrls(WebDriverWait wait) {
+    private List<String> parseStoreImageUrls(WebDriverWait wait) {
         List<String> result = new ArrayList<>();
         try {
             WebElement ulElement = wait.until(ExpectedConditions.visibilityOfElementLocated(
@@ -99,7 +101,7 @@ public class StoreCrawlerService {
         return result;
     }
 
-    public List<KakaoMenuDto> parseStoreMenus(WebDriverWait wait) {
+    private List<KakaoMenuDto> parseStoreMenus(WebDriverWait wait) {
         List<KakaoMenuDto> result = new ArrayList<>();
 
         try {
@@ -156,6 +158,21 @@ public class StoreCrawlerService {
             return result;
         }
         return result;
+    }
+
+    private String parsePhoneName(WebDriverWait wait) {
+        try {
+            WebElement nameElement = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.cssSelector(
+                            "#mainContent > div.main_detail.home > div.detail_cont > div.section_comm.section_defaultinfo > div > div:nth-child(4) > div > div > span")
+            ));
+            String phoneName = nameElement.getText();
+            log.info("가게 전화번호 조회: {}", phoneName);
+            return phoneName;
+        } catch (Exception e) {
+            log.info("가게 전화번호 조회 실패");
+            return null;
+        }
     }
 
     private Long convertStringToInt(String price) {

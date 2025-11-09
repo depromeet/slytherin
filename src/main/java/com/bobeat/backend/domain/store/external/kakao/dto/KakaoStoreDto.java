@@ -4,5 +4,6 @@ import java.util.List;
 import lombok.Builder;
 
 @Builder
-public record KakaoStoreDto(String name, String address, List<String> imageUrls, List<KakaoMenuDto> menuDtos) {
+public record KakaoStoreDto(String name, String address, String phoneNumber, List<String> imageUrls,
+                            List<KakaoMenuDto> menuDtos) {
 }
