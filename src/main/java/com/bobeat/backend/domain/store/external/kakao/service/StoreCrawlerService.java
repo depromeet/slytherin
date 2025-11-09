@@ -23,7 +23,7 @@ public class StoreCrawlerService {
 
     public StoreCrawlerService() {
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless", "--disable-gpu", "--window-size=1920,1080");
+        options.addArguments("--headless=new", "--disable-gpu", "--window-size=1920,1080");
         options.addArguments("--disable-blink-features=AutomationControlled");
         options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
                 "(KHTML, like Gecko) Chrome/114.0.5735.110 Safari/537.36");
@@ -39,7 +39,7 @@ public class StoreCrawlerService {
             String name = parseStoreName(wait);
             String address = parseStoreAddress(wait);
             List<String> imageUrls = parseStoreImageUrls(wait);
-            List<KakaoMenuDto> menuDtos = parseStoeMenus(wait);
+            List<KakaoMenuDto> menuDtos = parseStoreMenus(wait);
 
             return KakaoStoreDto.builder()
                     .name(name)
@@ -47,7 +47,6 @@ public class StoreCrawlerService {
                     .imageUrls(imageUrls)
                     .menuDtos(menuDtos)
                     .build();
-
         } finally {
             driver.quit();
         }
@@ -100,14 +99,14 @@ public class StoreCrawlerService {
         return result;
     }
 
-    public List<KakaoMenuDto> parseStoeMenus(WebDriverWait wait) {
+    public List<KakaoMenuDto> parseStoreMenus(WebDriverWait wait) {
         List<KakaoMenuDto> result = new ArrayList<>();
 
         try {
-            WebElement ulElement = wait.until(ExpectedConditions.visibilityOfElementLocated(
+            WebElement ulElement = wait.until(ExpectedConditions.presenceOfElementLocated(
                     By.cssSelector(
-                            "#mainContent > div.main_detail.home > div.detail_cont > div.section_comm.section_product > div.wrap_goods > ul"))
-            );
+                            "#mainContent > div.main_detail.home > div.detail_cont > div.section_comm.section_product > div.wrap_goods > ul")
+            ));
 
             List<WebElement> liElements = ulElement.findElements(By.tagName("li"));
 
@@ -135,9 +134,10 @@ public class StoreCrawlerService {
                     name = nameElement.getText();
                 }
 
-                int price = -1;
+                Long price = null;
                 if (priceElement != null) {
-                    price = convertStringToInt(nameElement.getText());
+                    price = convertStringToInt(priceElement.getText());
+
                 }
 
                 String imageUrl = null;
@@ -158,10 +158,10 @@ public class StoreCrawlerService {
         return result;
     }
 
-    private int convertStringToInt(String price) {
+    private Long convertStringToInt(String price) {
         String cleaned = price.replaceAll("[^0-9]", "");
 
-        return Integer.parseInt(cleaned);
+        return Long.valueOf(cleaned);
     }
 }
 
