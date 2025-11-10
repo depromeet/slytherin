@@ -3,6 +3,7 @@ package com.bobeat.backend.domain.store.dto.request;
 import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.store.entity.SeatType;
 import com.bobeat.backend.global.request.CursorPaginationRequest;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -59,9 +60,10 @@ public record StoreFilteringRequest(
                 @Valid
                 PriceRange price,
 
-                @Schema(description = "혼밥 레벨 (1~4)", example = "3")
+                @Schema(description = "혼밥 레벨 (1~4) - 단일 값 또는 배열 모두 지원", example = "[1, 2, 3]")
+                @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
                 @NotNull
-                Integer honbobLevel,
+                List<Integer> honbobLevel,
 
                 @Schema(description = "좌석 형태", example = "[\"FOR_ONE\", \", \"FOR_TWO\"\", \"FOR_FOUR\", \", \"CUBICLE\"\", \"BAR_TABLE\"]")
                 List<SeatType> seatTypes,

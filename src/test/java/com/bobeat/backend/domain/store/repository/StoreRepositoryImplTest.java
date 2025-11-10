@@ -162,7 +162,7 @@ public class StoreRepositoryImplTest {
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, null, null, null),
+                new StoreFilteringRequest.Filters(null, List.of(), null, null),
                 null,
                 null
             );
@@ -207,11 +207,11 @@ public class StoreRepositoryImplTest {
         @Test
         @DisplayName("혼밥레벨 필터 - Level 1 매장만 조회 (정확히 일치)")
         void testHonbobLevelFilter_Level1() {
-            // given: honbobLevel == 1
+            // given: honbobLevels == [1]
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 1, null, null),
+                new StoreFilteringRequest.Filters(null, List.of(1), null, null),
                 null,
                 null
             );
@@ -231,11 +231,11 @@ public class StoreRepositoryImplTest {
         @Test
         @DisplayName("혼밥레벨 필터 - Level 2 매장만 조회")
         void testHonbobLevelFilter_Level2() {
-            // given: honbobLevel == 2
+            // given: honbobLevels == [2]
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 2, null, null),
+                new StoreFilteringRequest.Filters(null, List.of(2), null, null),
                 null,
                 null
             );
@@ -253,11 +253,11 @@ public class StoreRepositoryImplTest {
         @Test
         @DisplayName("혼밥레벨 필터 - Level 4 매장만 조회")
         void testHonbobLevelFilter_Level4() {
-            // given: honbobLevel == 4
+            // given: honbobLevels == [4]
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 4, null, null),
+                new StoreFilteringRequest.Filters(null, List.of(4), null, null),
                 null,
                 null
             );
@@ -270,6 +270,50 @@ public class StoreRepositoryImplTest {
             assertThat(result)
                 .extracting(row -> row.store().getName())
                 .containsExactly("Store E");
+        }
+
+        @Test
+        @DisplayName("혼밥레벨 필터 - 다중 레벨 [1, 2] 매장 조회")
+        void testHonbobLevelFilter_MultiLevel_1And2() {
+            // given: honbobLevels == [1, 2]
+            StoreFilteringRequest request = createRequest(
+                null,
+                centerAt(CENTER_LAT, CENTER_LON),
+                new StoreFilteringRequest.Filters(null, List.of(1, 2), null, null),
+                null,
+                null
+            );
+
+            // when
+            List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
+
+            // then: Level 1 (Store A, Store C) 또는 Level 2 (Store B)
+            assertThat(result).hasSize(3);
+            assertThat(result)
+                .extracting(row -> row.store().getName())
+                .containsExactlyInAnyOrder("Store A", "Store B", "Store C");
+        }
+
+        @Test
+        @DisplayName("혼밥레벨 필터 - 다중 레벨 [2, 4] 매장 조회")
+        void testHonbobLevelFilter_MultiLevel_2And4() {
+            // given: honbobLevels == [2, 4]
+            StoreFilteringRequest request = createRequest(
+                null,
+                centerAt(CENTER_LAT, CENTER_LON),
+                new StoreFilteringRequest.Filters(null, List.of(2, 4), null, null),
+                null,
+                null
+            );
+
+            // when
+            List<StoreRepositoryCustom.StoreRow> result = storeRepositoryImpl.findStoresSlice(request, 20);
+
+            // then: Level 2 (Store B) 또는 Level 4 (Store E)
+            assertThat(result).hasSize(2);
+            assertThat(result)
+                .extracting(row -> row.store().getName())
+                .containsExactlyInAnyOrder("Store B", "Store E");
         }
 
         @Test
@@ -422,7 +466,7 @@ public class StoreRepositoryImplTest {
                 centerAt(CENTER_LAT, CENTER_LON),
                 new StoreFilteringRequest.Filters(
                     null,
-                    1,
+                    List.of(1),
                     List.of(SeatType.FOR_ONE),
                     List.of("한식", "패스트푸드")
                 ),
@@ -448,7 +492,7 @@ public class StoreRepositoryImplTest {
                 centerAt(CENTER_LAT, CENTER_LON),
                 new StoreFilteringRequest.Filters(
                     new StoreFilteringRequest.PriceRange(10000, 15000),
-                    2,
+                    List.of(2),
                     null,
                     null
                 ),
@@ -709,11 +753,11 @@ public class StoreRepositoryImplTest {
         @Test
         @DisplayName("혼밥레벨 경계값 - level=1 (최소값)")
         void testHonbobLevelBoundary_Min() {
-            // given: honbobLevel == 1
+            // given: honbobLevels == [1]
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 1, null, null),
+                new StoreFilteringRequest.Filters(null, List.of(1), null, null),
                 null,
                 null
             );
@@ -753,7 +797,7 @@ public class StoreRepositoryImplTest {
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 3, null, null),
+                new StoreFilteringRequest.Filters(null, List.of(3), null, null),
                 null,
                 null
             );
@@ -779,7 +823,7 @@ public class StoreRepositoryImplTest {
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 2, null, null),
+                new StoreFilteringRequest.Filters(null, List.of(2), null, null),
                 null,
                 StoreFilteringRequest.SortBy.DISTANCE
             );
@@ -800,7 +844,7 @@ public class StoreRepositoryImplTest {
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 1, null, null),
+                new StoreFilteringRequest.Filters(null, List.of(1), null, null),
                 null,
                 StoreFilteringRequest.SortBy.DISTANCE
             );
@@ -827,7 +871,7 @@ public class StoreRepositoryImplTest {
             StoreFilteringRequest request = createRequest(
                 null,
                 centerAt(CENTER_LAT, CENTER_LON),
-                new StoreFilteringRequest.Filters(null, 1, null, null),
+                new StoreFilteringRequest.Filters(null, List.of(1), null, null),
                 null,
                 StoreFilteringRequest.SortBy.DISTANCE
             );

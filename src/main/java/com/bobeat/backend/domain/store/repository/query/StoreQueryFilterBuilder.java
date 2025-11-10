@@ -48,14 +48,16 @@ public class StoreQueryFilterBuilder {
     }
 
     /**
-     * 혼밥레벨 필터
+     * 혼밥레벨 필터 - 다중 레벨 지원
      */
     public BooleanExpression buildHonbobLevelFilter(StoreFilteringRequest request) {
-        if (request.filters() == null || request.filters().honbobLevel() == null) {
+        if (request.filters() == null || request.filters().honbobLevel() == null || request.filters().honbobLevel().isEmpty()) {
             return null;
         }
-        Level target = Level.fromValue(request.filters().honbobLevel());
-        return store.honbobLevel.eq(target);
+        List<Level> targetLevels = request.filters().honbobLevel().stream()
+                .map(Level::fromValue)
+                .toList();
+        return store.honbobLevel.in(targetLevels);
     }
 
     /**
