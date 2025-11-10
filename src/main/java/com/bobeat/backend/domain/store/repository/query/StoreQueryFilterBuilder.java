@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.bobeat.backend.domain.common.PostgisExpressions.intersectsEnvelope;
 import static com.bobeat.backend.domain.common.PostgisExpressions.stDWithin;
@@ -55,8 +56,14 @@ public class StoreQueryFilterBuilder {
             return null;
         }
         List<Level> targetLevels = request.filters().honbobLevel().stream()
+                .filter(Objects::nonNull)
                 .map(Level::fromValue)
                 .toList();
+
+        if (targetLevels.isEmpty()) {
+            return null;
+        }
+
         return store.honbobLevel.in(targetLevels);
     }
 
