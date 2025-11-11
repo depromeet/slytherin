@@ -17,10 +17,15 @@ import com.bobeat.backend.global.exception.ErrorCode;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
+import java.util.concurrent.CompletableFuture;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StoreEmbeddingService {
@@ -81,6 +86,24 @@ public class StoreEmbeddingService {
                 embedding,
                 embedding.size()
         );
+    }
+
+    /**
+     * 비동기로 Store 임베딩을 생성하고 저장합니다.
+     *
+     * @param storeId Store ID
+     * @return CompletableFuture<Void>
+     */
+    @Async("embeddingTaskExecutor")
+    @Transactional
+    public CompletableFuture<Void> saveEmbeddingByStoreAsync(Long storeId) {
+        try {
+            saveEmbeddingByStore(storeId);
+            return CompletableFuture.completedFuture(null);
+        } catch (Exception e) {
+            log.error("임베딩 생성 실패 - storeId: {}", storeId, e);
+            return CompletableFuture.failedFuture(e);
+        }
     }
 
     public StoreTextResponse createEmbeddingTextByStore(Long storeId) {

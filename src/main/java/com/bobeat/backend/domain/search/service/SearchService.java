@@ -76,16 +76,21 @@ public class SearchService {
         Map<Long, SignatureMenu> repMenus = storeRepository.findRepresentativeMenus(storeIds);
         Map<Long, List<String>> seatTypes = storeRepository.findSeatTypes(storeIds);
 
+        // N+1 쿼리 해결: StoreImage를 배치 조회
+        Map<Long, StoreImage> storeImageMap = storeImageRepository.findMainImagesByStoreIds(storeIds).stream()
+                .collect(Collectors.toMap(img -> img.getStore().getId(), img -> img));
+
         List<StoreSearchResultDto> storeSearchResultDtos = stores.stream()
                 .map(store -> {
-                            StoreImage storeImage = storeImageRepository.findByStoreAndIsMainTrue(store);
+                            StoreImage storeImage = storeImageMap.get(store.getId());
                             SignatureMenu signatureMenu = repMenus.get(store.getId());
                             Coordinate coordinate = new Coordinate(store.getAddress().getLatitude(),
                                     store.getAddress().getLongitude());
                             List<String> seatTypeStrings = seatTypes.get(store.getId());
 
                             List<String> categoryStrings = storeService.buildTagsFromCategories(store.getCategories());
-                            return new StoreSearchResultDto(store.getId(), store.getName(), storeImage.getImageUrl(),
+                            return new StoreSearchResultDto(store.getId(), store.getName(),
+                                    storeImage != null ? storeImage.getImageUrl() : null,
                                     signatureMenu, coordinate, 0, 0, seatTypeStrings, categoryStrings,
                                     store.getHonbobLevel() != null ? store.getHonbobLevel().getValue() : 0);
                         }
@@ -186,16 +191,20 @@ public class SearchService {
         var repMenuMap = storeRepository.findRepresentativeMenus(storeIds);
         var seatTypesMap = storeRepository.findSeatTypes(storeIds);
 
+        // N+1 쿼리 해결: StoreImage를 배치 조회
+        Map<Long, StoreImage> storeImageMap = storeImageRepository.findMainImagesByStoreIds(storeIds).stream()
+                .collect(Collectors.toMap(img -> img.getStore().getId(), img -> img));
+
         List<StoreSearchResultDto> data = stores.stream()
                 .map(store -> {
-                    var mainImage = storeImageRepository.findByStoreAndIsMainTrue(store);
+                    var mainImage = storeImageMap.get(store.getId());
 
                     long id = store.getId();
 
                     return new StoreSearchResultDto(
                             store.getId(),
                             store.getName(),
-                            mainImage.getImageUrl(),
+                            mainImage != null ? mainImage.getImageUrl() : null,
                             repMenuMap.getOrDefault(id, new StoreSearchResultDto.SignatureMenu(null, 0)),
                             new StoreSearchResultDto.Coordinate(store.getAddress().getLatitude(),
                                     store.getAddress().getLongitude()),

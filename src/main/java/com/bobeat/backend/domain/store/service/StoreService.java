@@ -13,6 +13,7 @@ import com.bobeat.backend.domain.store.entity.PrimaryCategory;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.entity.StoreImage;
+import com.bobeat.backend.domain.store.event.StoreCreationEvent;
 import com.bobeat.backend.domain.store.repository.MenuRepository;
 import com.bobeat.backend.domain.store.repository.PrimaryCategoryRepository;
 import com.bobeat.backend.domain.store.repository.SeatOptionRepository;
@@ -28,9 +29,9 @@ import com.bobeat.backend.global.util.KeysetCursor;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -38,6 +39,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StoreService {
@@ -49,7 +51,6 @@ public class StoreService {
     private final GeometryFactory geometryFactory;
     private final ApplicationEventPublisher eventPublisher;
     private final MemberService memberService;
-    private final StoreEmbeddingService storeEmbeddingService;
 
     @Transactional(readOnly = true)
     public CursorPageResponse<StoreSearchResultDto> search(StoreFilteringRequest request) {
@@ -138,6 +139,20 @@ public class StoreService {
         return tags;
     }
 
+    /**
+     * 여러 가게를 생성하고 트랜잭션 커밋 후 임베딩을 비동기로 생성합니다.
+     *
+     * 성능 개선:
+     * - 임베딩 생성을 비동기로 처리하여 API 응답시간 단축
+     * - Fire-and-forget 방식으로 백그라운드에서 임베딩 생성
+     *
+     * 트랜잭션 안전성:
+     * - @TransactionalEventListener를 통해 트랜잭션 커밋 후에만 임베딩 생성 시작
+     * - 트랜잭션 롤백 시 임베딩 생성 작업이 실행되지 않음
+     *
+     * @param requests 가게 생성 요청 리스트
+     * @return 생성된 가게 ID 리스트
+     */
     @Transactional
     public List<Long> createStores(List<StoreCreateRequest> requests) {
 
@@ -145,7 +160,9 @@ public class StoreService {
                 .map(this::createStore)
                 .toList();
 
-        storeIds.forEach(storeid -> storeEmbeddingService.saveEmbeddingByStore(storeid));
+        // 트랜잭션 커밋 후 임베딩 생성을 위한 이벤트 발행
+        eventPublisher.publishEvent(new StoreCreationEvent(storeIds));
+
         return storeIds;
     }
 
