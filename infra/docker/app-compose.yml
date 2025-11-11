@@ -43,6 +43,7 @@ services:
       - /etc/nginx/conf.d:/etc/nginx/conf.d:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /root/logs/nginx:/var/log/nginx
+      - /etc/localtime:/etc/localtime:ro
     mem_limit: 256m
     cpus: 0.2
 networks:
