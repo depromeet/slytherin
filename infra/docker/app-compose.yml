@@ -31,7 +31,7 @@ services:
     cpus: 0.7
 
   nginx:
-    image: nginx:1.24.0
+    image: nginx:1.29
     container_name: bobeat-nginx
     restart: always
     ports:
