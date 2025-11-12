@@ -1,36 +1,28 @@
 package com.bobeat.backend.domain.store.external.kakao.service;
 
+import com.bobeat.backend.domain.store.external.kakao.SeleniumDriver;
 import com.bobeat.backend.domain.store.external.kakao.dto.KakaoMenuDto;
 import com.bobeat.backend.domain.store.external.kakao.dto.KakaoStoreDto;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CrawlerService {
 
-    private WebDriver driver;
-
-    public CrawlerService() {
-    }
-
     public KakaoStoreDto crawlingKakaoMap(String storeId) {
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new", "--disable-gpu", "--window-size=1920,1080");
-        options.addArguments("--disable-blink-features=AutomationControlled");
-        options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-                "(KHTML, like Gecko) Chrome/114.0.5735.110 Safari/537.36");
-        WebDriver driver = new ChromeDriver(options);
+        SeleniumDriver seleniumDriver = new SeleniumDriver();
+        WebDriver driver = seleniumDriver.getDriver();
         try {
             String url = "https://place.map.kakao.com/" + storeId;
             driver.get(url);
@@ -52,6 +44,7 @@ public class CrawlerService {
         } finally {
             driver.quit();
         }
+
     }
 
     private String parseStoreName(WebDriverWait wait) {
