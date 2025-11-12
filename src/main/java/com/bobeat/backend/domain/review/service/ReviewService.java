@@ -4,6 +4,7 @@ import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.member.repository.MemberRepository;
 import com.bobeat.backend.domain.review.dto.request.CreateReviewRequest;
 import com.bobeat.backend.domain.review.dto.request.UpdateReviewRequest;
+import com.bobeat.backend.domain.review.dto.response.MyReviewResponse;
 import com.bobeat.backend.domain.review.dto.response.ReviewResponse;
 import com.bobeat.backend.domain.review.dto.response.StoreInfo;
 import com.bobeat.backend.domain.review.entity.Review;
@@ -72,15 +73,15 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<ReviewResponse> getMyReviews(Long memberId, CursorPaginationRequest request) {
+    public CursorPageResponse<MyReviewResponse> getMyReviews(Long memberId, CursorPaginationRequest request) {
         memberRepository.findByIdOrElseThrow(memberId);
 
         List<Review> reviews = reviewRepository.findByMemberIdWithCursor(memberId, request);
 
         return CursorPageResponse.of(
-                reviews.stream().map(ReviewResponse::from).toList(),
+                reviews.stream().map(MyReviewResponse::from).toList(),
                 request.limit(),
-                review -> review.getId().toString());
+                myReviewResponse -> myReviewResponse.id().toString());
     }
 
     @Transactional(readOnly = true)
