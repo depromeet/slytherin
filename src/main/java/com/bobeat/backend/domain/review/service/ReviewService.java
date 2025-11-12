@@ -80,7 +80,7 @@ public class ReviewService {
         return CursorPageResponse.of(
                 reviews.stream().map(ReviewResponse::from).toList(),
                 request.limit(),
-                ReviewResponse -> ReviewResponse.id().toString());
+                ReviewResponse -> ReviewResponse.getId().toString());
     }
 
     @Transactional(readOnly = true)
