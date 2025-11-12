@@ -77,11 +77,11 @@ public class ReviewService {
         memberRepository.findByIdOrElseThrow(memberId);
 
         List<Review> reviews = reviewRepository.findByMemberIdWithCursor(memberId, request);
-        List<MyReviewResponse> list = reviews.stream().map(MyReviewResponse::from).toList();
+
         return CursorPageResponse.of(
-                list,
+                reviews.stream().map(MyReviewResponse::from).toList(),
                 request.limit(),
-                review -> review.id().toString());
+                myReviewResponse -> myReviewResponse.id().toString());
     }
 
     @Transactional(readOnly = true)
