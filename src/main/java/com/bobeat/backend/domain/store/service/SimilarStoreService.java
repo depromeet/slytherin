@@ -2,8 +2,11 @@ package com.bobeat.backend.domain.store.service;
 
 import com.bobeat.backend.domain.store.dto.StoreWithDistance;
 import com.bobeat.backend.domain.store.dto.response.SimilarStoreResponse;
+import com.bobeat.backend.domain.store.entity.SeatOption;
+import com.bobeat.backend.domain.store.entity.SeatType;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.entity.StoreImage;
+import com.bobeat.backend.domain.store.repository.SeatOptionRepository;
 import com.bobeat.backend.domain.store.repository.SimilarStoreRepository;
 import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
@@ -34,6 +37,7 @@ public class SimilarStoreService {
     private final StoreRepository storeRepository;
     private final SimilarStoreRepository similarStoreRepository;
     private final StoreImageRepository storeImageRepository;
+    private final SeatOptionRepository seatOptionRepository;
 
     /**
      * 유사 가게 추천(최대 5개)
@@ -71,13 +75,19 @@ public class SimilarStoreService {
         Map<Long, StoreImage> storeImageMap = storeImageRepository.findMainImagesByStoreIds(similarStoreIds).stream()
                 .collect(Collectors.toMap(img -> img.getStore().getId(), img -> img));
 
-        // SeatOption은 @BatchSize로 최적화
+        Map<Long, List<SeatType>> seatTypeMap = seatOptionRepository.findByStoreIdIn(similarStoreIds).stream()
+                .collect(Collectors.groupingBy(
+                        seatOption -> seatOption.getStore().getId(),
+                        Collectors.mapping(SeatOption::getSeatType, Collectors.toList())
+                ));
+
         return similarStoresWithDistance.stream()
                 .map(storeWithDistance -> {
                     Store store = storeWithDistance.getStore();
                     Integer distance = storeWithDistance.getDistance();
                     StoreImage mainImage = storeImageMap.get(store.getId());
-                    return SimilarStoreResponse.of(store, mainImage, distance);
+                    List<SeatType> seatTypes = seatTypeMap.getOrDefault(store.getId(), List.of());
+                    return SimilarStoreResponse.of(store, mainImage, distance, seatTypes);
                 })
                 .toList();
     }

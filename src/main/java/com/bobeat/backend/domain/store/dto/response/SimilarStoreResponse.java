@@ -34,9 +34,9 @@ public record SimilarStoreResponse(
         List<SeatType> seatTypes
 ) {
     /**
-     * Store 엔티티, StoreImage, 거리 정보로부터 SimilarStoreResponse 생성
+     * Store 엔티티, StoreImage, 거리 정보, 좌석 타입 리스트로부터 SimilarStoreResponse 생성
      */
-    public static SimilarStoreResponse of(Store store, StoreImage storeImage, Integer distance) {
+    public static SimilarStoreResponse of(Store store, StoreImage storeImage, Integer distance, List<SeatType> seatTypes) {
         Level honbobLevel = store.getHonbobLevel();
         String primaryCategoryName = store.getCategories() != null
                 && store.getCategories().getPrimaryCategory() != null
@@ -50,7 +50,7 @@ public record SimilarStoreResponse(
                 honbobLevel != null ? honbobLevel.getValue() : null,
                 primaryCategoryName,
                 distance,
-                store.getSeatTypes()
+                seatTypes
         );
     }
 }

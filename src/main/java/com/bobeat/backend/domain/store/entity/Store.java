@@ -48,19 +48,7 @@ public class Store extends BaseTimeEntity {
     @Column(name = "internal_score")
     private Double internalScore;
 
-    @OneToMany(mappedBy = "store", fetch = FetchType.LAZY)
-    @org.hibernate.annotations.BatchSize(size = 100)
-    @Builder.Default
-    private List<SeatOption> seatOptions = new ArrayList<>();
-
     public void updateInternalScore(Double score) {
         this.internalScore = score;
-    }
-
-    public List<SeatType> getSeatTypes() {
-        return seatOptions.stream()
-                .map(SeatOption::getSeatType)
-                .distinct()
-                .toList();
     }
 }
