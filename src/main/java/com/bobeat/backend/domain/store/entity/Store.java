@@ -11,6 +11,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Entity
 @Table(name = "store", indexes = {
     @Index(name = "idx_store_internal_score", columnList = "internal_score"),
@@ -44,7 +48,19 @@ public class Store extends BaseTimeEntity {
     @Column(name = "internal_score")
     private Double internalScore;
 
+    @OneToMany(mappedBy = "store", fetch = FetchType.LAZY)
+    @org.hibernate.annotations.BatchSize(size = 100)
+    @Builder.Default
+    private List<SeatOption> seatOptions = new ArrayList<>();
+
     public void updateInternalScore(Double score) {
         this.internalScore = score;
+    }
+
+    public List<SeatType> getSeatTypes() {
+        return seatOptions.stream()
+                .map(SeatOption::getSeatType)
+                .distinct()
+                .toList();
     }
 }

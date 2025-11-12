@@ -12,7 +12,10 @@ import org.springframework.stereotype.Repository;
 public interface SeatOptionRepository extends JpaRepository<SeatOption, Long> {
 
     List<SeatOption> findByStore(Store store);
-    
+
     @Query("SELECT s FROM SeatOption s WHERE s.store IN :stores")
     List<SeatOption> findByStoreIn(@Param("stores") List<Store> stores);
+
+    @Query("SELECT s FROM SeatOption s WHERE s.store.id IN :storeIds")
+    List<SeatOption> findByStoreIdIn(@Param("storeIds") List<Long> storeIds);
 }

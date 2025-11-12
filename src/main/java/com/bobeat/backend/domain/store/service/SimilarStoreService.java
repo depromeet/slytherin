@@ -64,7 +64,6 @@ public class SimilarStoreService {
                 userLongitude
         );
 
-        // N+1 쿼리 해결: StoreImage를 배치 조회
         List<Long> similarStoreIds = similarStoresWithDistance.stream()
                 .map(storeWithDistance -> storeWithDistance.getStore().getId())
                 .toList();
@@ -72,6 +71,7 @@ public class SimilarStoreService {
         Map<Long, StoreImage> storeImageMap = storeImageRepository.findMainImagesByStoreIds(similarStoreIds).stream()
                 .collect(Collectors.toMap(img -> img.getStore().getId(), img -> img));
 
+        // SeatOption은 @BatchSize로 최적화
         return similarStoresWithDistance.stream()
                 .map(storeWithDistance -> {
                     Store store = storeWithDistance.getStore();

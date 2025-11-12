@@ -1,9 +1,11 @@
 package com.bobeat.backend.domain.store.dto.response;
 
 import com.bobeat.backend.domain.member.entity.Level;
+import com.bobeat.backend.domain.store.entity.SeatType;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.entity.StoreImage;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 
 /**
  * 유사 가게 추천 응답 DTO
@@ -26,7 +28,10 @@ public record SimilarStoreResponse(
         String primaryCategory,
 
         @Schema(description = "현재 위치와의 거리 (미터)", example = "1500")
-        Integer distanceInMeters
+        Integer distanceInMeters,
+
+        @Schema(description = "좌석 타입 목록")
+        List<SeatType> seatTypes
 ) {
     /**
      * Store 엔티티, StoreImage, 거리 정보로부터 SimilarStoreResponse 생성
@@ -44,7 +49,8 @@ public record SimilarStoreResponse(
                 storeImage != null ? storeImage.getImageUrl() : null,
                 honbobLevel != null ? honbobLevel.getValue() : null,
                 primaryCategoryName,
-                distance
+                distance,
+                store.getSeatTypes()
         );
     }
 }
