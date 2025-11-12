@@ -16,6 +16,9 @@ public class ReviewResponse {
     @Schema(description = "리뷰 ID", example = "1")
     private Long id;
 
+    @Schema(description = "가게 ID", example = "3")
+    private Long storeId;
+
     @Schema(description = "리뷰 내용", example = "맛있고 분위기도 좋아요!")
     private String content;
 
@@ -34,6 +37,7 @@ public class ReviewResponse {
     public static ReviewResponse from(Review review) {
         return new ReviewResponse(
                 review.getId(),
+                review.getStore().getId(),
                 review.getContent(),
                 new ReviewerInfo(
                         review.getMember().getId(),

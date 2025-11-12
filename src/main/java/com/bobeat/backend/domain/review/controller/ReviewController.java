@@ -2,7 +2,6 @@ package com.bobeat.backend.domain.review.controller;
 
 import com.bobeat.backend.domain.review.dto.request.CreateReviewRequest;
 import com.bobeat.backend.domain.review.dto.request.UpdateReviewRequest;
-import com.bobeat.backend.domain.review.dto.response.MyReviewResponse;
 import com.bobeat.backend.domain.review.dto.response.ReviewResponse;
 import com.bobeat.backend.domain.review.service.ReviewService;
 import com.bobeat.backend.global.request.CursorPaginationRequest;
@@ -57,11 +56,11 @@ public class ReviewController {
     @Operation(summary = "내 리뷰 목록 조회", description = "로그인한 사용자의 리뷰 목록을 커서 기반으로 조회합니다.")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/my")
-    public ApiResponse<CursorPageResponse<MyReviewResponse>> getMyReviews(
+    public ApiResponse<CursorPageResponse<ReviewResponse>> getMyReviews(
             @AuthenticationPrincipal Long memberId,
             @ModelAttribute @Valid CursorPaginationRequest request
     ) {
-        CursorPageResponse<MyReviewResponse> response = reviewService.getMyReviews(memberId, request);
+        CursorPageResponse<ReviewResponse> response = reviewService.getMyReviews(memberId, request);
         return ApiResponse.success(response);
     }
 
