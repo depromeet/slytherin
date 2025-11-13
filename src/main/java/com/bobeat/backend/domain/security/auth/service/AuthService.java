@@ -126,6 +126,7 @@ public class AuthService {
         reviewService.deleteByMember(member);
         searchService.deleteByMember(member);
         storeProposalService.deleteByMember(member);
+        refreshTokenRepository.deleteByMemberId(memberId);
         memberRepository.delete(member);
     }
 }
