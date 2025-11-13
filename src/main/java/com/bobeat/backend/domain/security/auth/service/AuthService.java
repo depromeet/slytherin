@@ -3,9 +3,14 @@ package com.bobeat.backend.domain.security.auth.service;
 
 import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.member.repository.MemberRepository;
+import com.bobeat.backend.domain.member.service.OnboardingService;
+import com.bobeat.backend.domain.report.service.ReportService;
+import com.bobeat.backend.domain.review.service.ReviewService;
+import com.bobeat.backend.domain.search.service.SearchService;
 import com.bobeat.backend.domain.security.auth.dao.RefreshTokenRepository;
 import com.bobeat.backend.domain.security.auth.domain.RefreshToken;
 import com.bobeat.backend.domain.security.auth.dto.AuthResponse;
+import com.bobeat.backend.domain.store.service.StoreProposalService;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
 import io.jsonwebtoken.Claims;
@@ -25,6 +30,11 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtService jwtService;
+    private final OnboardingService onboardingService;
+    private final ReportService reportService;
+    private final ReviewService reviewService;
+    private final SearchService searchService;
+    private final StoreProposalService storeProposalService;
 
     @Transactional
     public AuthResponse renewAccessToken(String refreshTokenWithBearer) {
@@ -48,21 +58,21 @@ public class AuthService {
         try {
             // 비관적 락을 사용하여 동시성 문제 해결
             Optional<RefreshToken> storedTokenOpt = refreshTokenRepository.findByMemberIdWithLock(memberId);
-            
+
             if (storedTokenOpt.isEmpty()) {
                 throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
             }
-            
+
             RefreshToken storedToken = storedTokenOpt.get();
             String storedRefreshToken = storedToken.getRefreshToken();
-            
+
             log.info("토큰 비교 - memberId: {}, DB토큰: {}, 요청토큰: {}",
-                    memberId, 
+                    memberId,
                     storedRefreshToken,
                     refreshToken);
-            
+
             if (!storedRefreshToken.equals(refreshToken)) {
-                log.warn("리프레시 토큰이 일치하지 않습니다. memberId: {}, DB토큰길이: {}, 요청토큰길이: {}", 
+                log.warn("리프레시 토큰이 일치하지 않습니다. memberId: {}, DB토큰길이: {}, 요청토큰길이: {}",
                         memberId, storedRefreshToken.length(), refreshToken.length());
                 throw new CustomException(ErrorCode.REFRESH_TOKEN_MISMATCH);
             }
@@ -71,9 +81,10 @@ public class AuthService {
 
             log.info("토큰 갱신 성공 - memberId: {}", memberId);
             return jwtService.generateTokens(member);
-            
+
         } catch (PessimisticLockingFailureException e) {
-            throw new CustomException("리프레시 토큰 갱신 중 락 충돌 발생. memberId: " + memberId + " " + e, ErrorCode.CONCURRENCY_ERROR);
+            throw new CustomException("리프레시 토큰 갱신 중 락 충돌 발생. memberId: " + memberId + " " + e,
+                    ErrorCode.CONCURRENCY_ERROR);
         }
     }
 
@@ -94,16 +105,27 @@ public class AuthService {
     @Transactional(readOnly = true)
     public String getTokenStatus(Long memberId) {
         Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByMemberId(memberId);
-        
+
         if (tokenOpt.isEmpty()) {
             return "토큰 없음";
         }
-        
+
         RefreshToken token = tokenOpt.get();
         String refreshToken = token.getRefreshToken();
-        
-        return String.format("토큰 존재 - 길이: %d, 끝 4자리: %s", 
-                refreshToken.length(), 
+
+        return String.format("토큰 존재 - 길이: %d, 끝 4자리: %s",
+                refreshToken.length(),
                 refreshToken.substring(Math.max(0, refreshToken.length() - 4)));
+    }
+
+    @Transactional
+    public void deleteMember(Long memberId) {
+        Member member = memberRepository.findByIdOrElseThrow(memberId);
+        onboardingService.deleteByMember(member);
+        reportService.deleteByMember(member);
+        reviewService.deleteByMember(member);
+        searchService.deleteByMember(member);
+        storeProposalService.deleteByMember(member);
+        memberRepository.delete(member);
     }
 }

@@ -175,6 +175,11 @@ public class SearchService {
         return embedding;
     }
 
+    @Transactional
+    public void deleteByMember(Member member) {
+        searchHistoryRepository.deleteByMember(member);
+    }
+
     private CursorPageResponse<StoreSearchResultDto> buildStoreSearchResponse(List<Store> stores,
                                                                               CursorPaginationRequest paging) {
         final int temporaryDistance = 20;

@@ -1,5 +1,6 @@
 package com.bobeat.backend.domain.review.repository;
 
+import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.review.entity.Review;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
@@ -13,4 +14,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, ReviewRep
         return findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
     }
+
+    void deleteByMember(Member member);
 }

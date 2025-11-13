@@ -51,4 +51,9 @@ public class StoreProposalService {
         StoreProposal saveStoreProposal = storeProposalRepository.save(storeProposal);
         return EditProposalResponse.from(saveStoreProposal);
     }
+
+    @Transactional
+    public void deleteByMember(Member member) {
+        storeProposalRepository.deleteByMember(member);
+    }
 }
