@@ -40,6 +40,9 @@ public enum ErrorCode {
     GOOGLE_TOKEN_VALIDATION_FAIL(HttpStatus.UNAUTHORIZED, "O002", "구글 토큰 검증에 실패했습니다."),
     PROVIDER_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "O003", "지원하지 않는 OAuth 프로바이더입니다."),
     APPLE_TOKEN_VALIDATION_FAIL(HttpStatus.UNAUTHORIZED, "O004", "애플 토큰 검증에 실패했습니다."),
+    KAKAO_UNLINK_FAIL(HttpStatus.UNAUTHORIZED, "O005", "카카오 OAUTH 연결 해제에 실패했습니다."),
+    GOOGLE_UNLINK_FAIL(HttpStatus.UNAUTHORIZED, "O006", "구글 OAUTH 연결 해제에 실패했습니다."),
+    APPLE_UNLINK_FAIL(HttpStatus.UNAUTHORIZED, "O007", "애플 OAUTH 연결 해제에 실패했습니다."),
     JWT_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "J001", "유효하지 않은 JWT 토큰입니다."),
     JWT_EXPIRED(HttpStatus.UNAUTHORIZED, "J002", "만료된 JWT 토큰입니다."),
     JWT_UNSUPPORTED(HttpStatus.UNAUTHORIZED, "J003", "지원하지 않는 JWT 토큰입니다."),
@@ -48,7 +51,6 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "J006", "리프레시 토큰을 찾을 수 없습니다."),
     REFRESH_TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "J007", "리프레시 토큰이 일치하지 않습니다."),
     CONCURRENCY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "J008", "동시성 처리 중 오류가 발생했습니다."),
-
 
     //검색
     SEARCH_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "검색 기록을 찾을 수 없습니다."),
