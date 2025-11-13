@@ -3,14 +3,9 @@ package com.bobeat.backend.domain.security.auth.service;
 
 import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.member.repository.MemberRepository;
-import com.bobeat.backend.domain.member.service.OnboardingService;
-import com.bobeat.backend.domain.report.service.ReportService;
-import com.bobeat.backend.domain.review.service.ReviewService;
-import com.bobeat.backend.domain.search.service.SearchService;
 import com.bobeat.backend.domain.security.auth.dao.RefreshTokenRepository;
 import com.bobeat.backend.domain.security.auth.domain.RefreshToken;
 import com.bobeat.backend.domain.security.auth.dto.AuthResponse;
-import com.bobeat.backend.domain.store.service.StoreProposalService;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
 import io.jsonwebtoken.Claims;
@@ -30,11 +25,6 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtService jwtService;
-    private final OnboardingService onboardingService;
-    private final ReportService reportService;
-    private final ReviewService reviewService;
-    private final SearchService searchService;
-    private final StoreProposalService storeProposalService;
 
     @Transactional
     public AuthResponse renewAccessToken(String refreshTokenWithBearer) {
@@ -116,17 +106,5 @@ public class AuthService {
         return String.format("토큰 존재 - 길이: %d, 끝 4자리: %s",
                 refreshToken.length(),
                 refreshToken.substring(Math.max(0, refreshToken.length() - 4)));
-    }
-
-    @Transactional
-    public void deleteMember(Long memberId) {
-        Member member = memberRepository.findByIdOrElseThrow(memberId);
-        onboardingService.deleteByMember(member);
-        reportService.deleteByMember(member);
-        reviewService.deleteByMember(member);
-        searchService.deleteByMember(member);
-        storeProposalService.deleteByMember(member);
-        refreshTokenRepository.deleteByMemberId(memberId);
-        memberRepository.delete(member);
     }
 }
