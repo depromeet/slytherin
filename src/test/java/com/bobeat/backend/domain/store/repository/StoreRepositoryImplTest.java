@@ -412,7 +412,7 @@ public class StoreRepositoryImplTest {
             // then: Store A(7000원), Store C(6000원)
             assertThat(result)
                 .extracting(row -> row.store().getName())
-                .containsExactlyInAnyOrder("Store A", "Store C");
+                .containsExactlyInAnyOrder("Store A", "Store C", "Store B");
         }
 
         @Test

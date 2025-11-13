@@ -110,6 +110,8 @@ public class StoreQueryFilterBuilder {
     /**
      * 가격 필터를 JOIN 조건으로 빌드
      * 2단계 쿼리의 1단계(Store ID 조회)에서 사용
+     *
+     * TODO: 임시로 추천 메뉴 조건 제거 - 전체 메뉴 대상으로 가격 필터 적용
      */
     public BooleanExpression buildPriceJoinFilter(StoreFilteringRequest request) {
         if (!needsPriceJoin(request)) {
@@ -128,7 +130,8 @@ public class StoreQueryFilterBuilder {
             priceCondition = menu.price.loe(max);
         }
 
-        return menu.recommend.isTrue().and(priceCondition);
+        // 추천 메뉴 조건 제거 - 전체 메뉴에서 가격 조건 체크
+        return priceCondition;
     }
 
     /**
