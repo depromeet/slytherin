@@ -47,7 +47,7 @@ public class AppleService implements OAuth2Service {
 
     @Value("${oauth.apple.auth-apple-id}")
     private String authAppleId;
-    @Value("${auth-apple-secret}")
+    @Value("${oauth.apple.auth-apple-secret}")
     private String authAppleSecret;
 
     @Override
