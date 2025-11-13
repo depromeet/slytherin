@@ -57,7 +57,7 @@ public class KakaoService implements OAuth2Service {
                 throw new CustomException(ErrorCode.KAKAO_UNLINK_FAIL);
             }
         } catch (Exception e) {
-            log.error("카카오 사용자 정보 조회 실패", e);
+            log.error("카카오 사용자 해제 실패", e);
             throw new CustomException(ErrorCode.KAKAO_UNLINK_FAIL);
         }
     }
