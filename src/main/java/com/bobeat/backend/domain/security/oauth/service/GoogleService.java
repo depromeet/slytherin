@@ -39,4 +39,8 @@ public class GoogleService implements OAuth2Service {
             throw new CustomException(ErrorCode.GOOGLE_TOKEN_VALIDATION_FAIL);
         }
     }
+
+    @Override
+    public void unlink(String accessToken) {
+    }
 } 

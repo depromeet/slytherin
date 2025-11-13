@@ -12,6 +12,7 @@ import com.bobeat.backend.domain.security.auth.dao.RefreshTokenRepository;
 import com.bobeat.backend.domain.security.auth.dto.AuthResponse;
 import com.bobeat.backend.domain.security.auth.service.JwtService;
 import com.bobeat.backend.domain.security.oauth.dto.OAuth2UserInfo;
+import com.bobeat.backend.domain.security.oauth.dto.request.OauthUnlinkRequest;
 import com.bobeat.backend.domain.security.oauth.dto.request.SocialLoginRequest;
 import com.bobeat.backend.domain.security.oauth.service.OAuth2Factory;
 import com.bobeat.backend.domain.security.oauth.service.OAuth2Service;
@@ -52,8 +53,9 @@ public class OauthService {
         return jwtService.generateTokens(member);
     }
 
-    public void unlinkLogin(Long memberId){
-        oAuth2Factory
+    public void unlinkLogin(Long memberId, OauthUnlinkRequest request) {
+        OAuth2Service oAuth2Service = oAuth2Factory.getProvider(request.provider());
+        oAuth2Service.unlink(request.oAuthToken());
     }
 
     @Transactional

@@ -63,6 +63,10 @@ public class AppleService implements OAuth2Service {
         throw new CustomException(ErrorCode.APPLE_TOKEN_VALIDATION_FAIL);
     }
 
+    @Override
+    public void unlink(String accessToken) {
+    }
+
     @Scheduled(cron = "0 0 */6 * * *")
     @Transactional
     public void refreshAppleKeys() {
