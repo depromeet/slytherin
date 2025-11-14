@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 
 @Schema(description = "어드민 가게 등록 요청 DTO")
@@ -40,7 +41,7 @@ public record StoreCreateRequest(
         CategoryRequest categories,
 
         @Schema(description = "가게 이미지 URL 목록")
-        @NotEmpty(message = "가게 이미지는 최소 1개 이상 필요합니다")
+        @Size(min = 2, message = "가게 이미지는 최소 2개 이상 필요합니다")
         List<StoreImageRequest> storeImages,
 
         @Schema(description = "메뉴 목록")
@@ -65,14 +66,16 @@ public record StoreCreateRequest(
             @Schema(description = "경도")
             @NotNull(message = "경도는 필수입니다")
             Double longitude
-    ) {}
+    ) {
+    }
 
     @Schema(description = "카테고리 요청 DTO")
     public record CategoryRequest(
             @Schema(description = "메뉴 카테고리 ID")
             @NotNull(message = "메뉴 카테고리는 필수입니다")
             String primaryCategory
-    ) {}
+    ) {
+    }
 
     @Schema(description = "가게 이미지 요청 DTO")
     public record StoreImageRequest(
@@ -83,7 +86,8 @@ public record StoreCreateRequest(
             @Schema(description = "메인 이미지 여부")
             @NotNull(message = "메인 이미지 여부는 필수입니다")
             Boolean isMain
-    ) {}
+    ) {
+    }
 
     @Schema(description = "메뉴 요청 DTO")
     public record MenuRequest(
@@ -97,8 +101,10 @@ public record StoreCreateRequest(
             Integer price,
 
             @Schema(description = "메뉴 이미지 URL")
+            @NotBlank(message = "메뉴 이미지 URL은 필수입니다")
             String imageUrl
-    ) {}
+    ) {
+    }
 
     @Schema(description = "좌석 옵션 요청 DTO")
     public record SeatOptionRequest(
@@ -108,5 +114,6 @@ public record StoreCreateRequest(
 
             @Schema(description = "좌석 이미지 URL")
             String imageUrl
-    ) {}
+    ) {
+    }
 }
