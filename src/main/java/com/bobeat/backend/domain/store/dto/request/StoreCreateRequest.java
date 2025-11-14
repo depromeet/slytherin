@@ -41,6 +41,7 @@ public record StoreCreateRequest(
         CategoryRequest categories,
 
         @Schema(description = "가게 이미지 URL 목록")
+        @NotNull(message = "가게 이미지 목록은 필수입니다.")
         @Size(min = 2, message = "가게 이미지는 최소 2개 이상 필요합니다")
         List<StoreImageRequest> storeImages,
 
