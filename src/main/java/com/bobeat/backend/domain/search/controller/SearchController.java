@@ -50,7 +50,7 @@ public class SearchController {
     @Operation(summary = "검색 히스토리 조회", description = "식당 검색 히스토리를 조회한다")
     @GetMapping("/history")
     public ApiResponse<List<StoreSearchHistoryResponse>> getStoreSearchHistory(@AuthenticationPrincipal Long memberId,
-                                                                               @ModelAttribute CursorPaginationRequest paging) {
+                                                                               @Valid @ModelAttribute CursorPaginationRequest paging) {
         List<StoreSearchHistoryResponse> response = searchService.getStoreSearchHistory(memberId, paging);
         return ApiResponse.success(response);
     }
