@@ -37,6 +37,7 @@ public class Store extends BaseTimeEntity {
 
     private String phoneNumber;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.ORDINAL)

@@ -23,4 +23,9 @@ public interface StoreRepository extends JpaRepository<Store, Long>, StoreReposi
      */
     @Query("SELECT s FROM Store s WHERE s.internalScore IS NULL")
     List<Store> findStoresNeedingScoreUpdate();
+
+    /**
+     * 이름, 위도, 경도로 중복 가게 확인
+     */
+    boolean existsByNameAndAddress_LatitudeAndAddress_Longitude(String name, Double latitude, Double longitude);
 }

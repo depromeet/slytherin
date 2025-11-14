@@ -29,6 +29,7 @@ public enum ErrorCode {
     // 가게
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "가게를 찾을 수 없습니다."),
     STORE_VECTOR_NOT_FOUND(HttpStatus.NOT_FOUND, "S002", "가게의 벡터 데이터가 없습니다."),
+    DUPLICATE_STORE_NAME(HttpStatus.BAD_REQUEST, "S003", "이미 존재하는 가게입니다."),
 
     // 리뷰
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리뷰를 찾을 수 없습니다."),

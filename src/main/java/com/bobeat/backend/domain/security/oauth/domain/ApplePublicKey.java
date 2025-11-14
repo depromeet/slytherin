@@ -1,6 +1,7 @@
 package com.bobeat.backend.domain.security.oauth.domain;
 
 import com.bobeat.backend.domain.common.BaseTimeEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,5 +30,6 @@ public class ApplePublicKey extends BaseTimeEntity {
     private String alg;
     private String n;
     private String e;
+    @Column(columnDefinition = "TEXT")
     private String encodedPublicKey;
 }

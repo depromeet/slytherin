@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 
 @Schema(description = "어드민 가게 등록 요청 DTO")
@@ -40,7 +41,8 @@ public record StoreCreateRequest(
         CategoryRequest categories,
 
         @Schema(description = "가게 이미지 URL 목록")
-        @NotEmpty(message = "가게 이미지는 최소 1개 이상 필요합니다")
+        @NotNull(message = "가게 이미지 목록은 필수입니다.")
+        @Size(min = 2, message = "가게 이미지는 최소 2개 이상 필요합니다")
         List<StoreImageRequest> storeImages,
 
         @Schema(description = "메뉴 목록")
@@ -97,6 +99,7 @@ public record StoreCreateRequest(
             Integer price,
 
             @Schema(description = "메뉴 이미지 URL")
+            @NotBlank(message = "메뉴 이미지 URL은 필수입니다")
             String imageUrl
     ) {}
 
