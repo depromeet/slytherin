@@ -20,7 +20,9 @@ import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,8 +31,6 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -78,17 +78,17 @@ public class AppleService implements OAuth2Service {
 
     @Override
     public void unlink(String accessToken) {
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("client_id", authAppleId);
-        body.add("client_secret", authAppleSecret);
-        body.add("token", accessToken);
-        body.add("token_type_hint", "access_token");
+        Map<String, String> body = new HashMap<>();
+        body.put("client_id", authAppleId);
+        body.put("client_secret", authAppleSecret);
+        body.put("token", accessToken);
+        body.put("token_type_hint", "access_token");
 
         try {
             webClient.post()
                     .uri(USER_UNLINK_URI)
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .body(BodyInserters.fromFormData(body))
+                    .body(BodyInserters.fromValue(body))
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, response -> {
                         log.error("애플 사용자 해제 실패");
