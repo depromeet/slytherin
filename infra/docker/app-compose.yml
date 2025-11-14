@@ -31,7 +31,7 @@ services:
     cpus: 0.7
 
   nginx:
-    image: nginx:1.24.0
+    image: nginx:1.29
     container_name: bobeat-nginx
     restart: always
     ports:
@@ -43,6 +43,7 @@ services:
       - /etc/nginx/conf.d:/etc/nginx/conf.d:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /root/logs/nginx:/var/log/nginx
+      - /etc/localtime:/etc/localtime:ro
     mem_limit: 256m
     cpus: 0.2
 networks:
