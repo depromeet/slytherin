@@ -16,11 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Search", description = "검색 관련 API")
@@ -50,7 +50,7 @@ public class SearchController {
     @Operation(summary = "검색 히스토리 조회", description = "식당 검색 히스토리를 조회한다")
     @GetMapping("/history")
     public ApiResponse<List<StoreSearchHistoryResponse>> getStoreSearchHistory(@AuthenticationPrincipal Long memberId,
-                                                                               @RequestParam CursorPaginationRequest paging) {
+                                                                               @ModelAttribute CursorPaginationRequest paging) {
         List<StoreSearchHistoryResponse> response = searchService.getStoreSearchHistory(memberId, paging);
         return ApiResponse.success(response);
     }
