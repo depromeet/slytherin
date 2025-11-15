@@ -58,8 +58,7 @@ public class SearchService {
         if (request.paging().lastKnown() != null) {
             lastKnown = Float.valueOf(request.paging().lastKnown());
         }
-//        List<StoreEmbedding> storeEmbeddings = storeEmbeddingQueryRepository.findSimilarEmbeddingsWithCursor(embedding,
-//                lastKnown, request.paging().limit() + 1);
+
         List<StoreEmbeddingWithDistanceDto> storeEmbeddingWithDistanceDtos = storeEmbeddingQueryRepository.findSimilarEmbeddingsWithCursor(
                 embedding, lastKnown, request.paging().limit() + 1,
                 request.lon(), request.lat());
