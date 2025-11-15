@@ -13,4 +13,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, ReviewRep
         return findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
     }
+
+    void deleteByStoreId(Long storeId);
 }

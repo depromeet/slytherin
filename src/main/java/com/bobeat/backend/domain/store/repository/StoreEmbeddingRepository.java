@@ -16,9 +16,9 @@ public interface StoreEmbeddingRepository extends JpaRepository<StoreEmbedding, 
 
     @Query(value = """
             SELECT store_embedding.* FROM store_embedding se
-            WHERE (:lastDistance IS NULL 
+            WHERE (:lastDistance IS NULL
                    OR (store_embedding.embedding <=> CAST(:embedding AS vector(1024))) > :lastDistance
-                   OR ((store_embedding.embedding <=> CAST(:embedding AS vector(1024))) = :lastDistance 
+                   OR ((store_embedding.embedding <=> CAST(:embedding AS vector(1024))) = :lastDistance
                                    AND store_embedding.id > :lastId))
             ORDER BY store_embedding.embedding <=> CAST(:embedding AS vector(1024)) ASC, se.id ASC
             LIMIT :limit
@@ -29,4 +29,6 @@ public interface StoreEmbeddingRepository extends JpaRepository<StoreEmbedding, 
             @Param("lastId") Long lastId,
             @Param("limit") int limit
     );
+
+    void deleteByStoreId(Long storeId);
 }

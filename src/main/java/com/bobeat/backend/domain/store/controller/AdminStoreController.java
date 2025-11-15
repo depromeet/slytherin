@@ -4,6 +4,7 @@ import com.bobeat.backend.domain.store.dto.request.StoreCreateRequest;
 import com.bobeat.backend.domain.store.dto.response.KakaoStoreResponse;
 import com.bobeat.backend.domain.store.service.StoreCrawlingService;
 import com.bobeat.backend.domain.store.service.StoreCreateService;
+import com.bobeat.backend.domain.store.service.StoreDeleteService;
 import com.bobeat.backend.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,7 +12,9 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminStoreController {
 
     private final StoreCreateService storeCreateService;
+    private final StoreDeleteService storeDeleteService;
     private final StoreCrawlingService storeCrawlingService;
 
     @Operation(summary = "가게 등록", description = "어드민이 새로운 가게를 등록합니다.")
@@ -42,5 +46,12 @@ public class AdminStoreController {
 
         KakaoStoreResponse response = storeCrawlingService.findStore(storeName);
         return ApiResponse.success(response);
+    }
+
+    @Operation(summary = "가게 삭제", description = "어드민이 가게를 삭제합니다. 연관된 모든 데이터(이미지, 메뉴, 좌석, 임베딩, 리뷰, 제안)가 함께 삭제됩니다.")
+    @DeleteMapping("/{storeId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteStore(@PathVariable Long storeId) {
+        storeDeleteService.deleteStore(storeId);
     }
 }
