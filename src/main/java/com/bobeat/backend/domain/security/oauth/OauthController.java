@@ -1,12 +1,15 @@
 package com.bobeat.backend.domain.security.oauth;
 
 import com.bobeat.backend.domain.security.auth.dto.AuthResponse;
+import com.bobeat.backend.domain.security.oauth.dto.request.OauthUnlinkRequest;
 import com.bobeat.backend.domain.security.oauth.dto.request.SocialLoginRequest;
 import com.bobeat.backend.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,5 +29,15 @@ public class OauthController {
     public ApiResponse<AuthResponse> socialLogin(@RequestBody SocialLoginRequest request) {
         AuthResponse response = oauthService.login(request);
         return ApiResponse.success(response);
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/withdraw")
+    @Operation(summary = "회원 탈퇴", description = "현재 로그인한 사용자의 계정을 삭제한다.")
+    public ApiResponse<Void> withdraw(@AuthenticationPrincipal Long memberId,
+                                      @RequestBody OauthUnlinkRequest request) {
+        oauthService.unlinkLogin(memberId, request);
+        oauthService.deleteMember(memberId);
+        return ApiResponse.successOnly();
     }
 }

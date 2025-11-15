@@ -38,4 +38,9 @@ public class ReportService {
 
         storeReportRepository.save(storeReport);
     }
+
+    @Transactional
+    public void deleteByMember(Member member) {
+        storeReportRepository.deleteByMember(member);
+    }
 }

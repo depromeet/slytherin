@@ -20,13 +20,20 @@ import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -34,8 +41,14 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class AppleService implements OAuth2Service {
 
     private static final String APPLE_KEY_ENDPOINT = "https://appleid.apple.com/auth/keys";
+    private static final String USER_UNLINK_URI = "https://appleid.apple.com/auth/revoke";
     private final WebClient webClient;
     private final ApplePublicKeyRepository applePublicKeyRepository;
+
+    @Value("${oauth.apple.auth-apple-id}")
+    private String authAppleId;
+    @Value("${oauth.apple.auth-apple-secret}")
+    private String authAppleSecret;
 
     @Override
     public OAuth2UserInfo getUser(String idToken) {
@@ -61,6 +74,33 @@ public class AppleService implements OAuth2Service {
         }
 
         throw new CustomException(ErrorCode.APPLE_TOKEN_VALIDATION_FAIL);
+    }
+
+    @Override
+    public void unlink(String accessToken) {
+        Map<String, String> body = new HashMap<>();
+        body.put("client_id", authAppleId);
+        body.put("client_secret", authAppleSecret);
+        body.put("token", accessToken);
+        body.put("token_type_hint", "access_token");
+
+        try {
+            webClient.post()
+                    .uri(USER_UNLINK_URI)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(BodyInserters.fromValue(body))
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, response -> {
+                        log.error("애플 사용자 해제 실패");
+                        return Mono.error(new CustomException(ErrorCode.APPLE_UNLINK_FAIL));
+                    })
+                    .toBodilessEntity()
+                    .block();
+
+        } catch (Exception e) {
+            log.error("애플 사용자 해제 실패", e);
+            throw new CustomException(ErrorCode.APPLE_UNLINK_FAIL);
+        }
     }
 
     @Scheduled(cron = "0 0 */6 * * *")

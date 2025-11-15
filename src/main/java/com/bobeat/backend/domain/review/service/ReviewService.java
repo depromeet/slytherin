@@ -111,4 +111,9 @@ public class ReviewService {
 
         reviewRepository.delete(review);
     }
+
+    @Transactional
+    public void deleteByMember(Member member) {
+        reviewRepository.deleteByMember(member);
+    }
 }

@@ -1,12 +1,12 @@
 package com.bobeat.backend.domain.member.service;
 
+import com.bobeat.backend.domain.member.dto.request.OnboardingRequest;
+import com.bobeat.backend.domain.member.dto.response.OnBoardingResult;
 import com.bobeat.backend.domain.member.entity.Level;
 import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.member.entity.MemberOnboardingProfile;
-import com.bobeat.backend.domain.member.repository.MemberRepository;
-import com.bobeat.backend.domain.member.dto.request.OnboardingRequest;
-import com.bobeat.backend.domain.member.dto.response.OnBoardingResult;
 import com.bobeat.backend.domain.member.repository.MemberOnboardingProfileRepository;
+import com.bobeat.backend.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +66,11 @@ public class OnboardingService {
                     return existing;
                 })
                 .orElseGet(() -> MemberOnboardingProfile.create(member, request));
+    }
+
+    @Transactional
+    public void deleteByMember(Member member) {
+        onboardingProfileRepository.deleteByMember(member);
     }
 
 }
