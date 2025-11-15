@@ -17,10 +17,10 @@ public record StoreSearchRequest(
 
         @Schema(description = "위도", example = "37.5665")
         @NotNull
-        Double lat,
+        Float lat,
 
         @Schema(description = "경도", example = "126.9780")
         @NotNull
-        Double lon
+        Float lon
 ) {
 }

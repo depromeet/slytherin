@@ -1,9 +1,15 @@
 package com.bobeat.backend.domain.store.repository;
 
 
+import static com.bobeat.backend.domain.common.PostgisExpressions.distanceMeters;
+import static com.bobeat.backend.domain.store.entity.QMenu.menu;
+import static com.bobeat.backend.domain.store.entity.QSeatOption.seatOption;
+import static com.bobeat.backend.domain.store.entity.QStore.store;
+
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.entity.Menu;
+import com.bobeat.backend.domain.store.entity.QStore;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.repository.query.StoreQueryFilterBuilder;
 import com.bobeat.backend.domain.store.repository.query.StoreQuerySortBuilder;
@@ -11,21 +17,22 @@ import com.bobeat.backend.global.util.KeysetCursor;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.util.*;
-
-import static com.bobeat.backend.domain.common.PostgisExpressions.distanceMeters;
-import static com.bobeat.backend.domain.store.entity.QMenu.menu;
-import static com.bobeat.backend.domain.store.entity.QSeatOption.seatOption;
-import static com.bobeat.backend.domain.store.entity.QStore.store;
-
 /**
- * Store 검색 QueryDSL 구현체
- * Builder 패턴을 적용하여 필터/정렬 로직을 분리
+ * Store 검색 QueryDSL 구현체 Builder 패턴을 적용하여 필터/정렬 로직을 분리
  */
 @Repository
 @RequiredArgsConstructor
@@ -33,6 +40,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
     private final JPAQueryFactory queryFactory;
     private final StoreQueryFilterBuilder filterBuilder;
     private final StoreQuerySortBuilder sortBuilder;
+    private final EntityManager em;
 
     @Override
     public List<StoreRow> findStoresSlice(StoreFilteringRequest request, int limitPlusOne) {
@@ -68,20 +76,17 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
     /**
      * 가격/좌석 필터가 있을 때 2단계 쿼리로 조회
-     *
-     * 전략:
-     * 1단계 - JOIN으로 필터링된 Store ID만 조회 (DISTINCT)
-     * 2단계 - ID로 Store + distance 조회 (중복 없음, 정렬 정확)
-     *
-     * 이유:
-     * - 상관 서브쿼리는 각 Store마다 반복 실행되어 느림
-     * - 단순 JOIN은 중복 발생 (1 Store : N Menu)
-     * - DISTINCT + ORDER BY는 PostgreSQL 에러 발생
-     * - GROUP BY 모든 컬럼은 코드가 지저분함
-     *
+     * <p>
+     * 전략: 1단계 - JOIN으로 필터링된 Store ID만 조회 (DISTINCT) 2단계 - ID로 Store + distance 조회 (중복 없음, 정렬 정확)
+     * <p>
+     * 이유: - 상관 서브쿼리는 각 Store마다 반복 실행되어 느림 - 단순 JOIN은 중복 발생 (1 Store : N Menu) - DISTINCT + ORDER BY는 PostgreSQL 에러 발생 -
+     * GROUP BY 모든 컬럼은 코드가 지저분함
+     * <p>
      * 상세 설명: SUBQUERY_OPTIMIZATION.md 참고
      */
-    private List<StoreRow> findStoresWithJoins(StoreFilteringRequest request, int limitPlusOne, NumberExpression<Integer> distanceExpr, double centerLat, double centerLon) {
+    private List<StoreRow> findStoresWithJoins(StoreFilteringRequest request, int limitPlusOne,
+                                               NumberExpression<Integer> distanceExpr, double centerLat,
+                                               double centerLon) {
         // 1단계: JOIN으로 필터링된 Store ID만 조회
         List<Long> filteredStoreIds = findFilteredStoreIds(request, centerLat, centerLon, limitPlusOne);
 
@@ -111,18 +116,15 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
     /**
      * JOIN 조건으로 필터링된 Store ID 목록 조회 (1단계) //TODO: 데이터가 많아져 성능저하 시 고민 필요
-     *
-     * 전략:
-     * - DISTINCT로 중복 제거하여 유효한 모든 Store ID를 조회
-     * - LIMIT을 적용하지 않음 → 2단계에서 키셋 페이징으로 정확하게 제어
-     * - 이 방식으로 무한 스크롤에서 데이터 누락 방지
-     *
-     * 트레이드오프:
-     * - 장점: 키셋 페이징이 정확하게 동작, 데이터 누락 없음
-     * - 단점: 필터링된 Store가 많으면 1단계에서 많은 ID를 가져올 수 있음
-     * - 일반적으로 위치 필터(반경 5km)로 인해 결과 집합은 제한적
+     * <p>
+     * 전략: - DISTINCT로 중복 제거하여 유효한 모든 Store ID를 조회 - LIMIT을 적용하지 않음 → 2단계에서 키셋 페이징으로 정확하게 제어 - 이 방식으로 무한 스크롤에서 데이터 누락
+     * 방지
+     * <p>
+     * 트레이드오프: - 장점: 키셋 페이징이 정확하게 동작, 데이터 누락 없음 - 단점: 필터링된 Store가 많으면 1단계에서 많은 ID를 가져올 수 있음 - 일반적으로 위치 필터(반경 5km)로 인해 결과
+     * 집합은 제한적
      */
-    private List<Long> findFilteredStoreIds(StoreFilteringRequest request, double centerLat, double centerLon, int limitPlusOne) {
+    private List<Long> findFilteredStoreIds(StoreFilteringRequest request, double centerLat, double centerLon,
+                                            int limitPlusOne) {
         // 기본 필터
         BooleanExpression baseFilters = filterBuilder.buildAllFilters(request, centerLat, centerLon);
 
@@ -154,7 +156,9 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
     @Override
     public Map<Long, StoreSearchResultDto.SignatureMenu> findRepresentativeMenus(List<Long> storeIds) {
-        if (storeIds.isEmpty()) return Map.of();
+        if (storeIds.isEmpty()) {
+            return Map.of();
+        }
 
         // 대표 메뉴 선택 기준: 추천 메뉴 우선, 가격 낮은 순
         List<Menu> menus = queryFactory
@@ -173,7 +177,9 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
     @Override
     public Map<Long, List<String>> findSeatTypes(List<Long> storeIds) {
-        if (storeIds.isEmpty()) return Map.of();
+        if (storeIds.isEmpty()) {
+            return Map.of();
+        }
 
         List<Tuple> rows = queryFactory
                 .select(seatOption.store.id, seatOption.seatType)
@@ -245,5 +251,30 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
             acc = (acc == null) ? e : acc.and(e);
         }
         return acc;
+    }
+
+    public Map<Long, Integer> findDistance(List<Long> storeIds, float userLat, float userLon) {
+        QStore store = QStore.store;
+
+        NumberExpression<Integer> distanceExpr = Expressions.numberTemplate(
+                Integer.class,
+                "CAST(ST_Distance(" +
+                        "geography(ST_SetSRID(ST_MakePoint({0}, {1}), 4326)), " +
+                        "geography(ST_SetSRID(ST_MakePoint({2}, {3}), 4326))" +
+                        ") AS integer)",
+                userLon, userLat, store.address.longitude, store.address.latitude
+        );
+
+        List<Tuple> results = new JPAQuery<>(em)
+                .select(store.id, distanceExpr)
+                .from(store)
+                .where(store.id.in(storeIds))
+                .fetch();
+
+        return results.stream()
+                .collect(Collectors.toMap(
+                        t -> t.get(store.id),
+                        t -> t.get(distanceExpr)
+                ));
     }
 }

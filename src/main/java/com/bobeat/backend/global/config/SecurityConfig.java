@@ -59,7 +59,7 @@ public class SecurityConfig {
 
         // 허용할 오리진 (개발 환경)
         configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:*",
+                "http://localhost:8080",
                 "http://127.0.0.1:*",
                 "https://localhost:*",
                 "https://gryffindor.vercel.app",
