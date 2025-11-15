@@ -18,7 +18,6 @@ import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.entity.StoreEmbedding;
 import com.bobeat.backend.domain.store.entity.StoreImage;
 import com.bobeat.backend.domain.store.external.clova.service.ClovaEmbeddingClient;
-import com.bobeat.backend.domain.store.repository.SeatOptionRepository;
 import com.bobeat.backend.domain.store.repository.StoreEmbeddingQueryRepository;
 import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
@@ -48,7 +47,6 @@ public class SearchService {
     private final MemberRepository memberRepository;
     private final ClovaEmbeddingClient clovaEmbeddingClient;
     private final StoreEmbeddingQueryRepository storeEmbeddingQueryRepository;
-    private final SeatOptionRepository seatOptionRepository;
     private final SearchHistoryEmbeddingRepository searchHistoryEmbeddingRepository;
 
     public CursorPageResponse<StoreSearchResultDto> searchStore(StoreSearchRequest request) {
@@ -65,7 +63,11 @@ public class SearchService {
         List<StoreEmbedding> actualStoreEmbeddings = storeEmbeddings.stream()
                 .limit(request.paging().limit())
                 .toList();
-        String nextCursor = findNextCursor(storeEmbeddings, embedding);
+
+        String nextCursor = null;
+        if (hasNext) {
+            nextCursor = findNextCursor(storeEmbeddings, embedding);
+        }
 
         List<Store> stores = actualStoreEmbeddings.stream()
                 .map(StoreEmbedding::getStore)
@@ -94,7 +96,6 @@ public class SearchService {
                             List<String> categoryStrings = storeService.buildTagsFromCategories(store.getCategories());
 
                             Integer distance = distanceMap.get(store.getId());
-                            System.out.println("distance = " + distance);
                             int walkingMinutes = (int) Math.ceil(distance / 80.0);
                             return new StoreSearchResultDto(store.getId(), store.getName(),
                                     storeImage != null ? storeImage.getImageUrl() : null,
@@ -263,4 +264,6 @@ public class SearchService {
         double distance = 1 - cosineSimilarity;
         return String.valueOf(distance);
     }
+
+
 }

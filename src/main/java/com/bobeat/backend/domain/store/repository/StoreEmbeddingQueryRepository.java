@@ -2,7 +2,6 @@ package com.bobeat.backend.domain.store.repository;
 
 import com.bobeat.backend.domain.store.entity.StoreEmbedding;
 import com.bobeat.backend.domain.store.util.PgVectorUtils;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import java.util.List;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Repository;
 public class StoreEmbeddingQueryRepository {
 
     private final EntityManager em;
-    private final JPAQueryFactory queryFactory;
 
     public List<StoreEmbedding> findSimilarEmbeddingsWithCursor(
             List<Float> embedding,
