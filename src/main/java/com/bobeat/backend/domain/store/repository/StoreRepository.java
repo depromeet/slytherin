@@ -3,11 +3,11 @@ package com.bobeat.backend.domain.store.repository;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.global.exception.CustomException;
 import com.bobeat.backend.global.exception.ErrorCode;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import org.springframework.data.jpa.repository.Query;
-
 import java.util.List;
+import java.util.Map;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public interface StoreRepository extends JpaRepository<Store, Long>, StoreRepositoryCustom {
@@ -18,8 +18,7 @@ public interface StoreRepository extends JpaRepository<Store, Long>, StoreReposi
     }
 
     /**
-     * 점수 업데이트가 필요한 식당들을 조회
-     * (internalScore가 null인 경우)
+     * 점수 업데이트가 필요한 식당들을 조회 (internalScore가 null인 경우)
      */
     @Query("SELECT s FROM Store s WHERE s.internalScore IS NULL")
     List<Store> findStoresNeedingScoreUpdate();
@@ -28,4 +27,6 @@ public interface StoreRepository extends JpaRepository<Store, Long>, StoreReposi
      * 이름, 위도, 경도로 중복 가게 확인
      */
     boolean existsByNameAndAddress_LatitudeAndAddress_Longitude(String name, Double latitude, Double longitude);
+
+    Map<Long, Integer> findDistance(List<Long> storeIds, float userLat, float userLon);
 }

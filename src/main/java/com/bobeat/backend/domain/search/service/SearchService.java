@@ -5,6 +5,7 @@ import static com.bobeat.backend.global.exception.ErrorCode.SEARCH_HISTORY_ACCES
 
 import com.bobeat.backend.domain.member.entity.Member;
 import com.bobeat.backend.domain.member.repository.MemberRepository;
+import com.bobeat.backend.domain.search.dto.request.StoreSearchRequest;
 import com.bobeat.backend.domain.search.dto.response.StoreSearchHistoryResponse;
 import com.bobeat.backend.domain.search.entity.SearchHistory;
 import com.bobeat.backend.domain.search.entity.SearchHistoryEmbedding;
@@ -17,7 +18,6 @@ import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.entity.StoreEmbedding;
 import com.bobeat.backend.domain.store.entity.StoreImage;
 import com.bobeat.backend.domain.store.external.clova.service.ClovaEmbeddingClient;
-import com.bobeat.backend.domain.store.repository.SeatOptionRepository;
 import com.bobeat.backend.domain.store.repository.StoreEmbeddingQueryRepository;
 import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
@@ -47,24 +47,27 @@ public class SearchService {
     private final MemberRepository memberRepository;
     private final ClovaEmbeddingClient clovaEmbeddingClient;
     private final StoreEmbeddingQueryRepository storeEmbeddingQueryRepository;
-    private final SeatOptionRepository seatOptionRepository;
     private final SearchHistoryEmbeddingRepository searchHistoryEmbeddingRepository;
 
-    public CursorPageResponse<StoreSearchResultDto> searchStore(String query,
-                                                                CursorPaginationRequest request) {
-        List<Float> embedding = CheckAndSaveQueryEmbedding(query);
+    public CursorPageResponse<StoreSearchResultDto> searchStore(StoreSearchRequest request) {
+        List<Float> embedding = CheckAndSaveQueryEmbedding(request.query());
         Float lastKnown = null;
-        if (request.lastKnown() != null) {
-            lastKnown = Float.valueOf(request.lastKnown());
+        if (request.paging().lastKnown() != null) {
+            lastKnown = Float.valueOf(request.paging().lastKnown());
         }
-        List<StoreEmbedding> storeEmbeddings = storeEmbeddingQueryRepository.findSimilarEmbeddingsWithCursor(embedding,
-                lastKnown, request.limit() + 1);
-        boolean hasNext = checkHasNext(storeEmbeddings, request.limit());
+
+        List<StoreEmbedding> storeEmbeddings = storeEmbeddingQueryRepository.findSimilarEmbeddingsWithCursor(
+                embedding, lastKnown, request.paging().limit() + 1);
+        boolean hasNext = checkHasNext(storeEmbeddings, request.paging().limit());
 
         List<StoreEmbedding> actualStoreEmbeddings = storeEmbeddings.stream()
-                .limit(request.limit())
+                .limit(request.paging().limit())
                 .toList();
-        String nextCursor = findNextCursor(actualStoreEmbeddings, embedding);
+
+        String nextCursor = null;
+        if (hasNext) {
+            nextCursor = findNextCursor(storeEmbeddings, embedding);
+        }
 
         List<Store> stores = actualStoreEmbeddings.stream()
                 .map(StoreEmbedding::getStore)
@@ -75,13 +78,15 @@ public class SearchService {
                 .toList();
         Map<Long, SignatureMenu> repMenus = storeRepository.findRepresentativeMenus(storeIds);
         Map<Long, List<String>> seatTypes = storeRepository.findSeatTypes(storeIds);
+        Map<Long, Integer> distanceMap = storeRepository.findDistance(storeIds, request.lat(), request.lon());
 
         // N+1 쿼리 해결: StoreImage를 배치 조회
         Map<Long, StoreImage> storeImageMap = storeImageRepository.findMainImagesByStoreIds(storeIds).stream()
                 .collect(Collectors.toMap(img -> img.getStore().getId(), img -> img));
 
-        List<StoreSearchResultDto> storeSearchResultDtos = stores.stream()
-                .map(store -> {
+        List<StoreSearchResultDto> storeSearchResultDtos = actualStoreEmbeddings.stream()
+                .map(actualStoreEmbedding -> {
+                            Store store = actualStoreEmbedding.getStore();
                             StoreImage storeImage = storeImageMap.get(store.getId());
                             SignatureMenu signatureMenu = repMenus.get(store.getId());
                             Coordinate coordinate = new Coordinate(store.getAddress().getLatitude(),
@@ -89,9 +94,12 @@ public class SearchService {
                             List<String> seatTypeStrings = seatTypes.get(store.getId());
 
                             List<String> categoryStrings = storeService.buildTagsFromCategories(store.getCategories());
+
+                            Integer distance = distanceMap.get(store.getId());
+                            int walkingMinutes = (int) Math.ceil(distance / 80.0);
                             return new StoreSearchResultDto(store.getId(), store.getName(),
                                     storeImage != null ? storeImage.getImageUrl() : null,
-                                    signatureMenu, coordinate, 0, 0, seatTypeStrings, categoryStrings,
+                                    signatureMenu, coordinate, distance, walkingMinutes, seatTypeStrings, categoryStrings,
                                     store.getHonbobLevel() != null ? store.getHonbobLevel().getValue() : 0);
                         }
                 )
@@ -100,10 +108,10 @@ public class SearchService {
         return new CursorPageResponse<>(storeSearchResultDtos, nextCursor, hasNext, null);
     }
 
-    public CursorPageResponse<StoreSearchResultDto> searchStoreWithMember(Long memberId, String query,
-                                                                          CursorPaginationRequest request) {
-        CursorPageResponse<StoreSearchResultDto> response = searchStore(query, request);
-        saveSearchHistory(memberId, query);
+    public CursorPageResponse<StoreSearchResultDto> searchStoreWithMember(Long memberId,
+                                                                          StoreSearchRequest request) {
+        CursorPageResponse<StoreSearchResultDto> response = searchStore(request);
+        saveSearchHistory(memberId, request.query());
         return response;
     }
 
@@ -152,6 +160,7 @@ public class SearchService {
         searchHistoryRepository.delete(searchHistory);
     }
 
+    @Transactional
     public List<Float> CheckAndSaveQueryEmbedding(String query) {
         SearchHistoryEmbedding searchHistoryEmbeddings = searchHistoryEmbeddingRepository.findByQuery(query);
         if (searchHistoryEmbeddings != null) {
@@ -255,4 +264,6 @@ public class SearchService {
         double distance = 1 - cosineSimilarity;
         return String.valueOf(distance);
     }
+
+
 }

@@ -13,6 +13,14 @@ public record StoreSearchRequest(
 
         @Schema(description = "페이징 정보")
         @Valid
-        CursorPaginationRequest paging
+        CursorPaginationRequest paging,
+
+        @Schema(description = "위도", example = "37.5665")
+        @NotNull
+        Float lat,
+
+        @Schema(description = "경도", example = "126.9780")
+        @NotNull
+        Float lon
 ) {
 }

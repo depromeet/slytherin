@@ -37,13 +37,10 @@ public class SearchController {
     public ApiResponse<CursorPageResponse<StoreSearchResultDto>> searchStore(@AuthenticationPrincipal Long memberId,
                                                                              @RequestBody @Valid StoreSearchRequest request) {
         if (memberId == null) {
-            CursorPageResponse<StoreSearchResultDto> response = searchService.searchStore(request.query(),
-                    request.paging());
+            CursorPageResponse<StoreSearchResultDto> response = searchService.searchStore(request);
             return ApiResponse.success(response);
         }
-        CursorPageResponse<StoreSearchResultDto> response = searchService.searchStoreWithMember(memberId,
-                request.query(),
-                request.paging());
+        CursorPageResponse<StoreSearchResultDto> response = searchService.searchStoreWithMember(memberId, request);
         return ApiResponse.success(response);
     }
 
