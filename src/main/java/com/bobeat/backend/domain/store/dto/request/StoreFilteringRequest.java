@@ -65,11 +65,11 @@ public record StoreFilteringRequest(
                 @NotNull
                 List<Integer> honbobLevel,
 
-                @Schema(description = "좌석 형태", example = "[\"FOR_ONE\", \", \"FOR_TWO\"\", \"FOR_FOUR\", \", \"CUBICLE\"\", \"BAR_TABLE\"]")
+                @Schema(description = "좌석 형태", example = "[\"FOR_ONE\", \"FOR_TWO\", \"FOR_FOUR\", \"CUBICLE\", \"BAR_TABLE\"]")
                 List<SeatType> seatTypes,
 
                 // TODO: ENUM 생성시 변경
-                @Schema(description = "메뉴 카테고리", example = "[\"한식\", \"일식\", \"중식\", \"양식\", \"패스트푸드\", \"분식\", \"아시아음식\", \"카페\", \"기타\"]")
+                @Schema(description = "메뉴 카테고리 (한식, 일식, 중식, 양식, 패스트푸드, 분식, 아시아음식, 카페, 기타)", example = "[\"한식\", \"일식\"]")
                 List<String> categories
         ) {}
 
