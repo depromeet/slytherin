@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface StoreProposalRepository extends JpaRepository<StoreProposal, Long> {
+
+    void deleteByStoreId(Long storeId);
 }

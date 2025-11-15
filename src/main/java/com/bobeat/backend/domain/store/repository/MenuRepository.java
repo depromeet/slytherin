@@ -19,4 +19,6 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
     List<Menu> findTop3ByStoreAndRecommendFalseOrderByIdAsc(Store store);
 
     List<Menu> findTop3ByStoreAndRecommendTrueOrderByIdAsc(Store store);
+
+    void deleteByStoreId(Long storeId);
 }

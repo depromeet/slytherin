@@ -21,4 +21,6 @@ public interface StoreImageRepository extends JpaRepository<StoreImage, Long> {
         WHERE si.store.id IN :storeIds AND si.isMain = true
         """)
     List<StoreImage> findMainImagesByStoreIds(@Param("storeIds") List<Long> storeIds);
+
+    void deleteByStoreId(Long storeId);
 }

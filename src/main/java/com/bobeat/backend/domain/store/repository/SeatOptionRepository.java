@@ -18,4 +18,6 @@ public interface SeatOptionRepository extends JpaRepository<SeatOption, Long> {
 
     @Query("SELECT s FROM SeatOption s WHERE s.store.id IN :storeIds")
     List<SeatOption> findByStoreIdIn(@Param("storeIds") List<Long> storeIds);
+
+    void deleteByStoreId(Long storeId);
 }
