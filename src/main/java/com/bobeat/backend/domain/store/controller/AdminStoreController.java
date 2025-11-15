@@ -3,7 +3,7 @@ package com.bobeat.backend.domain.store.controller;
 import com.bobeat.backend.domain.store.dto.request.StoreCreateRequest;
 import com.bobeat.backend.domain.store.dto.response.KakaoStoreResponse;
 import com.bobeat.backend.domain.store.service.StoreCrawlingService;
-import com.bobeat.backend.domain.store.service.StoreService;
+import com.bobeat.backend.domain.store.service.StoreCreateService;
 import com.bobeat.backend.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,14 +25,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AdminStoreController {
 
-    private final StoreService storeService;
+    private final StoreCreateService storeCreateService;
     private final StoreCrawlingService storeCrawlingService;
 
     @Operation(summary = "가게 등록", description = "어드민이 새로운 가게를 등록합니다.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<List<Long>> createStores(@Valid @RequestBody List<StoreCreateRequest> requests) {
-        List<Long> storeIds = storeService.createStores(requests);
+        List<Long> storeIds = storeCreateService.createStores(requests);
         return ApiResponse.success(storeIds);
     }
 

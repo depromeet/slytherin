@@ -18,12 +18,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.Mono;
-
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -35,30 +31,6 @@ public class StoreEmbeddingService {
     private final SeatOptionRepository seatOptionRepository;
     private final StoreRepository storeRepository;
     private final StoreEmbeddingRepository storeEmbeddingRepository;
-
-    /**
-     * Store 엔티티의 모든 정보를 결합하여 임베딩 벡터를 생성합니다.
-     * <p>
-     * 포함 정보: - 가게 이름 - 설명 - 혼밥 난이도 - 카테고리 (Primary, Secondary) - 위치 (주소) - 메뉴 (이름, 가격) - 좌석 유형
-     *
-     * @param store Store 엔티티
-     * @return 1024차원의 임베딩 벡터
-     */
-    public Mono<List<Float>> generateStoreEmbedding(Store store) {
-        String combinedText = buildStoreText(store);
-        return clovaEmbeddingClient.getEmbedding(combinedText);
-    }
-
-    /**
-     * Store 엔티티의 모든 정보를 결합하여 임베딩 벡터를 동기식으로 생성합니다.
-     *
-     * @param store Store 엔티티
-     * @return 1024차원의 임베딩 벡터
-     */
-    public List<Float> generateStoreEmbeddingSync(Store store) {
-        String combinedText = buildStoreText(store);
-        return clovaEmbeddingClient.getEmbeddingSync(combinedText);
-    }
 
     @Transactional
     public EmbeddingTestResponse saveEmbeddingByStore(Long storeId) {
@@ -88,22 +60,9 @@ public class StoreEmbeddingService {
         );
     }
 
-    /**
-     * 비동기로 Store 임베딩을 생성하고 저장합니다.
-     *
-     * @param storeId Store ID
-     * @return CompletableFuture<Void>
-     */
-    @Async("embeddingTaskExecutor")
-    @Transactional
-    public CompletableFuture<Void> saveEmbeddingByStoreAsync(Long storeId) {
-        try {
-            saveEmbeddingByStore(storeId);
-            return CompletableFuture.completedFuture(null);
-        } catch (Exception e) {
-            log.error("임베딩 생성 실패 - storeId: {}", storeId, e);
-            return CompletableFuture.failedFuture(e);
-        }
+    private List<Float> generateStoreEmbeddingSync(Store store) {
+        String combinedText = buildStoreText(store);
+        return clovaEmbeddingClient.getEmbeddingSync(combinedText);
     }
 
     public StoreTextResponse createEmbeddingTextByStore(Long storeId) {
@@ -124,6 +83,7 @@ public class StoreEmbeddingService {
      * Store 엔티티의 모든 정보를 하나의 텍스트로 결합합니다.
      *
      * @param store Store 엔티티
+     *
      * @return 결합된 텍스트
      */
     private String buildStoreText(Store store) {
@@ -190,6 +150,7 @@ public class StoreEmbeddingService {
      * 가격을 천 단위 구분자로 포맷팅합니다.
      *
      * @param price 가격
+     *
      * @return 포맷팅된 가격 문자열
      */
     private String formatPrice(int price) {

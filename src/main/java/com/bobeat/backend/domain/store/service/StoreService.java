@@ -2,28 +2,20 @@ package com.bobeat.backend.domain.store.service;
 
 import static com.bobeat.backend.global.exception.ErrorCode.NOT_FOUND_STORE;
 
-import com.bobeat.backend.domain.member.entity.Level;
-import com.bobeat.backend.domain.member.service.MemberService;
-import com.bobeat.backend.domain.store.dto.request.StoreCreateRequest;
 import com.bobeat.backend.domain.store.dto.request.StoreFilteringRequest;
 import com.bobeat.backend.domain.store.dto.response.StoreDetailResponse;
 import com.bobeat.backend.domain.store.dto.response.StoreSearchResultDto;
 import com.bobeat.backend.domain.store.entity.Menu;
-import com.bobeat.backend.domain.store.entity.PrimaryCategory;
 import com.bobeat.backend.domain.store.entity.SeatOption;
 import com.bobeat.backend.domain.store.entity.Store;
 import com.bobeat.backend.domain.store.entity.StoreImage;
-import com.bobeat.backend.domain.store.event.StoreCreationEvent;
 import com.bobeat.backend.domain.store.repository.MenuRepository;
-import com.bobeat.backend.domain.store.repository.PrimaryCategoryRepository;
 import com.bobeat.backend.domain.store.repository.SeatOptionRepository;
 import com.bobeat.backend.domain.store.repository.StoreImageRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepository;
 import com.bobeat.backend.domain.store.repository.StoreRepositoryCustom;
-import com.bobeat.backend.domain.store.vo.Address;
 import com.bobeat.backend.domain.store.vo.Categories;
 import com.bobeat.backend.global.exception.CustomException;
-import com.bobeat.backend.global.exception.ErrorCode;
 import com.bobeat.backend.global.response.CursorPageResponse;
 import com.bobeat.backend.global.util.KeysetCursor;
 import java.util.ArrayList;
@@ -32,10 +24,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,10 +35,6 @@ public class StoreService {
     private final StoreImageRepository storeImageRepository;
     private final MenuRepository menuRepository;
     private final SeatOptionRepository seatOptionRepository;
-    private final PrimaryCategoryRepository primaryCategoryRepository;
-    private final GeometryFactory geometryFactory;
-    private final ApplicationEventPublisher eventPublisher;
-    private final MemberService memberService;
 
     @Transactional(readOnly = true)
     public CursorPageResponse<StoreSearchResultDto> search(StoreFilteringRequest request) {
@@ -125,6 +109,13 @@ public class StoreService {
         return StoreDetailResponse.of(store, storeImages, sortMenus, seatOptions);
     }
 
+    private List<Menu> sortMenuByRecommend(List<Menu> menus1, List<Menu> menus2) {
+        menus1.addAll(menus2);
+        return menus1.stream()
+                .sorted(Comparator.comparing(Menu::isRecommend)).toList().reversed();
+    }
+
+
     public List<String> buildTagsFromCategories(Categories c) {
         if (c == null) {
             return List.of();
@@ -137,122 +128,5 @@ public class StoreService {
             tags.add(c.getSecondaryCategory().getSecondaryType());
         }
         return tags;
-    }
-
-    /**
-     * 여러 가게를 생성하고 트랜잭션 커밋 후 임베딩을 비동기로 생성합니다.
-     *
-     * 성능 개선:
-     * - 임베딩 생성을 비동기로 처리하여 API 응답시간 단축
-     * - Fire-and-forget 방식으로 백그라운드에서 임베딩 생성
-     *
-     * 트랜잭션 안전성:
-     * - @TransactionalEventListener를 통해 트랜잭션 커밋 후에만 임베딩 생성 시작
-     * - 트랜잭션 롤백 시 임베딩 생성 작업이 실행되지 않음
-     *
-     * @param requests 가게 생성 요청 리스트
-     * @return 생성된 가게 ID 리스트
-     */
-    @Transactional
-    public List<Long> createStores(List<StoreCreateRequest> requests) {
-
-        List<Long> storeIds = requests.stream()
-                .map(this::createStore)
-                .toList();
-
-        // 트랜잭션 커밋 후 임베딩 생성을 위한 이벤트 발행
-        eventPublisher.publishEvent(new StoreCreationEvent(storeIds));
-
-        return storeIds;
-    }
-
-    @Transactional
-    public Long createStore(StoreCreateRequest request) {
-        PrimaryCategory primaryCategory = primaryCategoryRepository.findByPrimaryType(
-                        request.categories().primaryCategory())
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_STORE_CATEGORY));
-
-        Address address = createAddress(request.address());
-        Categories categories = createCategories(primaryCategory);
-
-        Store store = Store.builder()
-                .name(request.name())
-                .address(address)
-                .phoneNumber(request.phoneNumber())
-                .description(request.description())
-                .honbobLevel(Level.fromValue(request.honbobLevel()))
-                .categories(categories)
-                .build();
-
-        Store savedStore = storeRepository.save(store);
-
-        createStoreImages(request.storeImages(), savedStore);
-        createMenus(request.menus(), savedStore);
-        createSeatOptions(request.seatOptions(), savedStore);
-
-        return savedStore.getId();
-    }
-
-    private Address createAddress(StoreCreateRequest.AddressRequest addressRequest) {
-        Point location = geometryFactory.createPoint(
-                new Coordinate(addressRequest.longitude(), addressRequest.latitude())
-        );
-        location.setSRID(4326);
-
-        Address address = Address.builder()
-                .address(addressRequest.address())
-                .latitude(addressRequest.latitude())
-                .longitude(addressRequest.longitude())
-                .build();
-
-        address.setLocation(location);
-        return address;
-    }
-
-    private Categories createCategories(PrimaryCategory primaryCategory) {
-        return new Categories(primaryCategory, null);
-    }
-
-    private void createStoreImages(List<StoreCreateRequest.StoreImageRequest> imageRequests, Store store) {
-        List<StoreImage> storeImages = imageRequests.stream()
-                .map(imageRequest -> StoreImage.builder()
-                        .store(store)
-                        .imageUrl(imageRequest.imageUrl())
-                        .isMain(imageRequest.isMain())
-                        .build())
-                .toList();
-
-        storeImageRepository.saveAll(storeImages);
-    }
-
-    private void createMenus(List<StoreCreateRequest.MenuRequest> menuRequests, Store store) {
-        List<Menu> menus = menuRequests.stream()
-                .map(menuRequest -> Menu.builder()
-                        .store(store)
-                        .name(menuRequest.name())
-                        .price(menuRequest.price())
-                        .imageUrl(menuRequest.imageUrl())
-                        .build())
-                .toList();
-
-        menuRepository.saveAll(menus);
-    }
-
-    private void createSeatOptions(List<StoreCreateRequest.SeatOptionRequest> seatOptionRequests, Store store) {
-        List<SeatOption> seatOptions = seatOptionRequests.stream()
-                .map(seatOptionRequest -> SeatOption.builder()
-                        .store(store)
-                        .seatType(seatOptionRequest.seatType())
-                        .imageUrl(seatOptionRequest.imageUrl())
-                        .build())
-                .toList();
-
-        seatOptionRepository.saveAll(seatOptions);
-    }
-
-    private List<Menu> sortMenuByRecommend(List<Menu> menus1, List<Menu> menus2) {
-        menus1.addAll(menus2);
-        return menus1.stream()
-                .sorted(Comparator.comparing(Menu::isRecommend)).toList().reversed();
     }
 }
