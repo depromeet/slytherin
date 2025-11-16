@@ -160,7 +160,6 @@ public class SearchService {
         searchHistoryRepository.delete(searchHistory);
     }
 
-    @Transactional
     public List<Float> CheckAndSaveQueryEmbedding(String query) {
         SearchHistoryEmbedding searchHistoryEmbeddings = searchHistoryEmbeddingRepository.findByQuery(query);
         if (searchHistoryEmbeddings != null) {
@@ -180,7 +179,7 @@ public class SearchService {
                 .embedding(embeddingArray)
                 .query(query)
                 .build();
-        searchHistoryEmbeddingRepository.save(searchHistoryEmbedding);
+        searchHistoryEmbeddingRepository.saveAndCache(searchHistoryEmbedding);
         return embedding;
     }
 
